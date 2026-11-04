@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Code2, ChevronDown, ArrowDownToLine, X, Key, Lock, Play, RotateCcw } from 'lucide-react';
+import { Box, Code2, ChevronDown, ArrowDownToLine, AlertCircle, X, Key, Lock, Play, RotateCcw } from 'lucide-react';
 
 export const Sidebar = ({
   activeTab,
@@ -24,7 +24,7 @@ export const Sidebar = ({
       title: 'MONEY IN',
       items: [
         { id: 'deposits', label: 'Deposits', icon: 'deposit' },
-        { id: 'exceptions', label: 'Exceptions', icon: 'dot' },
+        { id: 'exceptions', label: 'Exceptions', icon: 'exception' },
       ]
     },
     {
@@ -70,6 +70,55 @@ export const Sidebar = ({
     onClose?.();
   };
 
+  const renderActiveIcon = (id) => {
+    switch (id) {
+      case 'dashboard':
+        return <Box className="w-3.5 h-3.5 text-white stroke-[2.2]" />;
+      case 'deposits':
+        return <ArrowDownToLine className="w-3.5 h-3.5 text-white stroke-[2.2]" />;
+      case 'exceptions':
+        return <AlertCircle className="w-3.5 h-3.5 text-white stroke-[2.2]" />;
+      default:
+        return <div className="w-1.5 h-1.5 rounded-full bg-white" />;
+    }
+  };
+
+  const renderInactiveIcon = (id, icon) => {
+    switch (id) {
+      case 'dashboard':
+        return (
+          <div className="w-3.5 flex items-center justify-center text-[#64748B] group-hover:text-[#1E293B]">
+            <Box className="w-3.5 h-3.5 stroke-[1.8]" />
+          </div>
+        );
+      case 'deposits':
+        return (
+          <div className="w-3.5 flex items-center justify-center text-[#64748B] group-hover:text-[#1E293B]">
+            <ArrowDownToLine className="w-3.5 h-3.5 stroke-[1.8]" />
+          </div>
+        );
+      case 'exceptions':
+        return (
+          <div className="w-3.5 flex items-center justify-center">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#94A3B8] group-hover:bg-[#64748B]" />
+          </div>
+        );
+      default:
+        if (icon === 'code') {
+          return (
+            <div className="w-3.5 flex items-center justify-center text-[#64748B] group-hover:text-[#1E293B]">
+              <Code2 className="w-3.5 h-3.5" />
+            </div>
+          );
+        }
+        return (
+          <div className="w-3.5 flex items-center justify-center">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#94A3B8] group-hover:bg-[#64748B]" />
+          </div>
+        );
+    }
+  };
+
   const sidebarContent = (
     <div className="h-full flex flex-col justify-between select-none">
       <div>
@@ -104,8 +153,8 @@ export const Sidebar = ({
               {section.items.map((item) => {
                 const isActive = activeTab === item.id;
 
-                // If item is active and either 'dashboard' or 'deposits', display the signature vibrant green pill
-                if (isActive && (item.id === 'dashboard' || item.id === 'deposits')) {
+                // When active, display signature vibrant emerald green pill
+                if (isActive) {
                   return (
                     <button
                       key={item.id}
@@ -113,11 +162,7 @@ export const Sidebar = ({
                       className="w-full flex items-center justify-between bg-[#00C076] text-white px-3 py-1.5 rounded-full shadow-sm hover:bg-[#00B16D] transition-all group"
                     >
                       <div className="flex items-center gap-2">
-                        {item.id === 'dashboard' ? (
-                          <Box className="w-3.5 h-3.5 text-white stroke-[2.2]" />
-                        ) : (
-                          <ArrowDownToLine className="w-3.5 h-3.5 text-white stroke-[2.2]" />
-                        )}
+                        {renderActiveIcon(item.id)}
                         <span className="text-[12.5px] font-medium tracking-tight">
                           {item.label}
                         </span>
@@ -133,28 +178,10 @@ export const Sidebar = ({
                   <button
                     key={item.id}
                     onClick={() => handleItemClick(item)}
-                    className={`w-full flex items-center gap-2 px-2.5 py-1 rounded-md text-left transition-colors duration-150 group ${
-                      isActive
-                        ? 'text-[#00C076] font-medium'
-                        : 'text-[#64748B] hover:text-[#1E293B] hover:bg-gray-50'
-                    }`}
+                    className="w-full flex items-center gap-2 px-2.5 py-1 rounded-md text-left transition-colors duration-150 group text-[#64748B] hover:text-[#1E293B] hover:bg-gray-50"
                   >
-                    {item.id === 'dashboard' ? (
-                      <div className="w-3.5 flex items-center justify-center text-[#64748B] group-hover:text-[#1E293B]">
-                        <Box className="w-3.5 h-3.5 stroke-[1.8]" />
-                      </div>
-                    ) : item.icon === 'code' ? (
-                      <div className="w-3.5 flex items-center justify-center text-[#64748B] group-hover:text-[#1E293B]">
-                        <Code2 className="w-3.5 h-3.5" />
-                      </div>
-                    ) : (
-                      <div className="w-3.5 flex items-center justify-center">
-                        <div className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                          isActive ? 'bg-[#00C076]' : 'bg-[#94A3B8] group-hover:bg-[#64748B]'
-                        }`} />
-                      </div>
-                    )}
-                    <span className={`text-[12px] ${isActive ? 'font-semibold text-[#14171A]' : 'font-normal'}`}>
+                    {renderInactiveIcon(item.id, item.icon)}
+                    <span className="text-[12px] font-normal">
                       {item.label}
                     </span>
                   </button>

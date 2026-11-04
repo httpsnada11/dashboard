@@ -5,6 +5,7 @@ import { PageHeader } from './components/PageHeader';
 import { BalanceCard } from './components/BalanceCard';
 import { RecentActivity } from './components/RecentActivity';
 import { DepositsPage } from './components/DepositsPage';
+import { ExceptionsPage } from './components/ExceptionsPage';
 import { DeveloperModal, DepositModal, PayoutModal, SwapModal } from './components/Modals';
 import { SecurityModal } from './components/SecurityModal';
 import { TransactionModal } from './components/TransactionModal';
@@ -196,7 +197,7 @@ export function App() {
 
       {/* Main Workspace: Sidebar on left + Large Rounded Canvas on right */}
       <div className="flex-1 flex overflow-hidden relative">
-        {/* Navigation Sidebar (Docked on desktop, slide-over on mobile) */}
+        {/* Navigation Sidebar */}
         <Sidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -210,7 +211,7 @@ export function App() {
           setIsLiveSimulating={setIsLiveSimulating}
         />
 
-        {/* Large Rounded Content Canvas - Responsive across mobile, tablet & desktop */}
+        {/* Large Rounded Content Canvas */}
         <main className="flex-1 bg-[#EAEBED] rounded-t-2xl sm:rounded-tl-[32px] overflow-y-auto px-3.5 py-3.5 sm:px-6 sm:py-5 lg:px-8 transition-all">
           <div className="w-full flex flex-col max-w-7xl mx-auto">
             {/* Uniform Page Header: Title and Breadcrumb across EVERY page */}
@@ -249,7 +250,7 @@ export function App() {
                 />
               </>
             ) : activeTab === 'deposits' ? (
-              /* Dedicated Deposits Page matching exact screenshot */
+              /* Dedicated Deposits Page */
               <DepositsPage
                 searchQuery={searchQuery}
                 onOpenNewDeposit={() => setIsDepositModalOpen(true)}
@@ -264,6 +265,9 @@ export function App() {
                   time: dep.created
                 })}
               />
+            ) : activeTab === 'exceptions' ? (
+              /* Dedicated Exceptions Page matching exact reference design */
+              <ExceptionsPage globalSearchQuery={searchQuery} />
             ) : (
               <SectionView
                 activeTab={activeTab}
@@ -277,7 +281,7 @@ export function App() {
         </main>
       </div>
 
-      {/* Interactive Modals - Responsive */}
+      {/* Interactive Modals */}
       <DeveloperModal
         isOpen={isDevModalOpen}
         onClose={() => setIsDevModalOpen(false)}
