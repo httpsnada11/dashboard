@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Copy, Check, ChevronDown, Download, ExternalLink } from 'lucide-react';
+import { Plus, Copy, Check, ChevronDown } from 'lucide-react';
 
 const DEPOSITS_DATA = [
   {
@@ -159,7 +159,6 @@ export const DepositsPage = ({
 
   // Filtered rows
   const filteredData = DEPOSITS_DATA.filter((row) => {
-    // Search filter
     const matchesSearch =
       searchQuery === '' ||
       row.depositId.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -168,13 +167,11 @@ export const DepositsPage = ({
       row.assetChain.toLowerCase().includes(searchQuery.toLowerCase()) ||
       row.status.toLowerCase().includes(searchQuery.toLowerCase());
 
-    // Status Tab filter
     const currentTab = filterTabs.find(t => t.id === activeFilter);
     const matchesStatus =
       activeFilter === 'all' ||
       (currentTab?.match && row.status.toLowerCase().includes(currentTab.match.toLowerCase()));
 
-    // Network filter
     const matchesNetwork =
       selectedNetwork === 'All' ||
       row.assetChain.toLowerCase().includes(selectedNetwork.toLowerCase());
@@ -183,18 +180,18 @@ export const DepositsPage = ({
   });
 
   return (
-    <div className="w-full flex flex-col space-y-3.5 animate-fadeIn">
-      {/* Top Filter and Actions Row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        {/* Left: Status Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+    <div className="w-full flex flex-col space-y-3 sm:space-y-3.5 animate-fadeIn">
+      {/* Top Filter and Actions Row - Responsive wrapping */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 sm:gap-3">
+        {/* Left: Status Filter Pills (Horizontal swipeable on mobile) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none -mx-1 px-1 touch-pan-x">
           {filterTabs.map((tab) => {
             const isActive = activeFilter === tab.id;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveFilter(tab.id)}
-                className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all whitespace-nowrap ${
+                className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                   isActive
                     ? 'bg-[#00C076] text-white shadow-sm'
                     : 'bg-[#ECEEF2] hover:bg-[#E2E4E9] text-gray-700'
@@ -207,19 +204,19 @@ export const DepositsPage = ({
         </div>
 
         {/* Right: Secondary Action Pills */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           {/* Network Filter Pill */}
           <div className="relative">
             <button
               onClick={() => setShowNetworkMenu(!showNetworkMenu)}
-              className="px-3 py-1 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11px] font-medium transition-all shadow-sm flex items-center gap-1 select-none"
+              className="px-3 py-1 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11px] font-medium transition-all shadow-sm flex items-center gap-1 select-none whitespace-nowrap"
             >
               <span>Network: {selectedNetwork === 'All' ? 'All 6' : selectedNetwork}</span>
               <ChevronDown className="w-3 h-3 text-white" />
             </button>
 
             {showNetworkMenu && (
-              <div className="absolute right-0 mt-1.5 w-36 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-40 text-xs">
+              <div className="absolute right-0 mt-1.5 w-36 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-40 text-xs animate-fadeIn">
                 {['All', 'TRON', 'ERC-20', 'BEP-20'].map((net) => (
                   <button
                     key={net}
@@ -241,33 +238,33 @@ export const DepositsPage = ({
           {/* Export CSV Pill */}
           <button
             onClick={handleExportCSV}
-            className="px-3 py-1 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11px] font-medium transition-all shadow-sm flex items-center gap-1 select-none"
+            className="px-3 py-1 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11px] font-medium transition-all shadow-sm flex items-center gap-1 select-none whitespace-nowrap"
           >
             <span>Export CSV · 1,248 rows</span>
           </button>
         </div>
       </div>
 
-      {/* Modern Fitted Table Container */}
+      {/* Modern Fitted Table Container with Smooth Horizontal Scroll on Mobile */}
       <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[780px]">
+        <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
+          <table className="w-full text-left border-collapse min-w-[740px]">
             {/* Dark Sleek Header Bar */}
             <thead>
-              <tr className="bg-[#18191B] text-white text-[12.5px] font-medium tracking-normal select-none">
-                <th className="py-2.5 px-5 rounded-tl-2xl">Deposit ID</th>
+              <tr className="bg-[#18191B] text-white text-[12px] sm:text-[12.5px] font-medium tracking-normal select-none">
+                <th className="py-2.5 px-4 sm:px-5 rounded-tl-2xl">Deposit ID</th>
                 <th className="py-2.5 px-3">Customer ID</th>
                 <th className="py-2.5 px-3">Asset · Chain</th>
                 <th className="py-2.5 px-3">Flow</th>
                 <th className="py-2.5 px-3 text-right">Expected</th>
                 <th className="py-2.5 px-3 text-right">Received</th>
-                <th className="py-2.5 px-4 text-center">Status</th>
-                <th className="py-2.5 px-5 text-right rounded-tr-2xl">Created</th>
+                <th className="py-2.5 px-3 sm:px-4 text-center">Status</th>
+                <th className="py-2.5 px-4 sm:px-5 text-right rounded-tr-2xl">Created</th>
               </tr>
             </thead>
 
             {/* Table Rows matching screenshot */}
-            <tbody className="divide-y divide-gray-100/90 text-[12.5px]">
+            <tbody className="divide-y divide-gray-100/90 text-[12px] sm:text-[12.5px]">
               {filteredData.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-8 text-center text-gray-400">
@@ -282,7 +279,7 @@ export const DepositsPage = ({
                     className="hover:bg-[#F9FAFB] transition-colors cursor-pointer group"
                   >
                     {/* Deposit ID & ref */}
-                    <td className="py-2.5 sm:py-3 px-5">
+                    <td className="py-2.5 sm:py-3 px-4 sm:px-5">
                       <div className="flex items-center gap-1.5">
                         <span className="font-bold text-[#14171A]">{row.depositId}</span>
                         <button
@@ -297,7 +294,7 @@ export const DepositsPage = ({
                           )}
                         </button>
                       </div>
-                      <div className="text-[10.5px] text-[#8E95A5] font-normal leading-tight mt-0.5">
+                      <div className="text-[10px] sm:text-[10.5px] text-[#8E95A5] font-normal leading-tight mt-0.5">
                         {row.refId}
                       </div>
                     </td>
@@ -328,15 +325,15 @@ export const DepositsPage = ({
                     </td>
 
                     {/* Status Pill Badge */}
-                    <td className="py-2.5 sm:py-3 px-4 text-center">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#F3F4F6] text-[#374151] text-[11px] font-medium border border-gray-200/60 shadow-xs">
+                    <td className="py-2.5 sm:py-3 px-3 sm:px-4 text-center">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#F3F4F6] text-[#374151] text-[10.5px] sm:text-[11px] font-medium border border-gray-200/60 shadow-xs whitespace-nowrap">
                         <span className="w-1.5 h-1.5 rounded-full bg-gray-500" />
                         {row.status}
                       </span>
                     </td>
 
                     {/* Created */}
-                    <td className="py-2.5 sm:py-3 px-5 text-right text-[#6B7280]">
+                    <td className="py-2.5 sm:py-3 px-4 sm:px-5 text-right text-[#6B7280] whitespace-nowrap">
                       {row.created}
                     </td>
                   </tr>
@@ -349,7 +346,7 @@ export const DepositsPage = ({
 
       {/* Table Pagination Footer */}
       <div className="flex items-center justify-between pt-1 px-1 text-xs select-none">
-        <span className="text-[#6B7280] text-[12px]">
+        <span className="text-[#6B7280] text-[11px] sm:text-[12px]">
           Showing {filteredData.length} of 1,248
         </span>
         <div className="flex items-center gap-2">
@@ -369,4 +366,3 @@ export const DepositsPage = ({
     </div>
   );
 };
-

@@ -95,6 +95,9 @@ export function App() {
   const [balance, setBalance] = useState(56768);
   const [usdtBalance, setUsdtBalance] = useState(56768.98);
 
+  // Responsive Mobile Navigation State
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
   // Loading & Simulation States
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLiveSimulating, setIsLiveSimulating] = useState(false);
@@ -176,7 +179,7 @@ export function App() {
   }, [isLiveSimulating]);
 
   return (
-    <div className="h-screen bg-white flex flex-col font-sans selection:bg-[#00C076] selection:text-white overflow-hidden">
+    <div className="min-h-screen lg:h-screen bg-white flex flex-col font-sans selection:bg-[#00C076] selection:text-white lg:overflow-hidden">
       {/* Top Header / Navigation Bar */}
       <Navbar
         searchQuery={searchQuery}
@@ -187,21 +190,29 @@ export function App() {
         setIsLiveSimulating={setIsLiveSimulating}
         onOpenDevModal={() => setIsDevModalOpen(true)}
         onOpenSecurityModal={() => setIsSecurityModalOpen(true)}
+        mobileSidebarOpen={mobileSidebarOpen}
+        setMobileSidebarOpen={setMobileSidebarOpen}
       />
 
       {/* Main Workspace: Sidebar on left + Large Rounded Canvas on right */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Navigation Sidebar */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Navigation Sidebar (Docked on desktop, slide-over on mobile) */}
         <Sidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           onOpenDevModal={() => setIsDevModalOpen(true)}
           onOpenSecurityModal={() => setIsSecurityModalOpen(true)}
+          isOpen={mobileSidebarOpen}
+          onClose={() => setMobileSidebarOpen(false)}
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
+          isLiveSimulating={isLiveSimulating}
+          setIsLiveSimulating={setIsLiveSimulating}
         />
 
-        {/* Large Rounded Content Canvas */}
-        <main className="flex-1 bg-[#EAEBED] rounded-tl-[32px] overflow-y-auto px-5 py-4 sm:px-7 sm:py-5 transition-all">
-          <div className="w-full flex flex-col">
+        {/* Large Rounded Content Canvas - Responsive across mobile, tablet & desktop */}
+        <main className="flex-1 bg-[#EAEBED] rounded-t-2xl sm:rounded-tl-[32px] overflow-y-auto px-3.5 py-3.5 sm:px-6 sm:py-5 lg:px-8 transition-all">
+          <div className="w-full flex flex-col max-w-7xl mx-auto">
             {/* Uniform Page Header: Title and Breadcrumb across EVERY page */}
             <PageHeader
               title={currentMeta.title}
@@ -210,7 +221,7 @@ export function App() {
                 activeTab === 'deposits' ? (
                   <button
                     onClick={() => setIsDepositModalOpen(true)}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[12px] font-semibold shadow-sm transition-all select-none"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11.5px] sm:text-[12px] font-semibold shadow-sm transition-all select-none"
                   >
                     <span className="text-sm font-bold leading-none">+</span>
                     <span>New deposit flow</span>
@@ -266,7 +277,7 @@ export function App() {
         </main>
       </div>
 
-      {/* Interactive Modals */}
+      {/* Interactive Modals - Responsive */}
       <DeveloperModal
         isOpen={isDevModalOpen}
         onClose={() => setIsDevModalOpen(false)}
