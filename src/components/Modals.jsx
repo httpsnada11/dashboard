@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Key, Lock, Play, RotateCcw, ExternalLink, Copy, Check, Shield, AlertTriangle, ArrowRight } from 'lucide-react';
+import { X, Key, Lock, Play, RotateCcw, ExternalLink, Copy, Check, Shield, AlertTriangle, ArrowRight, CheckCircle2, ChevronDown } from 'lucide-react';
 
 // Developer Modal highlighting Key, Lock, Play, RotateCcw, ExternalLink
 export const DeveloperModal = ({ isOpen, onClose, onSimulateWebhook }) => {
@@ -30,7 +30,7 @@ export const DeveloperModal = ({ isOpen, onClose, onSimulateWebhook }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
       <div className="bg-white rounded-[24px] max-w-lg w-full p-6 shadow-2xl border border-gray-100 relative">
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-gray-100">
@@ -163,7 +163,7 @@ export const DepositModal = ({ isOpen, onClose, onAddDeposit }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
       <div className="bg-white rounded-[24px] max-w-md w-full p-6 shadow-2xl border border-gray-100">
         <div className="flex items-center justify-between pb-4 border-b border-gray-100">
           <h3 className="text-lg font-bold text-gray-900">Receive Crypto Deposit</h3>
@@ -212,69 +212,180 @@ export const DepositModal = ({ isOpen, onClose, onAddDeposit }) => {
   );
 };
 
-// Payout Modal
+// Create Payout Modal - Matching Exact User Design from media_1793818063090_f6078c73.png
 export const PayoutModal = ({ isOpen, onClose, onAddPayout }) => {
-  const [recipient, setRecipient] = useState('');
-  const [amount, setAmount] = useState('500');
+  const [assetNetwork, setAssetNetwork] = useState('USDT - TRON (TRC-20)');
+  const [amount, setAmount] = useState('4200.00');
+  const [destinationAddress, setDestinationAddress] = useState('TJx8TrAdErWiThDrAwAlAdDrEsSmQ2a');
+  const [purposeCode, setPurposeCode] = useState('CUSTOMER_WITHDRAWAL');
 
   if (!isOpen) return null;
 
+  const currentCurrency = assetNetwork.startsWith('USDC') ? 'USDC' : 'USDT';
+  const networkFee = '~$1.00 ' + currentCurrency;
+  const vaultBalance = currentCurrency === 'USDC' ? '184,410.50 USDC' : '248,320.17 USDT';
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!amount || isNaN(amount)) return;
-    onAddPayout({
-      type: 'Payout',
-      reference: `po_${Math.random().toString(36).substring(2, 5)}T..${Math.random().toString(36).substring(2, 5)}`,
+    if (!amount || isNaN(parseFloat(amount))) return;
+
+    const parsedNum = parseFloat(amount);
+    const formattedAmount = parsedNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const shortRef = `pay_${Math.random().toString(36).substring(2, 5).toUpperCase()}X8..${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
+    const cleanNetwork = assetNetwork.includes('TRON') ? 'USDT · TRON' : assetNetwork.includes('Polygon') ? 'USDC · Polygon' : assetNetwork.includes('BEP-20') ? 'USDT · BEP-20' : assetNetwork.includes('USDC') ? 'USDC · ERC-20' : 'USDT · ERC-20';
+    const shortDest = destinationAddress.length > 14
+      ? `${destinationAddress.substring(0, 6)}..${destinationAddress.substring(destinationAddress.length - 4)}`
+      : destinationAddress;
+
+    const newPayoutItem = {
+      id: 'pay_' + Date.now(),
+      ref: shortRef,
+      fullRef: `pay_${Math.random().toString(36).substring(2, 14)}`,
+      amount: formattedAmount,
+      numericAmount: parsedNum,
+      network: cleanNetwork,
       customer: `cust_${Math.floor(10000 + Math.random() * 90000)}`,
-      network: 'USDT · TRON',
-      amount: `- ${parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
-      status: 'Awaiting approval',
-      time: 'Just now'
-    });
+      destinationType: 'DESTINATION · FIRST-PARTY DEPOSIT',
+      destinationAddress: shortDest,
+      fullAddress: destinationAddress,
+      requestedBy: 'Daniel Vance (Admin)',
+      complianceText: 'KYC verified · sanctions clear',
+      status: 'Needs approval',
+      createdAt: 'Just now'
+    };
+
+    onAddPayout(newPayoutItem);
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white rounded-[24px] max-w-md w-full p-6 shadow-2xl border border-gray-100">
-        <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-          <h3 className="text-lg font-bold text-gray-900">Create Payout</h3>
-          <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100 text-gray-500">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+      <div className="bg-white rounded-[24px] max-w-[440px] w-full p-5 sm:p-6 shadow-2xl border border-gray-100 relative">
+        {/* Modal Header */}
+        <div className="flex items-center justify-between pb-3.5 border-b border-gray-100">
+          <h2 className="text-[19px] font-bold text-[#14171A]">Create payout</h2>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="py-4 space-y-4">
+
+        {/* Modal Form */}
+        <form onSubmit={handleSubmit} className="pt-4 space-y-3.5 text-xs">
+          {/* Asset and network */}
           <div>
-            <label className="text-xs font-semibold text-gray-700 block mb-1">Destination Address</label>
+            <label className="text-[11.5px] font-semibold text-[#14171A] block mb-1">
+              Asset and network
+            </label>
+            <div className="relative">
+              <select
+                value={assetNetwork}
+                onChange={(e) => setAssetNetwork(e.target.value)}
+                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 appearance-none pr-8 focus:outline-none focus:border-[#00C076] transition"
+              >
+                <option value="USDT - TRON (TRC-20)">USDT - TRON (TRC-20)</option>
+                <option value="USDC - Ethereum (ERC-20)">USDC - Ethereum (ERC-20)</option>
+                <option value="USDT - Ethereum (ERC-20)">USDT - Ethereum (ERC-20)</option>
+                <option value="USDC - Polygon">USDC - Polygon</option>
+                <option value="USDT - BNB Chain (BEP-20)">USDT - BNB Chain (BEP-20)</option>
+              </select>
+              <ChevronDown className="w-4 h-4 text-gray-500 absolute right-3 top-3 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Available in vault */}
+          <div>
+            <span className="text-[10.5px] text-[#8E95A5] block">Available in vault</span>
+            <span className="text-[13px] font-bold text-[#14171A] mt-0.5 block">
+              {vaultBalance}
+            </span>
+          </div>
+
+          {/* Amount Input with Currency inside */}
+          <div>
+            <label className="text-[11.5px] font-semibold text-[#14171A] block mb-1">
+              Amount
+            </label>
+            <div className="relative flex items-center">
+              <input
+                type="number"
+                step="any"
+                required
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0.00"
+                className="w-full pl-3 pr-16 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-900 focus:outline-none focus:border-[#00C076] transition"
+              />
+              <span className="absolute right-3.5 text-xs font-bold text-gray-700 pointer-events-none">
+                {currentCurrency}
+              </span>
+            </div>
+          </div>
+
+          {/* Est. network fee */}
+          <div>
+            <span className="text-[10.5px] text-[#8E95A5] block">Est. network fee</span>
+            <span className="text-[12px] font-bold text-[#14171A] mt-0.5 block">
+              {networkFee}
+            </span>
+          </div>
+
+          {/* Destination address */}
+          <div>
+            <label className="text-[11.5px] font-semibold text-[#14171A] block mb-1">
+              Destination address
+            </label>
             <input
               type="text"
               required
-              placeholder="TRON / ERC-20 Wallet Address"
-              value={recipient}
-              onChange={(e) => setRecipient(e.target.value)}
-              className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:border-[#00C076]"
+              value={destinationAddress}
+              onChange={(e) => setDestinationAddress(e.target.value)}
+              placeholder="Enter destination address"
+              className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl font-mono text-[11.5px] text-gray-900 focus:outline-none focus:border-[#00C076] transition"
             />
           </div>
+
+          {/* First-party match Box with dark Checkmark circle */}
+          <div className="p-3 bg-gray-50 rounded-xl border border-gray-200/80 flex items-center gap-2.5">
+            <div className="w-5 h-5 rounded-full bg-gray-500 text-white flex items-center justify-center flex-shrink-0">
+              <Check className="w-3 h-3 stroke-[2.5]" />
+            </div>
+            <p className="text-[10.5px] text-gray-600 leading-tight">
+              First-party match: Address previously deposited by this customer. Zero cooling delay.
+            </p>
+          </div>
+
+          {/* Purpose code */}
           <div>
-            <label className="text-xs font-semibold text-gray-700 block mb-1">Payout Amount (US$)</label>
+            <label className="text-[11.5px] font-semibold text-[#14171A] block mb-1">
+              Purpose code
+            </label>
             <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="e.g. 1000"
-              className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-800 focus:outline-none focus:border-[#00C076]"
+              type="text"
+              value={purposeCode}
+              onChange={(e) => setPurposeCode(e.target.value)}
+              className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-900 focus:outline-none focus:border-[#00C076] transition"
             />
           </div>
-          <div className="p-3 bg-amber-50 rounded-xl border border-amber-200/50 text-[11px] text-amber-800 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-            Payouts require 2-step verification and administrator compliance sign-off.
+
+          {/* Form Action Buttons: Cancel and Review payout */}
+          <div className="grid grid-cols-2 gap-2.5 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full py-2.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 rounded-xl text-xs font-semibold transition text-center"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="w-full py-2.5 bg-[#5A5C63] hover:bg-[#43454B] text-white rounded-xl text-xs font-semibold transition text-center shadow-xs"
+            >
+              Review payout
+            </button>
           </div>
-          <button
-            type="submit"
-            className="w-full py-3 bg-gray-900 hover:bg-black text-white rounded-xl text-xs font-bold shadow-md transition"
-          >
-            Dispatch Payout Request
-          </button>
         </form>
       </div>
     </div>
@@ -295,7 +406,7 @@ export const SwapModal = ({ isOpen, onClose, onExecuteSwap }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
       <div className="bg-white rounded-[24px] max-w-md w-full p-6 shadow-2xl border border-gray-100">
         <div className="flex items-center justify-between pb-4 border-b border-gray-100">
           <h3 className="text-lg font-bold text-gray-900">Instant Swapp</h3>
@@ -347,4 +458,3 @@ export const SwapModal = ({ isOpen, onClose, onExecuteSwap }) => {
     </div>
   );
 };
-

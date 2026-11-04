@@ -1,126 +1,12 @@
 import React, { useState } from 'react';
 import { Search, ArrowUpDown, Upload, Plus, CheckCircle2, XCircle, AlertCircle, Check, Copy, ExternalLink, X, ShieldCheck } from 'lucide-react';
 
-const INITIAL_PAYOUTS = [
-  {
-    id: 'pay_1',
-    ref: 'pay_3LX8..C51',
-    fullRef: 'pay_3LX891280a9bC51',
-    amount: '8,750.00',
-    numericAmount: 8750,
-    network: 'USDC · ERC-20',
-    customer: 'cust_29371',
-    destinationType: 'DESTINATION · FIRST-PARTY DEPOSIT',
-    destinationAddress: '0x4d8A..91eC',
-    fullAddress: '0x4d8A00912cb84910ef123491eC',
-    requestedBy: 'Owen Shah',
-    complianceText: 'KYC verified · sanctions clear',
-    status: 'Needs approval',
-    createdAt: '28 Oct 2026, 14:20'
-  },
-  {
-    id: 'pay_2',
-    ref: 'pay_3LX8..C52',
-    fullRef: 'pay_3LX891280a9bC52',
-    amount: '8,750.00',
-    numericAmount: 8750,
-    network: 'USDC · ERC-20',
-    customer: 'cust_29371',
-    destinationType: 'DESTINATION · FIRST-PARTY DEPOSIT',
-    destinationAddress: '0x4d8A..91eC',
-    fullAddress: '0x4d8A00912cb84910ef123491eC',
-    requestedBy: 'Owen Shah',
-    complianceText: 'KYC verified · sanctions clear',
-    status: 'Needs approval',
-    createdAt: '28 Oct 2026, 14:15'
-  },
-  {
-    id: 'pay_3',
-    ref: 'pay_3LX8..C53',
-    fullRef: 'pay_3LX891280a9bC53',
-    amount: '8,750.00',
-    numericAmount: 8750,
-    network: 'USDC · ERC-20',
-    customer: 'cust_29371',
-    destinationType: 'DESTINATION · FIRST-PARTY DEPOSIT',
-    destinationAddress: '0x4d8A..91eC',
-    fullAddress: '0x4d8A00912cb84910ef123491eC',
-    requestedBy: 'Owen Shah',
-    complianceText: 'KYC verified · sanctions clear',
-    status: 'Needs approval',
-    createdAt: '28 Oct 2026, 14:05'
-  },
-  {
-    id: 'pay_4',
-    ref: 'pay_3LX8..C54',
-    fullRef: 'pay_3LX891280a9bC54',
-    amount: '8,750.00',
-    numericAmount: 8750,
-    network: 'USDC · ERC-20',
-    customer: 'cust_29371',
-    destinationType: 'DESTINATION · FIRST-PARTY DEPOSIT',
-    destinationAddress: '0x4d8A..91eC',
-    fullAddress: '0x4d8A00912cb84910ef123491eC',
-    requestedBy: 'Owen Shah',
-    complianceText: 'KYC verified · sanctions clear',
-    status: 'Needs approval',
-    createdAt: '28 Oct 2026, 13:50'
-  },
-  {
-    id: 'pay_5',
-    ref: 'pay_3LX8..C55',
-    fullRef: 'pay_3LX891280a9bC55',
-    amount: '8,750.00',
-    numericAmount: 8750,
-    network: 'USDC · ERC-20',
-    customer: 'cust_29371',
-    destinationType: 'DESTINATION · FIRST-PARTY DEPOSIT',
-    destinationAddress: '0x4d8A..91eC',
-    fullAddress: '0x4d8A00912cb84910ef123491eC',
-    requestedBy: 'Owen Shah',
-    complianceText: 'KYC verified · sanctions clear',
-    status: 'Needs approval',
-    createdAt: '28 Oct 2026, 13:30'
-  },
-  {
-    id: 'pay_6',
-    ref: 'pay_3LX8..C56',
-    fullRef: 'pay_3LX891280a9bC56',
-    amount: '8,750.00',
-    numericAmount: 8750,
-    network: 'USDC · ERC-20',
-    customer: 'cust_29371',
-    destinationType: 'DESTINATION · FIRST-PARTY DEPOSIT',
-    destinationAddress: '0x4d8A..91eC',
-    fullAddress: '0x4d8A00912cb84910ef123491eC',
-    requestedBy: 'Owen Shah',
-    complianceText: 'KYC verified · sanctions clear',
-    status: 'Needs approval',
-    createdAt: '28 Oct 2026, 13:10'
-  },
-  {
-    id: 'pay_7',
-    ref: 'pay_3LX8..C57',
-    fullRef: 'pay_3LX891280a9bC57',
-    amount: '8,750.00',
-    numericAmount: 8750,
-    network: 'USDC · ERC-20',
-    customer: 'cust_29371',
-    destinationType: 'DESTINATION · FIRST-PARTY DEPOSIT',
-    destinationAddress: '0x4d8A..91eC',
-    fullAddress: '0x4d8A00912cb84910ef123491eC',
-    requestedBy: 'Owen Shah',
-    complianceText: 'KYC verified · sanctions clear',
-    status: 'Needs approval',
-    createdAt: '28 Oct 2026, 12:45'
-  }
-];
-
 export const PayoutsPage = ({
+  payouts = [],
+  setPayouts,
   globalSearchQuery = '',
   onOpenCreatePayout
 }) => {
-  const [payouts, setPayouts] = useState(INITIAL_PAYOUTS);
   const [activeTab, setActiveTab] = useState('needs-approval');
   const [localSearch, setLocalSearch] = useState('');
   const [sortOrder, setSortOrder] = useState('oldest'); // 'oldest' | 'newest'
@@ -129,7 +15,7 @@ export const PayoutsPage = ({
   const [declineModalItem, setDeclineModalItem] = useState(null);
   const [showBatchModal, setShowBatchModal] = useState(false);
 
-  // Counts
+  // Dynamic counts for each status tab
   const needsApprovalCount = payouts.filter(p => p.status === 'Needs approval').length;
   const inFlightCount = payouts.filter(p => p.status === 'In flight').length;
   const completedCount = payouts.filter(p => p.status === 'Completed').length;
@@ -179,6 +65,7 @@ export const PayoutsPage = ({
         item.customer.toLowerCase().includes(effectiveSearch.toLowerCase()) ||
         item.destinationAddress.toLowerCase().includes(effectiveSearch.toLowerCase()) ||
         item.requestedBy.toLowerCase().includes(effectiveSearch.toLowerCase()) ||
+        item.network.toLowerCase().includes(effectiveSearch.toLowerCase()) ||
         item.amount.includes(effectiveSearch);
 
       return matchesTab && matchesSearch;
@@ -260,7 +147,7 @@ export const PayoutsPage = ({
         </div>
       </div>
 
-      {/* Payout Cards Stack (Exact card design from screenshot) */}
+      {/* Payout Cards Stack */}
       <div className="space-y-2.5">
         {filteredPayouts.length === 0 ? (
           <div className="bg-white rounded-2xl p-8 text-center text-gray-400 text-xs border border-gray-100 shadow-sm">
@@ -270,7 +157,7 @@ export const PayoutsPage = ({
           filteredPayouts.map((item) => (
             <div
               key={item.id}
-              className="bg-white rounded-2xl p-4 sm:p-4.5 border border-gray-100/90 shadow-2xs hover:shadow-xs transition-shadow"
+              className="bg-white rounded-2xl p-4 sm:p-4.5 border border-gray-100/90 shadow-2xs hover:shadow-xs transition-shadow animate-fadeIn"
             >
               {/* Card Top Row: Amount & Action Buttons */}
               <div className="flex items-start justify-between">
@@ -324,7 +211,7 @@ export const PayoutsPage = ({
                 </div>
               </div>
 
-              {/* Card Bottom Row: 4 Metadata Columns */}
+              {/* Card Bottom Row: 4 Diverse Metadata Columns */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-3 pt-3 border-t border-gray-100/70 text-[11.5px]">
                 {/* Column 1: Customer */}
                 <div>

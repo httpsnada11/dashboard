@@ -27,6 +27,122 @@ const PAGE_META = {
   settings: { title: 'Settings', category: 'Account' },
 };
 
+// Initial distinct payout dataset
+const INITIAL_PAYOUTS = [
+  {
+    id: 'pay_1',
+    ref: 'pay_3LX8..C51',
+    fullRef: 'pay_3LX891280a9bC51',
+    amount: '8,750.00',
+    numericAmount: 8750,
+    network: 'USDC · ERC-20',
+    customer: 'cust_29371',
+    destinationType: 'DESTINATION · FIRST-PARTY DEPOSIT',
+    destinationAddress: '0x4d8A..91eC',
+    fullAddress: '0x4d8A00912cb84910ef123491eC',
+    requestedBy: 'Owen Shah',
+    complianceText: 'KYC verified · sanctions clear',
+    status: 'Needs approval',
+    createdAt: '28 Oct 2026, 14:20'
+  },
+  {
+    id: 'pay_2',
+    ref: 'pay_7NK9..B14',
+    fullRef: 'pay_7NK988201fa1B14',
+    amount: '14,200.00',
+    numericAmount: 14200,
+    network: 'USDT · TRON',
+    customer: 'cust_84019',
+    destinationType: 'DESTINATION · VENDOR SETTLEMENT',
+    destinationAddress: 'TYK9A..8v2L',
+    fullAddress: 'TYK9A3XmUqZ9z8VnLw7h4Jb1k8Pq5D2gXy',
+    requestedBy: 'Elena Rostova',
+    complianceText: 'AML risk score: 08 (Low) · TRM verified',
+    status: 'Needs approval',
+    createdAt: '28 Oct 2026, 13:45'
+  },
+  {
+    id: 'pay_3',
+    ref: 'pay_9VR2..E88',
+    fullRef: 'pay_9VR244012bc0E88',
+    amount: '3,850.00',
+    numericAmount: 3850,
+    network: 'USDT · ERC-20',
+    customer: 'cust_15492',
+    destinationType: 'DESTINATION · OTC LIQUIDITY POOL',
+    destinationAddress: '0x91F2..3cA8',
+    fullAddress: '0x91F20901abcf8912c7713cA8',
+    requestedBy: 'Marcus Vance',
+    complianceText: 'Biometric 2FA confirmed · Chainalysis clean',
+    status: 'Needs approval',
+    createdAt: '28 Oct 2026, 12:50'
+  },
+  {
+    id: 'pay_4',
+    ref: 'pay_4TM1..K09',
+    fullRef: 'pay_4TM1557288aaK09',
+    amount: '22,400.00',
+    numericAmount: 22400,
+    network: 'USDC · Polygon',
+    customer: 'cust_90218',
+    destinationType: 'DESTINATION · PAYROLL DISBURSEMENT',
+    destinationAddress: '0x38bE..11aD',
+    fullAddress: '0x38bE8921bca9082ef45511aD',
+    requestedBy: 'Sarah Chen (Batch API)',
+    complianceText: 'Whitelisted merchant contract · Verified',
+    status: 'Needs approval',
+    createdAt: '28 Oct 2026, 11:30'
+  },
+  {
+    id: 'pay_5',
+    ref: 'pay_8HQ6..W32',
+    fullRef: 'pay_8HQ611094ba3W32',
+    amount: '6,150.00',
+    numericAmount: 6150,
+    network: 'USDT · TRON',
+    customer: 'cust_38104',
+    destinationType: 'DESTINATION · MERCHANT SWEEP',
+    destinationAddress: 'TF7mQ..09xP',
+    fullAddress: 'TF7mQqZ9z8VnLw7h4Jb1k8Pq5D2g09xP',
+    requestedBy: 'David Al-Mansoor',
+    complianceText: 'KYC verified · Dual sign-off approved',
+    status: 'In flight',
+    createdAt: '28 Oct 2026, 10:15'
+  },
+  {
+    id: 'pay_6',
+    ref: 'pay_2PL5..X71',
+    fullRef: 'pay_2PL590412ee8X71',
+    amount: '1,800.00',
+    numericAmount: 1800,
+    network: 'USDT · BEP-20',
+    customer: 'cust_72350',
+    destinationType: 'DESTINATION · AFFILIATE COMMISSION',
+    destinationAddress: '0x7a2C..5eB9',
+    fullAddress: '0x7a2C88910ebca9082ef75eB9',
+    requestedBy: 'Alex Rivera',
+    complianceText: 'Tier 1 Automated clearance pass',
+    status: 'Completed',
+    createdAt: '27 Oct 2026, 18:20'
+  },
+  {
+    id: 'pay_7',
+    ref: 'pay_6ZF4..M90',
+    fullRef: 'pay_6ZF477123aa1M90',
+    amount: '35,000.00',
+    numericAmount: 35000,
+    network: 'USDC · ERC-20',
+    customer: 'cust_49821',
+    destinationType: 'DESTINATION · TREASURY REBALANCE',
+    destinationAddress: '0x15eA..77f0',
+    fullAddress: '0x15eA772180a9bC51098277f0',
+    requestedBy: 'Hannah Lindberg',
+    complianceText: 'Enterprise multi-sig quorum verified',
+    status: 'Completed',
+    createdAt: '27 Oct 2026, 16:05'
+  }
+];
+
 // Initial dataset strictly matching the provided design
 const INITIAL_ACTIVITIES = [
   {
@@ -95,6 +211,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [activities, setActivities] = useState(INITIAL_ACTIVITIES);
+  const [payouts, setPayouts] = useState(INITIAL_PAYOUTS);
   const [balance, setBalance] = useState(56768);
   const [usdtBalance, setUsdtBalance] = useState(56768.98);
 
@@ -131,12 +248,28 @@ export function App() {
     setActivities(prev => [{ ...newDeposit, id: 'tx_' + Date.now(), fullRef: newDeposit.reference }, ...prev]);
   };
 
-  // Add Payout from modal
-  const handleAddPayout = (newPayout) => {
-    const rawVal = parseFloat(newPayout.amount.replace(/[^0-9.]/g, ''));
-    setBalance(prev => Math.max(0, prev - rawVal));
-    setUsdtBalance(prev => Math.max(0, prev - rawVal));
-    setActivities(prev => [{ ...newPayout, id: 'tx_' + Date.now(), fullRef: newPayout.reference }, ...prev]);
+  // Add Payout from modal - Directly prepends to both Payouts rows and Recent activities!
+  const handleAddPayout = (newPayoutItem) => {
+    // 1. Prepend directly to Payouts Cards Stack
+    setPayouts(prev => [newPayoutItem, ...prev]);
+
+    // 2. Adjust vault balance
+    setBalance(prev => Math.max(0, prev - newPayoutItem.numericAmount));
+    setUsdtBalance(prev => Math.max(0, prev - newPayoutItem.numericAmount));
+
+    // 3. Add to Recent Activity table
+    setActivities(prev => [{
+      id: newPayoutItem.id,
+      type: 'Payout',
+      reference: newPayoutItem.ref,
+      fullRef: newPayoutItem.fullRef,
+      customer: newPayoutItem.customer,
+      network: newPayoutItem.network,
+      amount: `- ${newPayoutItem.amount}`,
+      numericAmount: -newPayoutItem.numericAmount,
+      status: 'Awaiting approval',
+      time: 'Just now'
+    }, ...prev]);
   };
 
   // Execute Swap
@@ -299,8 +432,10 @@ export function App() {
               /* Dedicated Exceptions Page */
               <ExceptionsPage globalSearchQuery={searchQuery} />
             ) : activeTab === 'payouts' ? (
-              /* Dedicated Payouts Page matching exact reference design */
+              /* Dedicated Payouts Page with Live State Synchronization */
               <PayoutsPage
+                payouts={payouts}
+                setPayouts={setPayouts}
                 globalSearchQuery={searchQuery}
                 onOpenCreatePayout={() => setIsPayoutModalOpen(true)}
               />

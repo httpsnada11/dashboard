@@ -1,40 +1,9 @@
 import React from 'react';
+import copyMLogo from '../image/logo.png';
 
-// Brand Logo: CopyM folded green ribbon loop
+// Brand Logo: CopyM
 export const CopyMLogo = ({ className = "w-8 h-8" }) => (
-  <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <defs>
-      <linearGradient id="copym-grad1" x1="6" y1="8" x2="32" y2="34" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#00E68C" />
-        <stop offset="0.6" stopColor="#00C076" />
-        <stop offset="1" stopColor="#00824E" />
-      </linearGradient>
-      <linearGradient id="copym-grad2" x1="12" y1="6" x2="34" y2="28" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#10F29E" />
-        <stop offset="1" stopColor="#00C076" />
-      </linearGradient>
-      <filter id="copym-shadow" x="0" y="0" width="40" height="40" filterUnits="userSpaceOnUse">
-        <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#00824E" floodOpacity="0.25" />
-      </filter>
-    </defs>
-    <g filter="url(#copym-shadow)">
-      {/* Outer loop folded ribbon */}
-      <path
-        d="M20 5C13.2 5 7.5 9.8 6.3 16.5C5.1 23.2 9.1 29.8 15.6 32.2C18.4 33.2 21.6 33.2 24.4 32.2L28.8 30.2C31.5 29 33.5 26.5 34.2 23.5C35.2 19.5 33.8 15.2 30.7 12.5L25.5 8C23.9 6.1 22 5 20 5Z"
-        fill="url(#copym-grad1)"
-      />
-      {/* Inner cutout hole to create the ring loop */}
-      <path
-        d="M20 12C23.3 12 26 14.7 26 18C26 21.3 23.3 24 20 24C16.7 24 14 21.3 14 18C14 14.7 16.7 12 20 12Z"
-        fill="#FFFFFF"
-      />
-      {/* Overlay highlight ribbon */}
-      <path
-        d="M14 18C14 14.7 16.7 12 20 12C22.5 12 24.6 13.5 25.5 15.7C24.2 15 22.5 14.8 21 15.2C18.2 16 16.2 18.2 15.8 21C14.7 20.3 14 19.2 14 18Z"
-        fill="url(#copym-grad2)"
-      />
-    </g>
-  </svg>
+  <img src={copyMLogo} alt="CopyM Pay" className={`object-contain ${className}`} />
 );
 
 // Metallic 3D Wallet Graphic for "Deposits"
