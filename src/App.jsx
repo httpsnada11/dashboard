@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Upload } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 import { PageHeader } from './components/PageHeader';
@@ -6,6 +7,7 @@ import { BalanceCard } from './components/BalanceCard';
 import { RecentActivity } from './components/RecentActivity';
 import { DepositsPage } from './components/DepositsPage';
 import { ExceptionsPage } from './components/ExceptionsPage';
+import { PayoutsPage } from './components/PayoutsPage';
 import { DeveloperModal, DepositModal, PayoutModal, SwapModal } from './components/Modals';
 import { SecurityModal } from './components/SecurityModal';
 import { TransactionModal } from './components/TransactionModal';
@@ -179,6 +181,44 @@ export function App() {
     return () => clearInterval(interval);
   }, [isLiveSimulating]);
 
+  // Dynamic Header Action based on current route
+  const renderHeaderAction = () => {
+    if (activeTab === 'deposits') {
+      return (
+        <button
+          onClick={() => setIsDepositModalOpen(true)}
+          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11.5px] sm:text-[12px] font-semibold shadow-sm transition-all select-none"
+        >
+          <span className="text-sm font-bold leading-none">+</span>
+          <span>New deposit flow</span>
+        </button>
+      );
+    }
+
+    if (activeTab === 'payouts') {
+      return (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsPayoutModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 rounded-full text-[11.5px] sm:text-[12px] font-medium shadow-2xs transition-all select-none"
+          >
+            <Upload className="w-3.5 h-3.5 text-gray-600" />
+            <span>Import CSV batch</span>
+          </button>
+          <button
+            onClick={() => setIsPayoutModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11.5px] sm:text-[12px] font-semibold shadow-sm transition-all select-none"
+          >
+            <span className="text-sm font-bold leading-none">+</span>
+            <span>Create payout</span>
+          </button>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <div className="min-h-screen lg:h-screen bg-white flex flex-col font-sans selection:bg-[#00C076] selection:text-white lg:overflow-hidden">
       {/* Top Header / Navigation Bar */}
@@ -214,21 +254,11 @@ export function App() {
         {/* Large Rounded Content Canvas */}
         <main className="flex-1 bg-[#EAEBED] rounded-t-2xl sm:rounded-tl-[32px] overflow-y-auto px-3.5 py-3.5 sm:px-6 sm:py-5 lg:px-8 transition-all">
           <div className="w-full flex flex-col max-w-7xl mx-auto">
-            {/* Uniform Page Header: Title and Breadcrumb across EVERY page */}
+            {/* Uniform Page Header across EVERY page */}
             <PageHeader
               title={currentMeta.title}
               category={currentMeta.category}
-              action={
-                activeTab === 'deposits' ? (
-                  <button
-                    onClick={() => setIsDepositModalOpen(true)}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11.5px] sm:text-[12px] font-semibold shadow-sm transition-all select-none"
-                  >
-                    <span className="text-sm font-bold leading-none">+</span>
-                    <span>New deposit flow</span>
-                  </button>
-                ) : null
-              }
+              action={renderHeaderAction()}
             />
 
             {activeTab === 'dashboard' ? (
@@ -266,8 +296,14 @@ export function App() {
                 })}
               />
             ) : activeTab === 'exceptions' ? (
-              /* Dedicated Exceptions Page matching exact reference design */
+              /* Dedicated Exceptions Page */
               <ExceptionsPage globalSearchQuery={searchQuery} />
+            ) : activeTab === 'payouts' ? (
+              /* Dedicated Payouts Page matching exact reference design */
+              <PayoutsPage
+                globalSearchQuery={searchQuery}
+                onOpenCreatePayout={() => setIsPayoutModalOpen(true)}
+              />
             ) : (
               <SectionView
                 activeTab={activeTab}

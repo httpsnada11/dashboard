@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Code2, ChevronDown, ArrowDownToLine, AlertCircle, X, Key, Lock, Play, RotateCcw } from 'lucide-react';
+import { Box, Code2, ChevronDown, ArrowDownToLine, AlertCircle, ArrowUpFromLine, X, Key, Lock, Play, RotateCcw } from 'lucide-react';
 
 export const Sidebar = ({
   activeTab,
@@ -30,7 +30,7 @@ export const Sidebar = ({
     {
       title: 'MONEY OUT',
       items: [
-        { id: 'payouts', label: 'Payouts', icon: 'dot' },
+        { id: 'payouts', label: 'Payouts', icon: 'payout' },
       ]
     },
     {
@@ -78,6 +78,8 @@ export const Sidebar = ({
         return <ArrowDownToLine className="w-3.5 h-3.5 text-white stroke-[2.2]" />;
       case 'exceptions':
         return <AlertCircle className="w-3.5 h-3.5 text-white stroke-[2.2]" />;
+      case 'payouts':
+        return <ArrowUpFromLine className="w-3.5 h-3.5 text-white stroke-[2.2]" />;
       default:
         return <div className="w-1.5 h-1.5 rounded-full bg-white" />;
     }
@@ -98,11 +100,7 @@ export const Sidebar = ({
           </div>
         );
       case 'exceptions':
-        return (
-          <div className="w-3.5 flex items-center justify-center">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#94A3B8] group-hover:bg-[#64748B]" />
-          </div>
-        );
+      case 'payouts':
       default:
         if (icon === 'code') {
           return (
