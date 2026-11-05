@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Code2, ChevronDown, ArrowDownToLine, AlertCircle, ArrowUpFromLine, X, Key, Lock, Play, RotateCcw, ShieldCheck } from 'lucide-react';
+import { Box, Code2, ChevronDown, ArrowDownToLine, AlertCircle, ArrowUpFromLine, X, Key, Lock, Play, RotateCcw, ShieldCheck, Settings as SettingsIcon } from 'lucide-react';
 
 export const Sidebar = ({
   activeTab,
@@ -76,6 +76,8 @@ export const Sidebar = ({
         return <Code2 className="w-3.5 h-3.5 text-white stroke-[2.2]" />;
       case 'team-security':
         return <ShieldCheck className="w-3.5 h-3.5 text-white stroke-[2.2]" />;
+      case 'settings':
+        return <SettingsIcon className="w-3.5 h-3.5 text-white stroke-[2.2]" />;
       default:
         return <div className="w-1.5 h-1.5 rounded-full bg-white" />;
     }
@@ -99,6 +101,12 @@ export const Sidebar = ({
         return (
           <div className="w-3.5 flex items-center justify-center text-[#64748B] group-hover:text-[#1E293B]">
             <ShieldCheck className="w-3.5 h-3.5" />
+          </div>
+        );
+      case 'settings':
+        return (
+          <div className="w-3.5 flex items-center justify-center text-[#64748B] group-hover:text-[#1E293B]">
+            <SettingsIcon className="w-3.5 h-3.5" />
           </div>
         );
       case 'exceptions':

@@ -10,6 +10,7 @@ import { ExceptionsPage } from './components/ExceptionsPage';
 import { PayoutsPage } from './components/PayoutsPage';
 import { DevelopersPage } from './components/DevelopersPage';
 import { TeamSecurityPage } from './components/TeamSecurityPage';
+import { SettingsPage } from './components/SettingsPage';
 import { DeveloperModal, DepositModal, PayoutModal, SwapModal } from './components/Modals';
 import { SecurityModal } from './components/SecurityModal';
 import { TransactionModal } from './components/TransactionModal';
@@ -500,6 +501,9 @@ export function App() {
                 openReviewRoles={isRolesOpen}
                 setOpenReviewRoles={setIsRolesOpen}
               />
+            ) : activeTab === 'settings' ? (
+              /* Dedicated Settings Page matching Figma design */
+              <SettingsPage />
             ) : (
               <SectionView
                 activeTab={activeTab}
