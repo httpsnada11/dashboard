@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Code2, ChevronDown, ArrowDownToLine, AlertCircle, ArrowUpFromLine, X, Key, Lock, Play, RotateCcw } from 'lucide-react';
+import { Box, Code2, ChevronDown, ArrowDownToLine, AlertCircle, ArrowUpFromLine, X, Key, Lock, Play, RotateCcw, ShieldCheck } from 'lucide-react';
 
 export const Sidebar = ({
   activeTab,
@@ -57,15 +57,7 @@ export const Sidebar = ({
   ];
 
   const handleItemClick = (item) => {
-    if (item.id === 'developers') {
-      setActiveTab('developers');
-      onOpenDevModal();
-    } else if (item.id === 'team-security') {
-      setActiveTab('team-security');
-      onOpenSecurityModal();
-    } else {
-      setActiveTab(item.id);
-    }
+    setActiveTab(item.id);
     // Close mobile drawer on selection
     onClose?.();
   };
@@ -80,6 +72,10 @@ export const Sidebar = ({
         return <AlertCircle className="w-3.5 h-3.5 text-white stroke-[2.2]" />;
       case 'payouts':
         return <ArrowUpFromLine className="w-3.5 h-3.5 text-white stroke-[2.2]" />;
+      case 'developers':
+        return <Code2 className="w-3.5 h-3.5 text-white stroke-[2.2]" />;
+      case 'team-security':
+        return <ShieldCheck className="w-3.5 h-3.5 text-white stroke-[2.2]" />;
       default:
         return <div className="w-1.5 h-1.5 rounded-full bg-white" />;
     }
@@ -97,6 +93,12 @@ export const Sidebar = ({
         return (
           <div className="w-3.5 flex items-center justify-center text-[#64748B] group-hover:text-[#1E293B]">
             <ArrowDownToLine className="w-3.5 h-3.5 stroke-[1.8]" />
+          </div>
+        );
+      case 'team-security':
+        return (
+          <div className="w-3.5 flex items-center justify-center text-[#64748B] group-hover:text-[#1E293B]">
+            <ShieldCheck className="w-3.5 h-3.5" />
           </div>
         );
       case 'exceptions':

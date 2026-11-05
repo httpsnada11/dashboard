@@ -43,12 +43,12 @@ export const Navbar = ({
       </div>
 
       {/* Center: Search Bar (Desktop / Tablet) */}
-      <div className="flex-1 max-w-md mx-4 lg:mx-8 hidden md:block">
+      <div className="flex-1 max-w-xs sm:max-w-sm lg:max-w-md ml-3 sm:ml-5 mr-auto hidden md:block">
         <div className="relative flex items-center">
           <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3.5 pointer-events-none" />
           <input
             type="text"
-            placeholder="Search reference, customer, amount..."
+            placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-4 py-1.5 bg-[#EAEBEF] hover:bg-[#E4E6EA] focus:bg-white text-[13px] text-gray-800 placeholder-gray-400 rounded-full border border-transparent focus:border-[#00C076] focus:outline-none transition-all duration-200"
@@ -214,7 +214,7 @@ export const Navbar = ({
             <input
               type="text"
               autoFocus
-              placeholder="Search reference, customer..."
+              placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-8 py-2 bg-[#EAEBEF] text-xs text-gray-800 rounded-full border border-transparent focus:border-[#00C076] focus:outline-none"

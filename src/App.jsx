@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Upload } from 'lucide-react';
+import { Upload, BookOpen } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 import { PageHeader } from './components/PageHeader';
@@ -8,6 +8,8 @@ import { RecentActivity } from './components/RecentActivity';
 import { DepositsPage } from './components/DepositsPage';
 import { ExceptionsPage } from './components/ExceptionsPage';
 import { PayoutsPage } from './components/PayoutsPage';
+import { DevelopersPage } from './components/DevelopersPage';
+import { TeamSecurityPage } from './components/TeamSecurityPage';
 import { DeveloperModal, DepositModal, PayoutModal, SwapModal } from './components/Modals';
 import { SecurityModal } from './components/SecurityModal';
 import { TransactionModal } from './components/TransactionModal';
@@ -224,6 +226,9 @@ export function App() {
 
   // Modals
   const [isDevModalOpen, setIsDevModalOpen] = useState(false);
+  const [isCreateKeyOpen, setIsCreateKeyOpen] = useState(false);
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isRolesOpen, setIsRolesOpen] = useState(false);
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [isPayoutModalOpen, setIsPayoutModalOpen] = useState(false);
@@ -349,6 +354,47 @@ export function App() {
       );
     }
 
+    if (activeTab === 'developers') {
+      return (
+        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1.5 sm:gap-2">
+          <button
+            onClick={() => setIsDevModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 rounded-full text-[11px] sm:text-[11.5px] font-medium shadow-2xs transition select-none"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-gray-600" />
+            <span>API documentation</span>
+          </button>
+          <button
+            onClick={() => setIsCreateKeyOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11.5px] sm:text-[12px] font-semibold shadow-xs transition select-none"
+          >
+            <span className="text-sm font-bold leading-none">+</span>
+            <span>Create key</span>
+          </button>
+        </div>
+      );
+    }
+
+    if (activeTab === 'team-security') {
+      return (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsRolesOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 rounded-full text-[11.5px] sm:text-[12px] font-medium shadow-2xs transition-all select-none"
+          >
+            <span>Review roles</span>
+          </button>
+          <button
+            onClick={() => setIsInviteOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11.5px] sm:text-[12px] font-semibold shadow-sm transition-all select-none"
+          >
+            <span className="text-sm font-bold leading-none">+</span>
+            <span>Invite member</span>
+          </button>
+        </div>
+      );
+    }
+
     return null;
   };
 
@@ -438,6 +484,21 @@ export function App() {
                 setPayouts={setPayouts}
                 globalSearchQuery={searchQuery}
                 onOpenCreatePayout={() => setIsPayoutModalOpen(true)}
+              />
+            ) : activeTab === 'developers' ? (
+              /* Dedicated Developers Page matching Figma design */
+              <DevelopersPage
+                onOpenDocs={() => setIsDevModalOpen(true)}
+                openCreateKey={isCreateKeyOpen}
+                setOpenCreateKey={setIsCreateKeyOpen}
+              />
+            ) : activeTab === 'team-security' ? (
+              /* Dedicated Team & Security Page matching Figma design */
+              <TeamSecurityPage
+                openInviteMember={isInviteOpen}
+                setOpenInviteMember={setIsInviteOpen}
+                openReviewRoles={isRolesOpen}
+                setOpenReviewRoles={setIsRolesOpen}
               />
             ) : (
               <SectionView
