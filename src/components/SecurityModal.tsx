@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
-import { X, Lock, ShieldCheck, Key, AlertCircle, Smartphone } from 'lucide-react';
+import { X, Lock, ShieldCheck, Smartphone } from 'lucide-react';
 
-export const SecurityModal = ({ isOpen, onClose }) => {
+export interface SecurityModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export const SecurityModal: React.FC<SecurityModalProps> = ({ isOpen, onClose }) => {
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
   const [withdrawalWhitelist, setWithdrawalWhitelist] = useState(true);
 
@@ -93,4 +98,3 @@ export const SecurityModal = ({ isOpen, onClose }) => {
     </div>
   );
 };
-

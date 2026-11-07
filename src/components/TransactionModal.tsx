@@ -1,7 +1,18 @@
 import React from 'react';
-import { X, ExternalLink, Copy, CheckCircle2, Clock, ShieldCheck, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { X, ExternalLink, Clock, ArrowUpRight, ArrowDownLeft, QrCode } from 'lucide-react';
+import { Transaction } from '../types';
 
-export const TransactionModal = ({ transaction, onClose }) => {
+export interface TransactionModalProps {
+  transaction: Transaction | null;
+  onClose: () => void;
+  onOpenDepositCheckout?: (transaction: Transaction) => void;
+}
+
+export const TransactionModal: React.FC<TransactionModalProps> = ({
+  transaction,
+  onClose,
+  onOpenDepositCheckout
+}) => {
   if (!transaction) return null;
 
   const isDeposit = transaction.type === 'Deposit';
@@ -53,9 +64,14 @@ export const TransactionModal = ({ transaction, onClose }) => {
           <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
             <div className="flex items-center justify-between text-gray-400 mb-1">
               <span>Blockchain Transaction Hash (TxID)</span>
-              <span className="text-[#00C076] font-medium flex items-center gap-1 cursor-pointer">
+              <a
+                href="https://sepolia.etherscan.io/tx/0x8f4c28a9b1c900e231d77a83d47012bc09ef78923a104c83d6a908be140f892a"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[#00C076] font-medium flex items-center gap-1 hover:underline"
+              >
                 Explorer <ExternalLink className="w-3 h-3" />
-              </span>
+              </a>
             </div>
             <p className="font-mono text-gray-800 break-all select-all">
               0x8f4c28a9b1c900e231d77a83d47012bc09ef78923a104c83d6a908be140f892a
@@ -68,7 +84,22 @@ export const TransactionModal = ({ transaction, onClose }) => {
           </div>
         </div>
 
-        <div className="pt-3 border-t border-gray-100 flex justify-end gap-2">
+        <div className="pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
+          {isDeposit ? (
+            <button
+              onClick={() => {
+                onClose();
+                onOpenDepositCheckout?.(transaction);
+              }}
+              className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#00C076] rounded-xl text-xs font-bold flex items-center gap-1.5 transition border border-emerald-200"
+            >
+              <QrCode className="w-3.5 h-3.5" />
+              <span>Open Deposit Checkout & QR</span>
+            </button>
+          ) : (
+            <div />
+          )}
+
           <button
             onClick={onClose}
             className="px-5 py-2 bg-gray-900 text-white rounded-xl text-xs font-semibold hover:bg-gray-800 transition"
@@ -80,4 +111,3 @@ export const TransactionModal = ({ transaction, onClose }) => {
     </div>
   );
 };
-

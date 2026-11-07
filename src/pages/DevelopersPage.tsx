@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Play, RotateCcw, Check, Copy, ExternalLink, Plus, BookOpen, AlertCircle, CheckCircle2, ChevronDown, X, Shield, Terminal, ArrowRight, RefreshCw } from 'lucide-react';
+import { Play, Check, Copy, CheckCircle2, ChevronDown, X, RefreshCw } from 'lucide-react';
+import { ApiKey, WebhookDelivery, Environment } from '../types';
 
-const INITIAL_KEYS = [
+const INITIAL_KEYS: ApiKey[] = [
   {
     id: 'key_1',
     name: 'Treasury bridge',
@@ -43,7 +44,7 @@ const INITIAL_KEYS = [
   }
 ];
 
-const INITIAL_WEBHOOKS = [
+const INITIAL_WEBHOOKS: WebhookDelivery[] = [
   {
     id: 'wh_1',
     http: 200,
@@ -107,7 +108,15 @@ const INITIAL_WEBHOOKS = [
   }
 ];
 
-const SCENARIOS = {
+interface ScenarioDetail {
+  label: string;
+  requested: string;
+  receipt: string;
+  event: string;
+  description: string;
+}
+
+const SCENARIOS: Record<string, ScenarioDetail> = {
   'underpaid': {
     label: 'Underpaid deposit - screening clear',
     requested: '320.00 USDC',
@@ -145,14 +154,20 @@ const SCENARIOS = {
   }
 };
 
-export const DevelopersPage = ({ onOpenDocs, openCreateKey, setOpenCreateKey }) => {
-  const [keys, setKeys] = useState(INITIAL_KEYS);
-  const [webhooks, setWebhooks] = useState(INITIAL_WEBHOOKS);
+export interface DevelopersPageProps {
+  onOpenDocs?: () => void;
+  openCreateKey?: boolean;
+  setOpenCreateKey?: (open: boolean) => void;
+}
+
+export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, setOpenCreateKey }) => {
+  const [keys, setKeys] = useState<ApiKey[]>(INITIAL_KEYS);
+  const [webhooks, setWebhooks] = useState<WebhookDelivery[]>(INITIAL_WEBHOOKS);
   const [selectedScenarioKey, setSelectedScenarioKey] = useState('underpaid');
   const [depositSession, setDepositSession] = useState('dep_demo_1§9R8J392');
 
   // Simulation State
-  const [simulatingStep, setSimulatingStep] = useState(0); // 0 = idle, 1 = confirmation, 2 = screening, 3 = crediting, 4 = webhooks, 5 = done
+  const [simulatingStep, setSimulatingStep] = useState(0);
   const [isSimulating, setIsSimulating] = useState(false);
 
   // Modals & Feedback
@@ -160,24 +175,24 @@ export const DevelopersPage = ({ onOpenDocs, openCreateKey, setOpenCreateKey }) 
   const showCreateKeyModal = openCreateKey !== undefined ? openCreateKey : internalCreateKey;
   const setShowCreateKeyModal = setOpenCreateKey !== undefined ? setOpenCreateKey : setInternalCreateKey;
   const [showSendTestEventModal, setShowSendTestEventModal] = useState(false);
-  const [toastMessage, setToastMessage] = useState(null);
-  const [copiedKeyId, setCopiedKeyId] = useState(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
 
   // Form State for Creating Key
   const [newKeyName, setNewKeyName] = useState('');
-  const [newKeyEnv, setNewKeyEnv] = useState('LIVE - DEMO');
+  const [newKeyEnv, setNewKeyEnv] = useState<Environment>('LIVE - DEMO');
   const [newKeyScopes, setNewKeyScopes] = useState('deposits, payouts');
   const [newKeyIp, setNewKeyIp] = useState('192.0.2.100');
 
   // Form State for Webhook Test Event
   const [testEventName, setTestEventName] = useState('deposit.credited');
 
-  const showToast = (msg) => {
+  const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleCopyKey = (e, keyString, id) => {
+  const handleCopyKey = (e: React.MouseEvent, keyString: string, id: string) => {
     e.stopPropagation();
     navigator.clipboard?.writeText(keyString);
     setCopiedKeyId(id);
@@ -185,7 +200,7 @@ export const DevelopersPage = ({ onOpenDocs, openCreateKey, setOpenCreateKey }) 
     setTimeout(() => setCopiedKeyId(null), 1800);
   };
 
-  const handleRotateKey = (keyItem) => {
+  const handleRotateKey = (keyItem: ApiKey) => {
     const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
     const prefix = keyItem.environment === 'LIVE - DEMO' ? 'demo_live_' : 'demo_test_';
     setKeys(prev => prev.map(k => k.id === keyItem.id ? {
@@ -198,19 +213,19 @@ export const DevelopersPage = ({ onOpenDocs, openCreateKey, setOpenCreateKey }) 
     showToast(`Key "${keyItem.name}" rotated successfully!`);
   };
 
-  const handleRevokeKey = (keyItem) => {
+  const handleRevokeKey = (keyItem: ApiKey) => {
     setKeys(prev => prev.filter(k => k.id !== keyItem.id));
     showToast(`Key "${keyItem.name}" has been revoked.`);
   };
 
-  const handleCreateKeySubmit = (e) => {
+  const handleCreateKeySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newKeyName.trim()) return;
 
     const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
     const prefix = newKeyEnv === 'LIVE - DEMO' ? 'demo_live_' : 'demo_test_';
 
-    const newKey = {
+    const newKey: ApiKey = {
       id: 'key_' + Date.now(),
       name: newKeyName.trim(),
       environment: newKeyEnv,
@@ -230,7 +245,7 @@ export const DevelopersPage = ({ onOpenDocs, openCreateKey, setOpenCreateKey }) 
     showToast(`New key "${newKey.name}" created!`);
   };
 
-  const handleRetryWebhook = (whItem) => {
+  const handleRetryWebhook = (whItem: WebhookDelivery) => {
     setWebhooks(prev => prev.map(w => w.id === whItem.id ? {
       ...w,
       http: 200,
@@ -241,10 +256,10 @@ export const DevelopersPage = ({ onOpenDocs, openCreateKey, setOpenCreateKey }) 
     showToast(`Webhook ${whItem.deliveryId} re-dispatched with 200 OK!`);
   };
 
-  const handleSendTestEventSubmit = (e) => {
+  const handleSendTestEventSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const deliveryNum = Math.floor(750 + Math.random() * 50);
-    const newDelivery = {
+    const newDelivery: WebhookDelivery = {
       id: 'wh_' + Date.now(),
       http: 200,
       event: testEventName,
@@ -265,27 +280,22 @@ export const DevelopersPage = ({ onOpenDocs, openCreateKey, setOpenCreateKey }) 
     setIsSimulating(true);
     setSimulatingStep(1);
 
-    // Step 1: Confirmation
     setTimeout(() => {
       setSimulatingStep(2);
-      // Step 2: Screening
       setTimeout(() => {
         setSimulatingStep(3);
-        // Step 3: Crediting
         setTimeout(() => {
           setSimulatingStep(4);
-          // Step 4: Webhooks
           setTimeout(() => {
             setSimulatingStep(5);
             setIsSimulating(false);
 
-            // Emit live matching webhook delivery to the left table
-            const currentScenario = SCENARIOS[selectedScenarioKey];
+            const curr = SCENARIOS[selectedScenarioKey];
             const deliveryNum = Math.floor(750 + Math.random() * 50);
-            const generatedEvent = {
+            const generatedEvent: WebhookDelivery = {
               id: 'wh_' + Date.now(),
               http: 200,
-              event: currentScenario.event,
+              event: curr.event,
               deliveryId: `dlv_demo_${deliveryNum}`,
               relatedRecord: depositSession.replace('dep_demo_', 'dep_'),
               latency: '188 ms',
@@ -293,7 +303,7 @@ export const DevelopersPage = ({ onOpenDocs, openCreateKey, setOpenCreateKey }) 
               attempts: '1 attempt'
             };
             setWebhooks(prev => [generatedEvent, ...prev]);
-            showToast(`Simulation completed! Event ${currentScenario.event} dispatched.`);
+            showToast(`Simulation completed! Event ${curr.event} dispatched.`);
           }, 600);
         }, 600);
       }, 600);
@@ -647,7 +657,7 @@ export const DevelopersPage = ({ onOpenDocs, openCreateKey, setOpenCreateKey }) 
                 <label className="text-[11.5px] font-semibold text-gray-800 block mb-1">Environment</label>
                 <select
                   value={newKeyEnv}
-                  onChange={(e) => setNewKeyEnv(e.target.value)}
+                  onChange={(e) => setNewKeyEnv(e.target.value as Environment)}
                   className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#00C076]"
                 >
                   <option value="LIVE - DEMO">LIVE - DEMO</option>

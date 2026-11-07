@@ -2,26 +2,17 @@ import React, { useState } from 'react';
 import {
   ShieldCheck,
   Users,
-  Lock,
-  Smartphone,
   CheckCircle2,
-  AlertCircle,
   X,
-  ExternalLink,
-  ChevronDown,
   Download,
   Clock,
-  Laptop,
-  Check,
   UserCheck,
-  UserX,
-  RefreshCw,
   Sliders,
-  ShieldAlert,
   ArrowRight
 } from 'lucide-react';
+import { TeamMember, ActiveSession, AuditLogItem } from '../types';
 
-const INITIAL_MEMBERS = [
+const INITIAL_MEMBERS: TeamMember[] = [
   {
     id: 'mem_1',
     name: 'Nora Vale',
@@ -84,7 +75,7 @@ const INITIAL_MEMBERS = [
   }
 ];
 
-const INITIAL_SESSIONS = [
+const INITIAL_SESSIONS: ActiveSession[] = [
   {
     id: 'sess_1',
     name: 'Nora Vale',
@@ -111,7 +102,7 @@ const INITIAL_SESSIONS = [
   }
 ];
 
-const INITIAL_AUDIT_LOGS = [
+const INITIAL_AUDIT_LOGS: AuditLogItem[] = [
   {
     id: 'aud_1',
     time: '14:18',
@@ -146,7 +137,13 @@ const INITIAL_AUDIT_LOGS = [
   }
 ];
 
-const ROLE_DEFINITIONS = [
+interface RoleDef {
+  role: string;
+  description: string;
+  permissions: string;
+}
+
+const ROLE_DEFINITIONS: RoleDef[] = [
   {
     role: 'Owner',
     description: 'Full workspace administration, security policies, and team management.',
@@ -174,15 +171,22 @@ const ROLE_DEFINITIONS = [
   }
 ];
 
-export const TeamSecurityPage = ({
+export interface TeamSecurityPageProps {
+  openInviteMember?: boolean;
+  setOpenInviteMember?: (open: boolean) => void;
+  openReviewRoles?: boolean;
+  setOpenReviewRoles?: (open: boolean) => void;
+}
+
+export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
   openInviteMember,
   setOpenInviteMember,
   openReviewRoles,
   setOpenReviewRoles
 }) => {
-  const [members, setMembers] = useState(INITIAL_MEMBERS);
-  const [sessions, setSessions] = useState(INITIAL_SESSIONS);
-  const [auditLogs, setAuditLogs] = useState(INITIAL_AUDIT_LOGS);
+  const [members, setMembers] = useState<TeamMember[]>(INITIAL_MEMBERS);
+  const [sessions, setSessions] = useState<ActiveSession[]>(INITIAL_SESSIONS);
+  const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>(INITIAL_AUDIT_LOGS);
 
   // Modals
   const [internalInviteOpen, setInternalInviteOpen] = useState(false);
@@ -193,7 +197,7 @@ export const TeamSecurityPage = ({
   const isRolesOpen = openReviewRoles !== undefined ? openReviewRoles : internalRolesOpen;
   const setIsRolesOpen = setOpenReviewRoles !== undefined ? setOpenReviewRoles : setInternalRolesOpen;
 
-  const [manageMember, setManageMember] = useState(null);
+  const [manageMember, setManageMember] = useState<TeamMember | null>(null);
   const [isEditPolicyOpen, setIsEditPolicyOpen] = useState(false);
   const [isFullActivityOpen, setIsFullActivityOpen] = useState(false);
   const [auditFilter, setAuditFilter] = useState('All');
@@ -209,21 +213,21 @@ export const TeamSecurityPage = ({
   const [inviteRole, setInviteRole] = useState('Operations analyst');
 
   // Toast State
-  const [toastMessage, setToastMessage] = useState(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const showToast = (msg) => {
+  const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
 
   // Submit New Invite
-  const handleInviteSubmit = (e) => {
+  const handleInviteSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteName.trim() || !inviteEmail.trim()) return;
 
     const roleDef = ROLE_DEFINITIONS.find(r => r.role === inviteRole) || ROLE_DEFINITIONS[4];
 
-    const newMem = {
+    const newMem: TeamMember = {
       id: 'mem_' + Date.now(),
       name: inviteName.trim(),
       isYou: false,
@@ -239,7 +243,7 @@ export const TeamSecurityPage = ({
     setMembers(prev => [...prev, newMem]);
 
     // Add Audit Log
-    const newAudit = {
+    const newAudit: AuditLogItem = {
       id: 'aud_' + Date.now(),
       time: new Date().toISOString().substring(11, 16),
       title: `Nora Vale invited ${newMem.name}`,
@@ -256,9 +260,9 @@ export const TeamSecurityPage = ({
   };
 
   // Resend Invite
-  const handleResendInvite = (member) => {
+  const handleResendInvite = (member: TeamMember) => {
     showToast(`Invitation re-sent to ${member.email} (expires in 7 days).`);
-    const newAudit = {
+    const newAudit: AuditLogItem = {
       id: 'aud_' + Date.now(),
       time: new Date().toISOString().substring(11, 16),
       title: `Nora Vale re-sent invitation to ${member.name}`,
@@ -270,10 +274,10 @@ export const TeamSecurityPage = ({
   };
 
   // Revoke Invite
-  const handleRevokeInvite = (member) => {
+  const handleRevokeInvite = (member: TeamMember) => {
     setMembers(prev => prev.filter(m => m.id !== member.id));
     showToast(`Invitation for ${member.name} revoked.`);
-    const newAudit = {
+    const newAudit: AuditLogItem = {
       id: 'aud_' + Date.now(),
       time: new Date().toISOString().substring(11, 16),
       title: `Nora Vale revoked invitation for ${member.name}`,
@@ -285,10 +289,10 @@ export const TeamSecurityPage = ({
   };
 
   // End Session
-  const handleEndSession = (sess) => {
+  const handleEndSession = (sess: ActiveSession) => {
     setSessions(prev => prev.filter(s => s.id !== sess.id));
     showToast(`Session for ${sess.name} terminated.`);
-    const newAudit = {
+    const newAudit: AuditLogItem = {
       id: 'aud_' + Date.now(),
       time: new Date().toISOString().substring(11, 16),
       title: `Session terminated: ${sess.name}`,
@@ -303,7 +307,7 @@ export const TeamSecurityPage = ({
   const handleEndOtherSessions = () => {
     setSessions(prev => prev.filter(s => s.isCurrent));
     showToast('All remote sessions terminated successfully.');
-    const newAudit = {
+    const newAudit: AuditLogItem = {
       id: 'aud_' + Date.now(),
       time: new Date().toISOString().substring(11, 16),
       title: 'Nora Vale terminated all remote sessions',
@@ -315,11 +319,11 @@ export const TeamSecurityPage = ({
   };
 
   // Save Manage Member Changes
-  const handleSaveMemberChanges = (updatedMember) => {
+  const handleSaveMemberChanges = (updatedMember: TeamMember) => {
     setMembers(prev => prev.map(m => m.id === updatedMember.id ? updatedMember : m));
     setManageMember(null);
     showToast(`Updated permissions for ${updatedMember.name}`);
-    const newAudit = {
+    const newAudit: AuditLogItem = {
       id: 'aud_' + Date.now(),
       time: new Date().toISOString().substring(11, 16),
       title: `Nora Vale updated role for ${updatedMember.name}`,
@@ -331,11 +335,11 @@ export const TeamSecurityPage = ({
   };
 
   // Save Policy Changes
-  const handleSavePolicy = (e) => {
+  const handleSavePolicy = (e: React.FormEvent) => {
     e.preventDefault();
     setIsEditPolicyOpen(false);
     showToast('Security & Dual-Control policy updated.');
-    const newAudit = {
+    const newAudit: AuditLogItem = {
       id: 'aud_' + Date.now(),
       time: new Date().toISOString().substring(11, 16),
       title: 'Nora Vale modified organization security policy',

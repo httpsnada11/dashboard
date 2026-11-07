@@ -1,15 +1,22 @@
 import React, { useState } from 'react';
 import { ExternalLink, Copy, Check } from 'lucide-react';
+import { Transaction } from '../types';
 
-export const RecentActivity = ({
+export interface RecentActivityProps {
+  activities?: Transaction[];
+  searchQuery?: string;
+  onSelectTransaction?: (transaction: Transaction) => void;
+}
+
+export const RecentActivity: React.FC<RecentActivityProps> = ({
   activities = [],
   searchQuery = '',
   onSelectTransaction
 }) => {
-  const [copiedId, setCopiedId] = useState(null);
-  const [selectedFilter, setSelectedFilter] = useState('ALL');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectedFilter, setSelectedFilter] = useState<'ALL' | 'DEPOSIT' | 'CONFIRMING'>('ALL');
 
-  const handleCopy = (e, text, id) => {
+  const handleCopy = (e: React.MouseEvent, text: string, id: string) => {
     e.stopPropagation();
     navigator.clipboard?.writeText(text);
     setCopiedId(id);
@@ -33,7 +40,7 @@ export const RecentActivity = ({
     return matchesSearch && matchesFilter;
   });
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     if (status === 'Credited' || status === 'Completed') {
       return 'text-[#00C076] font-semibold';
     }

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Search, CornerDownRight, Check, Copy, ExternalLink, X, ShieldAlert, AlertTriangle, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Search, Check, Copy, X, ShieldAlert, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { ExceptionRecord } from '../types';
 
-const INITIAL_EXCEPTIONS = [
+const INITIAL_EXCEPTIONS: ExceptionRecord[] = [
   {
     id: 'exc_1',
     excId: 'exc_7MV2..R84',
@@ -94,13 +95,17 @@ const INITIAL_EXCEPTIONS = [
   }
 ];
 
-export const ExceptionsPage = ({ globalSearchQuery = '' }) => {
-  const [exceptions, setExceptions] = useState(INITIAL_EXCEPTIONS);
+export interface ExceptionsPageProps {
+  globalSearchQuery?: string;
+}
+
+export const ExceptionsPage: React.FC<ExceptionsPageProps> = ({ globalSearchQuery = '' }) => {
+  const [exceptions, setExceptions] = useState<ExceptionRecord[]>(INITIAL_EXCEPTIONS);
   const [activeFilter, setActiveFilter] = useState('all');
   const [localSearch, setLocalSearch] = useState('');
-  const [copiedId, setCopiedId] = useState(null);
-  const [selectedException, setSelectedException] = useState(null);
-  const [settleToast, setSettleToast] = useState(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectedException, setSelectedException] = useState<ExceptionRecord | null>(null);
+  const [settleToast, setSettleToast] = useState<string | null>(null);
 
   const filterTabs = [
     { id: 'all', label: 'All 6', match: null },
@@ -109,7 +114,7 @@ export const ExceptionsPage = ({ globalSearchQuery = '' }) => {
     { id: 'settled', label: 'Settled 1', match: 'Settled' },
   ];
 
-  const handleCopy = (e, text, id) => {
+  const handleCopy = (e: React.MouseEvent, text: string, id: string) => {
     e.stopPropagation();
     navigator.clipboard?.writeText(text);
     setCopiedId(id);
@@ -123,7 +128,7 @@ export const ExceptionsPage = ({ globalSearchQuery = '' }) => {
     }
   };
 
-  const handleSettleAction = (exc, newStatus) => {
+  const handleSettleAction = (exc: ExceptionRecord, newStatus: string) => {
     setExceptions(prev => prev.map(e => e.id === exc.id ? {
       ...e,
       status: newStatus,

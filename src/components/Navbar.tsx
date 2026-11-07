@@ -1,9 +1,23 @@
 import React, { useState } from 'react';
-import { Search, Bell, ChevronDown, Key, Lock, Play, RotateCcw, ExternalLink, ShieldCheck, User, LogOut, Menu, X } from 'lucide-react';
+import { Search, Bell, ChevronDown, Key, Lock, Play, RotateCcw, ShieldCheck, User, LogOut, Menu, X } from 'lucide-react';
 import { CopyMLogo } from './Graphics';
 import { AMLRiskBadge } from './AMLRiskBadge';
 
-export const Navbar = ({
+export interface NavbarProps {
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  onRefresh: () => void;
+  isRefreshing: boolean;
+  isLiveSimulating: boolean;
+  setIsLiveSimulating: (active: boolean) => void;
+  onOpenDevModal: () => void;
+  onOpenSecurityModal: () => void;
+  mobileSidebarOpen: boolean;
+  setMobileSidebarOpen: (open: boolean) => void;
+  onSignOut?: () => void;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({
   searchQuery,
   setSearchQuery,
   onRefresh,
@@ -13,7 +27,8 @@ export const Navbar = ({
   onOpenDevModal,
   onOpenSecurityModal,
   mobileSidebarOpen,
-  setMobileSidebarOpen
+  setMobileSidebarOpen,
+  onSignOut
 }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotificationMenu, setShowNotificationMenu] = useState(false);
@@ -42,30 +57,30 @@ export const Navbar = ({
         </div>
       </div>
 
-      {/* Center: Search Bar (Desktop / Tablet) */}
-      <div className="flex-1 max-w-xs sm:max-w-sm lg:max-w-md ml-3 sm:ml-5 mr-auto hidden md:block">
-        <div className="relative flex items-center">
-          <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3.5 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-1.5 bg-[#EAEBEF] hover:bg-[#E4E6EA] focus:bg-white text-[13px] text-gray-800 placeholder-gray-400 rounded-full border border-transparent focus:border-[#00C076] focus:outline-none transition-all duration-200"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 text-xs text-gray-400 hover:text-gray-600 bg-gray-200 hover:bg-gray-300 rounded-full w-4 h-4 flex items-center justify-center"
-            >
-              ×
-            </button>
-          )}
+      {/* Right Controls & Search Bar */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Search Bar (Desktop / Tablet) - Moved to right side towards profile section */}
+        <div className="w-44 sm:w-52 md:w-56 lg:w-64 xl:w-72 hidden md:block">
+          <div className="relative flex items-center">
+            <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3.5 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-7 py-1.5 bg-[#EAEBEF] hover:bg-[#E4E6EA] focus:bg-white text-[13px] text-gray-800 placeholder-gray-400 rounded-full border border-transparent focus:border-[#00C076] focus:outline-none transition-all duration-200"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 text-xs text-gray-400 hover:text-gray-600 bg-gray-200 hover:bg-gray-300 rounded-full w-4 h-4 flex items-center justify-center cursor-pointer"
+              >
+                ×
+              </button>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Right Controls */}
-      <div className="flex items-center gap-1.5 sm:gap-3">
         {/* Mobile Search Button */}
         <button
           onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
@@ -195,11 +210,14 @@ export const Navbar = ({
               </button>
               <div className="border-t border-gray-100 my-1"></div>
               <button
-                onClick={() => setShowProfileMenu(false)}
-                className="w-full px-4 py-2 text-left text-xs text-red-600 hover:bg-red-50 flex items-center gap-2"
+                onClick={() => {
+                  setShowProfileMenu(false);
+                  onSignOut?.();
+                }}
+                className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 cursor-pointer"
               >
-                <LogOut className="w-3.5 h-3.5 text-red-500" />
-                Sign Out
+                <LogOut className="w-3.5 h-3.5 text-gray-500" />
+                Sign Out / Lock Portal
               </button>
             </div>
           )}
@@ -234,3 +252,4 @@ export const Navbar = ({
     </header>
   );
 };
+

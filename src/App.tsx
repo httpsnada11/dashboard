@@ -1,23 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Upload, BookOpen } from 'lucide-react';
-import { Navbar } from './components/Navbar';
-import { Sidebar } from './components/Sidebar';
-import { PageHeader } from './components/PageHeader';
-import { BalanceCard } from './components/BalanceCard';
-import { RecentActivity } from './components/RecentActivity';
-import { DepositsPage } from './components/DepositsPage';
-import { ExceptionsPage } from './components/ExceptionsPage';
-import { PayoutsPage } from './components/PayoutsPage';
-import { DevelopersPage } from './components/DevelopersPage';
-import { TeamSecurityPage } from './components/TeamSecurityPage';
-import { SettingsPage } from './components/SettingsPage';
-import { DeveloperModal, DepositModal, PayoutModal, SwapModal } from './components/Modals';
-import { SecurityModal } from './components/SecurityModal';
-import { TransactionModal } from './components/TransactionModal';
-import { SectionView } from './components/SectionViews';
+
+// Reusable Layout & UI Components
+import {
+  Navbar,
+  Sidebar,
+  PageHeader,
+  DeveloperModal,
+  DepositModal,
+  PayoutModal,
+  SwapModal,
+  SecurityModal,
+  TransactionModal
+} from './components';
+
+// Dedicated Page Views
+import {
+  DashboardPage,
+  DepositsPage,
+  ExceptionsPage,
+  PayoutsPage,
+  DevelopersPage,
+  TeamSecurityPage,
+  SettingsPage,
+  SectionView
+  // AuthPage (Temporarily commented out as requested)
+} from './pages';
+
+import { Transaction, PayoutRecord } from './types';
 
 // Uniform Page Metadata matching the exact screenshot structure
-const PAGE_META = {
+const PAGE_META: Record<string, { title: string; category: string }> = {
   dashboard: { title: 'Dashboard', category: 'Overview' },
   deposits: { title: 'Deposits', category: 'Money In' },
   exceptions: { title: 'Exceptions', category: 'Money In' },
@@ -31,7 +44,7 @@ const PAGE_META = {
 };
 
 // Initial distinct payout dataset
-const INITIAL_PAYOUTS = [
+const INITIAL_PAYOUTS: PayoutRecord[] = [
   {
     id: 'pay_1',
     ref: 'pay_3LX8..C51',
@@ -147,7 +160,7 @@ const INITIAL_PAYOUTS = [
 ];
 
 // Initial dataset strictly matching the provided design
-const INITIAL_ACTIVITIES = [
+const INITIAL_ACTIVITIES: Transaction[] = [
   {
     id: 'tx_1',
     type: 'Deposit',
@@ -211,12 +224,13 @@ const INITIAL_ACTIVITIES = [
 ];
 
 export function App() {
+  // const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activities, setActivities] = useState(INITIAL_ACTIVITIES);
-  const [payouts, setPayouts] = useState(INITIAL_PAYOUTS);
-  const [balance, setBalance] = useState(56768);
-  const [usdtBalance, setUsdtBalance] = useState(56768.98);
+  const [activities, setActivities] = useState<Transaction[]>(INITIAL_ACTIVITIES);
+  const [payouts, setPayouts] = useState<PayoutRecord[]>(INITIAL_PAYOUTS);
+  const [balance, setBalance] = useState<number>(56768);
+  const [usdtBalance, setUsdtBalance] = useState<number>(56768.98);
 
   // Responsive Mobile Navigation State
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -232,9 +246,10 @@ export function App() {
   const [isRolesOpen, setIsRolesOpen] = useState(false);
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+  const [depositModalInitial, setDepositModalInitial] = useState<Partial<Transaction> | null>(null);
   const [isPayoutModalOpen, setIsPayoutModalOpen] = useState(false);
   const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
-  const [selectedTx, setSelectedTx] = useState(null);
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
 
   const currentMeta = PAGE_META[activeTab] || PAGE_META.dashboard;
 
@@ -247,15 +262,28 @@ export function App() {
   };
 
   // Add Deposit from modal
-  const handleAddDeposit = (newDeposit) => {
-    const rawVal = parseFloat(newDeposit.amount.replace(/[^0-9.]/g, ''));
+  const handleAddDeposit = (newDeposit: Partial<Transaction>) => {
+    const amountStr = newDeposit.amount || '0';
+    const rawVal = parseFloat(amountStr.replace(/[^0-9.]/g, '')) || 0;
     setBalance(prev => prev + rawVal);
     setUsdtBalance(prev => prev + rawVal);
-    setActivities(prev => [{ ...newDeposit, id: 'tx_' + Date.now(), fullRef: newDeposit.reference }, ...prev]);
+    const completeTx: Transaction = {
+      id: 'tx_' + Date.now(),
+      type: newDeposit.type || 'Deposit',
+      reference: newDeposit.reference || 'dep_manual',
+      fullRef: newDeposit.fullRef || newDeposit.reference || 'dep_manual',
+      customer: newDeposit.customer || 'cust_anonymous',
+      network: newDeposit.network || 'USDT · TRON',
+      amount: newDeposit.amount || '+ 0.00',
+      numericAmount: rawVal,
+      status: newDeposit.status || 'Credited',
+      time: newDeposit.time || 'Just now'
+    };
+    setActivities(prev => [completeTx, ...prev]);
   };
 
   // Add Payout from modal - Directly prepends to both Payouts rows and Recent activities!
-  const handleAddPayout = (newPayoutItem) => {
+  const handleAddPayout = (newPayoutItem: PayoutRecord) => {
     // 1. Prepend directly to Payouts Cards Stack
     setPayouts(prev => [newPayoutItem, ...prev]);
 
@@ -294,7 +322,7 @@ export function App() {
       const networks = ['USDT · TRON', 'USDT · ERC-20', 'USDC · ERC-20'];
       const selectedNet = networks[Math.floor(Math.random() * networks.length)];
 
-      const newTx = {
+      const newTx: Transaction = {
         id: 'tx_' + Date.now(),
         type: isDeposit ? 'Deposit' : 'Payout',
         reference: `${isDeposit ? 'dep' : 'po'}_${Math.random().toString(36).substring(2, 6)}..${Math.random().toString(36).substring(2, 5)}`,
@@ -325,7 +353,10 @@ export function App() {
     if (activeTab === 'deposits') {
       return (
         <button
-          onClick={() => setIsDepositModalOpen(true)}
+          onClick={() => {
+            setDepositModalInitial(null);
+            setIsDepositModalOpen(true);
+          }}
           className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11.5px] sm:text-[12px] font-semibold shadow-sm transition-all select-none"
         >
           <span className="text-sm font-bold leading-none">+</span>
@@ -399,6 +430,17 @@ export function App() {
     return null;
   };
 
+  /*
+  // Dedicated Auth & 2FA View (Temporarily commented out as requested)
+  if (!isAuthenticated) {
+    return (
+      <AuthPage
+        onSuccessLogin={() => setIsAuthenticated(true)}
+      />
+    );
+  }
+  */
+
   return (
     <div className="min-h-screen lg:h-screen bg-white flex flex-col font-sans selection:bg-[#00C076] selection:text-white lg:overflow-hidden">
       {/* Top Header / Navigation Bar */}
@@ -413,6 +455,7 @@ export function App() {
         onOpenSecurityModal={() => setIsSecurityModalOpen(true)}
         mobileSidebarOpen={mobileSidebarOpen}
         setMobileSidebarOpen={setMobileSidebarOpen}
+        // onSignOut={() => setIsAuthenticated(false)}
       />
 
       {/* Main Workspace: Sidebar on left + Large Rounded Canvas on right */}
@@ -442,35 +485,37 @@ export function App() {
             />
 
             {activeTab === 'dashboard' ? (
-              <>
-                {/* Black Featured Balance Card */}
-                <BalanceCard
-                  balance={balance}
-                  usdtBalance={usdtBalance}
-                  onOpenDeposit={() => setIsDepositModalOpen(true)}
-                  onOpenPayout={() => setIsPayoutModalOpen(true)}
-                  onOpenSwap={() => setIsSwapModalOpen(true)}
-                />
-
-                {/* Recent Activity Table */}
-                <RecentActivity
-                  activities={activities}
-                  searchQuery={searchQuery}
-                  onSelectTransaction={(tx) => setSelectedTx(tx)}
-                />
-              </>
+              /* Dedicated Dashboard Overview Page */
+              <DashboardPage
+                balance={balance.toLocaleString('en-US')}
+                usdtBalance={usdtBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                onOpenDeposit={() => {
+                  setDepositModalInitial(null);
+                  setIsDepositModalOpen(true);
+                }}
+                onOpenPayout={() => setIsPayoutModalOpen(true)}
+                onOpenSwap={() => setIsSwapModalOpen(true)}
+                activities={activities}
+                searchQuery={searchQuery}
+                onSelectTransaction={(tx) => setSelectedTx(tx)}
+              />
             ) : activeTab === 'deposits' ? (
               /* Dedicated Deposits Page */
               <DepositsPage
                 searchQuery={searchQuery}
-                onOpenNewDeposit={() => setIsDepositModalOpen(true)}
+                onOpenNewDeposit={() => {
+                  setDepositModalInitial(null);
+                  setIsDepositModalOpen(true);
+                }}
                 onSelectDeposit={(dep) => setSelectedTx({
+                  id: dep.id,
                   type: 'Deposit',
                   reference: dep.depositId,
                   fullRef: dep.refId,
                   customer: dep.customer,
                   network: dep.assetChain,
                   amount: dep.received !== '—' ? `+ ${dep.received}` : `(Expected ${dep.expected})`,
+                  numericAmount: dep.numericReceived,
                   status: dep.status,
                   time: dep.created
                 })}
@@ -541,8 +586,12 @@ export function App() {
 
       <DepositModal
         isOpen={isDepositModalOpen}
-        onClose={() => setIsDepositModalOpen(false)}
+        onClose={() => {
+          setIsDepositModalOpen(false);
+          setDepositModalInitial(null);
+        }}
         onAddDeposit={handleAddDeposit}
+        initialDeposit={depositModalInitial}
       />
 
       <PayoutModal
@@ -560,7 +609,25 @@ export function App() {
       <TransactionModal
         transaction={selectedTx}
         onClose={() => setSelectedTx(null)}
+        onOpenDepositCheckout={(tx) => {
+          setDepositModalInitial(tx);
+          setIsDepositModalOpen(true);
+        }}
       />
+
+      {/* Quick Demo Switcher Pill to Return to Auth View (Temporarily commented out) */}
+      {/*
+      <div className="fixed bottom-4 right-4 z-40 hidden sm:flex items-center gap-2 bg-[#14171A]/90 backdrop-blur-xs text-white px-3.5 py-1.5 rounded-full shadow-lg border border-gray-700/80 text-xs">
+        <span className="w-2 h-2 rounded-full bg-[#00C076] animate-pulse" />
+        <span className="text-gray-300 font-medium">Session: Daniel Vance</span>
+        <button
+          onClick={() => setIsAuthenticated(false)}
+          className="ml-1 text-[#00C076] hover:underline font-bold"
+        >
+          View Auth Screens →
+        </button>
+      </div>
+      */}
     </div>
   );
 }

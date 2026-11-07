@@ -1,18 +1,25 @@
 import React, { useState } from 'react';
-import { Search, ArrowUpDown, Upload, Plus, CheckCircle2, XCircle, AlertCircle, Check, Copy, ExternalLink, X, ShieldCheck } from 'lucide-react';
+import { Search, Upload, CheckCircle2, Check, Copy, X } from 'lucide-react';
+import { PayoutRecord } from '../types';
 
-export const PayoutsPage = ({
+export interface PayoutsPageProps {
+  payouts?: PayoutRecord[];
+  setPayouts: React.Dispatch<React.SetStateAction<PayoutRecord[]>>;
+  globalSearchQuery?: string;
+  onOpenCreatePayout?: () => void;
+}
+
+export const PayoutsPage: React.FC<PayoutsPageProps> = ({
   payouts = [],
   setPayouts,
   globalSearchQuery = '',
-  onOpenCreatePayout
 }) => {
   const [activeTab, setActiveTab] = useState('needs-approval');
   const [localSearch, setLocalSearch] = useState('');
-  const [sortOrder, setSortOrder] = useState('oldest'); // 'oldest' | 'newest'
-  const [toastMessage, setToastMessage] = useState(null);
-  const [copiedId, setCopiedId] = useState(null);
-  const [declineModalItem, setDeclineModalItem] = useState(null);
+  const [sortOrder, setSortOrder] = useState<'oldest' | 'newest'>('oldest');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [declineModalItem, setDeclineModalItem] = useState<PayoutRecord | null>(null);
   const [showBatchModal, setShowBatchModal] = useState(false);
 
   // Dynamic counts for each status tab
@@ -28,14 +35,14 @@ export const PayoutsPage = ({
     { id: 'failed', label: `Failed ${failedCount}`, statusMatch: 'Failed' },
   ];
 
-  const handleCopy = (e, text, id) => {
+  const handleCopy = (e: React.MouseEvent, text: string, id: string) => {
     e.stopPropagation();
     navigator.clipboard?.writeText(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 1800);
   };
 
-  const handleApprove = (item) => {
+  const handleApprove = (item: PayoutRecord) => {
     setPayouts(prev => prev.map(p => p.id === item.id ? { ...p, status: 'In flight' } : p));
     setToastMessage(`Payout ${item.ref} approved! Dispatched to node.`);
     setTimeout(() => {
@@ -326,3 +333,4 @@ export const PayoutsPage = ({
     </div>
   );
 };
+

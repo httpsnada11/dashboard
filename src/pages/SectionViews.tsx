@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
-import { AlertCircle, FileText, Download, Key, Lock, Play, RotateCcw, ExternalLink, Copy, Check, ShieldCheck, Smartphone, ArrowRight } from 'lucide-react';
+import { AlertCircle, FileText, Download, Lock, RotateCcw, ExternalLink, Copy, Check, ShieldCheck, Smartphone } from 'lucide-react';
 
-export const SectionView = ({
+export interface SectionViewProps {
+  activeTab: string;
+  onOpenDeposit?: () => void;
+  onOpenPayout?: () => void;
+  onOpenDevModal?: () => void;
+  onOpenSecurityModal?: () => void;
+}
+
+export const SectionView: React.FC<SectionViewProps> = ({
   activeTab,
   onOpenDeposit,
   onOpenPayout,
-  onOpenDevModal,
-  onOpenSecurityModal
 }) => {
   const [copiedKey, setCopiedKey] = useState(false);
   const [apiKey, setApiKey] = useState('cpy_live_948f21e04a918bca48721c09');
@@ -363,3 +369,4 @@ export const SectionView = ({
 
   return null;
 };
+

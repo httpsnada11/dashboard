@@ -1,6 +1,11 @@
 import React from 'react';
 
-export const AMLRiskBadge = ({ level = "Low", score = 94 }) => {
+export interface AMLRiskBadgeProps {
+  level?: string;
+  score?: number;
+}
+
+export const AMLRiskBadge: React.FC<AMLRiskBadgeProps> = ({ level = "Low", score: _score = 94 }) => {
   return (
     <div className="flex items-center gap-2.5 px-2 py-1 select-none">
       <div className="relative w-8 h-8 flex items-center justify-center">
@@ -40,4 +45,3 @@ export const AMLRiskBadge = ({ level = "Low", score = 94 }) => {
     </div>
   );
 };
-

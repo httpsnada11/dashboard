@@ -18,19 +18,55 @@ import {
   FileText
 } from 'lucide-react';
 
-export const Sidebar = ({
+export type TabId =
+  | 'dashboard'
+  | 'deposits'
+  | 'exceptions'
+  | 'payouts'
+  | 'balances'
+  | 'convert'
+  | 'statements'
+  | 'developers'
+  | 'team-security'
+  | 'settings';
+
+export interface SidebarProps {
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+  onOpenDevModal?: () => void;
+  onOpenSecurityModal?: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
+  isLiveSimulating?: boolean;
+  setIsLiveSimulating?: (active: boolean) => void;
+}
+
+interface NavItem {
+  id: string;
+  label: string;
+  icon: string;
+}
+
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   setActiveTab,
   onOpenDevModal,
   onOpenSecurityModal,
-  isOpen,
+  isOpen = false,
   onClose,
   onRefresh,
   isRefreshing,
   isLiveSimulating,
   setIsLiveSimulating
 }) => {
-  const navSections = [
+  const navSections: NavSection[] = [
     {
       title: 'OVERVIEW',
       items: [
@@ -73,13 +109,12 @@ export const Sidebar = ({
     }
   ];
 
-  const handleItemClick = (item) => {
+  const handleItemClick = (item: NavItem) => {
     setActiveTab(item.id);
-    // Close mobile drawer on selection
     onClose?.();
   };
 
-  const renderActiveIcon = (id) => {
+  const renderActiveIcon = (id: string) => {
     const iconClass = "w-3.5 h-3.5 text-white stroke-[2.2]";
     switch (id) {
       case 'dashboard':
@@ -107,7 +142,7 @@ export const Sidebar = ({
     }
   };
 
-  const renderInactiveIcon = (id) => {
+  const renderInactiveIcon = (id: string) => {
     const iconClass = "w-3.5 h-3.5 stroke-[1.8] text-[#64748B] group-hover:text-[#1E293B] transition-colors";
     switch (id) {
       case 'dashboard':
@@ -169,7 +204,6 @@ export const Sidebar = ({
               {section.items.map((item) => {
                 const isActive = activeTab === item.id;
 
-                // When active, display signature vibrant emerald green pill
                 if (isActive) {
                   return (
                     <button
@@ -271,3 +305,4 @@ export const Sidebar = ({
     </>
   );
 };
+

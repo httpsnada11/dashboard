@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Plus, Copy, Check, ChevronDown } from 'lucide-react';
+import { Copy, Check, ChevronDown } from 'lucide-react';
+import { DepositRecord } from '../types';
 
-const DEPOSITS_DATA = [
+const DEPOSITS_DATA: DepositRecord[] = [
   {
     id: 'dep_1',
     depositId: 'dep_9KX4..Q72',
@@ -108,13 +109,18 @@ const DEPOSITS_DATA = [
   }
 ];
 
-export const DepositsPage = ({
+export interface DepositsPageProps {
+  searchQuery?: string;
+  onOpenNewDeposit?: () => void;
+  onSelectDeposit?: (deposit: DepositRecord) => void;
+}
+
+export const DepositsPage: React.FC<DepositsPageProps> = ({
   searchQuery = '',
-  onOpenNewDeposit,
   onSelectDeposit
 }) => {
   const [activeFilter, setActiveFilter] = useState('all');
-  const [copiedId, setCopiedId] = useState(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedNetwork, setSelectedNetwork] = useState('All');
   const [showNetworkMenu, setShowNetworkMenu] = useState(false);
 
@@ -127,7 +133,7 @@ export const DepositsPage = ({
     { id: 'exception', label: 'Exception 12', match: 'Exception' },
   ];
 
-  const handleCopy = (e, text, id) => {
+  const handleCopy = (e: React.MouseEvent, text: string, id: string) => {
     e.stopPropagation();
     navigator.clipboard?.writeText(text);
     setCopiedId(id);
@@ -366,3 +372,4 @@ export const DepositsPage = ({
     </div>
   );
 };
+

@@ -3,46 +3,36 @@ import {
   Shield,
   Search,
   CheckCircle2,
-  Sliders,
-  Lock,
-  Globe,
-  Users,
-  Clock,
   ArrowRight,
-  ExternalLink,
-  Save,
-  RotateCcw,
-  Check,
-  AlertTriangle
+  Save
 } from 'lucide-react';
 
-export const SettingsPage = () => {
+export const SettingsPage: React.FC = () => {
   // Active Tab
   const [activeSubTab, setActiveSubTab] = useState('financial-controls');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Financial Controls State (matching screenshot)
+  // Financial Controls State
   const [makerCheckerEnabled, setMakerCheckerEnabled] = useState(true);
   const [thresholdValue, setThresholdValue] = useState('$ 5,000.00');
-  const [selectedCurrency, setSelectedCurrency] = useState('USDT/USDC');
+  const [selectedCurrency] = useState('USDT/USDC');
   const [dailyCap, setDailyCap] = useState('$ 100,000.00');
   const [autoAmlFreeze, setAutoAmlFreeze] = useState(true);
 
   // General Settings State
   const [orgName, setOrgName] = useState('Harbor Demo Global Ltd');
-  const [workspaceId, setWorkspaceId] = useState('ws_harbor_live_09');
+  const [workspaceId] = useState('ws_harbor_live_09');
   const [timezone, setTimezone] = useState('UTC (+00:00)');
   const [baseCurrency, setBaseCurrency] = useState('USD');
 
   // Security & 2FA Settings State
   const [enforce2fa, setEnforce2fa] = useState(true);
   const [sessionTimeout, setSessionTimeout] = useState('30 minutes');
-  const [ipStrict, setIpStrict] = useState(false);
 
   // Toast
-  const [toastMessage, setToastMessage] = useState(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const showToast = (msg) => {
+  const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
@@ -51,7 +41,7 @@ export const SettingsPage = () => {
     showToast('Governance rules published to Production successfully!');
   };
 
-  const handleSaveFinancialPolicy = (e) => {
+  const handleSaveFinancialPolicy = (e: React.FormEvent) => {
     e.preventDefault();
     showToast('Payout Authorization Policy updated & synced with Sandbox.');
   };

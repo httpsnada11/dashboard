@@ -1,11 +1,22 @@
 import React, { useState } from 'react';
-import { X, Key, Lock, Play, RotateCcw, ExternalLink, Copy, Check, Shield, AlertTriangle, ArrowRight, CheckCircle2, ChevronDown } from 'lucide-react';
+import { X, Key, Lock, Play, RotateCcw, ExternalLink, Copy, Check, ChevronDown } from 'lucide-react';
+import { PayoutRecord } from '../types';
+import { DepositCheckoutModal, DepositCheckoutModalProps } from './DepositCheckoutModal';
+
+export type { DepositCheckoutModalProps as DepositModalProps };
+export const DepositModal = DepositCheckoutModal;
+
+export interface DeveloperModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSimulateWebhook?: () => void;
+}
 
 // Developer Modal highlighting Key, Lock, Play, RotateCcw, ExternalLink
-export const DeveloperModal = ({ isOpen, onClose, onSimulateWebhook }) => {
+export const DeveloperModal: React.FC<DeveloperModalProps> = ({ isOpen, onClose, onSimulateWebhook }) => {
   const [apiKey, setApiKey] = useState('cpy_live_948f21e04a918bca48721c09');
   const [copied, setCopied] = useState(false);
-  const [webhookStatus, setWebhookStatus] = useState('idle');
+  const [webhookStatus, setWebhookStatus] = useState<'idle' | 'testing' | 'success'>('idle');
 
   if (!isOpen) return null;
 
@@ -140,80 +151,14 @@ export const DeveloperModal = ({ isOpen, onClose, onSimulateWebhook }) => {
   );
 };
 
-// Deposit Modal
-export const DepositModal = ({ isOpen, onClose, onAddDeposit }) => {
-  const [network, setNetwork] = useState('USDT · TRON');
-  const [amount, setAmount] = useState('1000');
+export interface PayoutModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onAddPayout: (payout: PayoutRecord) => void;
+}
 
-  if (!isOpen) return null;
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!amount || isNaN(amount)) return;
-    onAddDeposit({
-      type: 'Deposit',
-      reference: `dep_${Math.random().toString(36).substring(2, 6)}..${Math.random().toString(36).substring(2, 5)}`,
-      customer: `cust_${Math.floor(10000 + Math.random() * 90000)}`,
-      network: network,
-      amount: `+ ${parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
-      status: 'Credited',
-      time: 'Just now'
-    });
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-      <div className="bg-white rounded-[24px] max-w-md w-full p-6 shadow-2xl border border-gray-100">
-        <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-          <h3 className="text-lg font-bold text-gray-900">Receive Crypto Deposit</h3>
-          <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100 text-gray-500">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        <form onSubmit={handleSubmit} className="py-4 space-y-4">
-          <div>
-            <label className="text-xs font-semibold text-gray-700 block mb-1">Select Network</label>
-            <select
-              value={network}
-              onChange={(e) => setNetwork(e.target.value)}
-              className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:border-[#00C076]"
-            >
-              <option value="USDT · TRON">USDT · TRON (TRC-20)</option>
-              <option value="USDT · ERC-20">USDT · Ethereum (ERC-20)</option>
-              <option value="USDC · ERC-20">USDC · Ethereum (ERC-20)</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-gray-700 block mb-1">Deposit Amount (US$)</label>
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="e.g. 2500"
-              className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-800 focus:outline-none focus:border-[#00C076]"
-            />
-          </div>
-          <div className="p-3 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-center">
-            <p className="text-[11px] text-gray-500">Deposit Address (TRON):</p>
-            <p className="text-xs font-mono font-medium text-gray-800 break-all select-all mt-1">
-              TYK9A3XmUqZ9z8VnLw7h4Jb1k8Pq5D2gXy
-            </p>
-          </div>
-          <button
-            type="submit"
-            className="w-full py-3 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-xs font-bold shadow-md transition"
-          >
-            Confirm Simulated Deposit
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-// Create Payout Modal - Matching Exact User Design from media_1793818063090_f6078c73.png
-export const PayoutModal = ({ isOpen, onClose, onAddPayout }) => {
+// Create Payout Modal - Matching Exact User Design
+export const PayoutModal: React.FC<PayoutModalProps> = ({ isOpen, onClose, onAddPayout }) => {
   const [assetNetwork, setAssetNetwork] = useState('USDT - TRON (TRC-20)');
   const [amount, setAmount] = useState('4200.00');
   const [destinationAddress, setDestinationAddress] = useState('TJx8TrAdErWiThDrAwAlAdDrEsSmQ2a');
@@ -225,7 +170,7 @@ export const PayoutModal = ({ isOpen, onClose, onAddPayout }) => {
   const networkFee = '~$1.00 ' + currentCurrency;
   const vaultBalance = currentCurrency === 'USDC' ? '184,410.50 USDC' : '248,320.17 USDT';
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || isNaN(parseFloat(amount))) return;
 
@@ -237,7 +182,7 @@ export const PayoutModal = ({ isOpen, onClose, onAddPayout }) => {
       ? `${destinationAddress.substring(0, 6)}..${destinationAddress.substring(destinationAddress.length - 4)}`
       : destinationAddress;
 
-    const newPayoutItem = {
+    const newPayoutItem: PayoutRecord = {
       id: 'pay_' + Date.now(),
       ref: shortRef,
       fullRef: `pay_${Math.random().toString(36).substring(2, 14)}`,
@@ -392,11 +337,17 @@ export const PayoutModal = ({ isOpen, onClose, onAddPayout }) => {
   );
 };
 
+export interface SwapModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onExecuteSwap?: () => void;
+}
+
 // Swapp Modal
-export const SwapModal = ({ isOpen, onClose, onExecuteSwap }) => {
+export const SwapModal: React.FC<SwapModalProps> = ({ isOpen, onClose, onExecuteSwap }) => {
   const [fromAmount, setFromAmount] = useState('1000');
-  const [fromToken, setFromToken] = useState('USDT (TRON)');
-  const [toToken, setToToken] = useState('USDC (ERC-20)');
+  const [fromToken] = useState('USDT (TRON)');
+  const [toToken] = useState('USDC (ERC-20)');
 
   if (!isOpen) return null;
 
@@ -458,3 +409,4 @@ export const SwapModal = ({ isOpen, onClose, onExecuteSwap }) => {
     </div>
   );
 };
+

@@ -1,6 +1,12 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 
-export const PageHeader = ({ title, category, action }) => {
+export interface PageHeaderProps {
+  title: string;
+  category: string;
+  action?: ReactNode;
+}
+
+export const PageHeader: React.FC<PageHeaderProps> = ({ title, category, action }) => {
   return (
     <div className="mb-3.5 select-none flex items-center justify-between flex-wrap gap-2">
       <div>

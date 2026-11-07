@@ -1,13 +1,17 @@
 import React from 'react';
 import copyMLogo from '../image/logo.png';
 
+interface GraphicProps {
+  className?: string;
+}
+
 // Brand Logo: CopyM
-export const CopyMLogo = ({ className = "w-8 h-8" }) => (
+export const CopyMLogo: React.FC<GraphicProps> = ({ className = "w-8 h-8" }) => (
   <img src={copyMLogo} alt="CopyM Pay" className={`object-contain ${className}`} />
 );
 
 // Metallic 3D Wallet Graphic for "Deposits"
-export const WalletGraphic = ({ className = "w-20 h-16" }) => (
+export const WalletGraphic: React.FC<GraphicProps> = ({ className = "w-20 h-16" }) => (
   <svg viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
     <defs>
       <linearGradient id="wallet-silver" x1="15" y1="10" x2="85" y2="70" gradientUnits="userSpaceOnUse">
@@ -90,7 +94,7 @@ export const WalletGraphic = ({ className = "w-20 h-16" }) => (
 );
 
 // Metallic 3D Card with Arrow Graphic for "Payout"
-export const PayoutGraphic = ({ className = "w-20 h-16" }) => (
+export const PayoutGraphic: React.FC<GraphicProps> = ({ className = "w-20 h-16" }) => (
   <svg viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
     <defs>
       <linearGradient id="payout-silver" x1="20" y1="12" x2="78" y2="68" gradientUnits="userSpaceOnUse">
@@ -152,7 +156,7 @@ export const PayoutGraphic = ({ className = "w-20 h-16" }) => (
 );
 
 // Metallic 3D Opposing Arrows Graphic for "Swapp"
-export const SwappGraphic = ({ className = "w-20 h-16" }) => (
+export const SwappGraphic: React.FC<GraphicProps> = ({ className = "w-20 h-16" }) => (
   <svg viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
     <defs>
       <linearGradient id="swap-top" x1="30" y1="20" x2="75" y2="45" gradientUnits="userSpaceOnUse">
@@ -192,7 +196,7 @@ export const SwappGraphic = ({ className = "w-20 h-16" }) => (
 );
 
 // Liquid Metallic Wave Flow Texture for the Black Card background
-export const LiquidChromeWaves = () => (
+export const LiquidChromeWaves: React.FC = () => (
   <svg
     className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-90 mix-blend-screen"
     viewBox="0 0 900 480"
