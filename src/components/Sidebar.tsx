@@ -294,10 +294,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
               {section.items.map((item) => {
                 const isActive = currentActive === item.id;
-                const activeColorClass =
-                  portalMode === 'admin'
-                    ? 'bg-slate-900 text-white hover:bg-slate-800'
-                    : 'bg-[#00C076] text-white hover:bg-[#00B16D]';
+                const activeColorClass = 'bg-[#00C076] text-white hover:bg-[#00B16D]';
 
                 if (isActive) {
                   return (
