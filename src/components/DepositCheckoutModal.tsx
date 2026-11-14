@@ -325,7 +325,7 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
 
             <div className="mt-3 flex items-center gap-1.5 text-[10px] text-gray-500 font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-[#00C076]" />
-              <span>Camera autofocus active · Auto-detected</span>
+              <span>Scan with any mobile crypto wallet</span>
             </div>
           </div>
 

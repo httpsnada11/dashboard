@@ -170,31 +170,31 @@ export const AdminExceptionsPage: React.FC = () => {
 
         {/* Exceptions Table */}
         <div className="overflow-x-auto mt-4">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full text-left text-xs border-collapse min-w-[980px]">
             <thead>
               <tr className="border-b border-gray-100 text-gray-400 uppercase font-semibold text-[10.5px] tracking-wider">
-                <th className="pb-3 pl-2">Exception Ref</th>
-                <th className="pb-3">Issue Category</th>
-                <th className="pb-3">Merchant / Client</th>
-                <th className="pb-3">Received vs Expected</th>
-                <th className="pb-3">Network & Tx</th>
-                <th className="pb-3">Resolution Status</th>
-                <th className="pb-3 pr-2 text-right">Admin Action</th>
+                <th className="pb-3 pl-2 whitespace-nowrap">Exception Ref</th>
+                <th className="pb-3 whitespace-nowrap">Issue Category</th>
+                <th className="pb-3 whitespace-nowrap">Merchant / Client</th>
+                <th className="pb-3 whitespace-nowrap">Received vs Expected</th>
+                <th className="pb-3 whitespace-nowrap">Network & Tx</th>
+                <th className="pb-3 whitespace-nowrap">Resolution Status</th>
+                <th className="pb-3 pr-2 text-right whitespace-nowrap">Admin Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100/80">
               {filtered.map((exc) => (
                 <tr key={exc.id} className="hover:bg-gray-50/70 transition-colors">
                   {/* Ref */}
-                  <td className="py-3.5 pl-2">
+                  <td className="py-3.5 pl-2 whitespace-nowrap">
                     <span className="font-mono font-bold text-gray-900">{exc.excRef}</span>
                     <span className="text-[10px] text-gray-400 block">{exc.createdAt}</span>
                   </td>
 
                   {/* Category */}
-                  <td className="py-3.5">
+                  <td className="py-3.5 whitespace-nowrap">
                     <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold text-[10.5px] ${
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold text-[10.5px] whitespace-nowrap ${
                         exc.type === 'Expired QR Deposit'
                           ? 'bg-amber-50 text-amber-700 border border-amber-200'
                           : exc.type === 'Network Mismatch'
@@ -202,33 +202,33 @@ export const AdminExceptionsPage: React.FC = () => {
                           : 'bg-blue-50 text-blue-700 border border-blue-200'
                       }`}
                     >
-                      <AlertOctagon className="w-3 h-3" />
-                      {exc.type}
+                      <AlertOctagon className="w-3 h-3 shrink-0" />
+                      <span>{exc.type}</span>
                     </span>
                   </td>
 
                   {/* Merchant / Client */}
-                  <td className="py-3.5">
+                  <td className="py-3.5 whitespace-nowrap">
                     <p className="font-bold text-gray-900">{exc.merchant}</p>
                     <p className="text-[10.5px] text-gray-400 font-mono">{exc.client}</p>
                   </td>
 
                   {/* Amounts */}
-                  <td className="py-3.5">
+                  <td className="py-3.5 whitespace-nowrap">
                     <p className="font-mono font-bold text-gray-900">{exc.receivedAmount}</p>
                     <p className="text-[10.5px] text-gray-400">Exp: {exc.expectedAmount}</p>
                   </td>
 
                   {/* Network */}
-                  <td className="py-3.5">
+                  <td className="py-3.5 whitespace-nowrap">
                     <p className="font-semibold text-gray-800">{exc.assetChain}</p>
                     <span className="text-[10px] font-mono text-gray-400">{exc.txHash}</span>
                   </td>
 
                   {/* Status */}
-                  <td className="py-3.5">
+                  <td className="py-3.5 whitespace-nowrap">
                     <span
-                      className={`inline-block px-2.5 py-0.5 rounded-full text-[10.5px] font-bold ${
+                      className={`inline-block px-2.5 py-0.5 rounded-full text-[10.5px] font-bold whitespace-nowrap ${
                         exc.status === 'Pending Resolution'
                           ? 'bg-amber-100 text-amber-800'
                           : exc.status === 'Manually Credited'
@@ -243,9 +243,9 @@ export const AdminExceptionsPage: React.FC = () => {
                   </td>
 
                   {/* Action */}
-                  <td className="py-3.5 pr-2 text-right">
+                  <td className="py-3.5 pr-2 text-right whitespace-nowrap">
                     {exc.status === 'Pending Resolution' ? (
-                      <div className="flex items-center justify-end gap-1.5">
+                      <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                         <button
                           onClick={() => handleResolve(exc.id, 'Manually Credited')}
                           className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#00C076] border border-emerald-200 rounded-lg font-bold text-[11px] transition"

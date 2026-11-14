@@ -228,7 +228,7 @@ export function App() {
     return { name: 'Daniel Vance', email: 'daniel@gmail.com' };
   });
 
-  // Portal Mode: 'merchant' (Port 3000) or 'admin' (Port 3001)
+  // Portal Mode: 'merchant' (Port 3000 / root / /merchant) or 'admin' (Port 3001 / /admin)
   const [portalMode, setPortalMode] = useState<PortalMode>(() => {
     try {
       // 1. Port-based detection: 3001 is dedicated Admin, 3000 is Merchant
@@ -238,13 +238,14 @@ export function App() {
       if (window.location.port === '3000') {
         return 'merchant';
       }
-      // 2. URL Path-based detection
+      // 2. Strict URL Path-based detection (Takes absolute precedence over localStorage)
       const path = window.location.pathname.toLowerCase();
-      if (path.includes('/admin') || path.includes('/ops-7x9k')) {
+      if (path.startsWith('/admin') || path.includes('/ops-7x9k')) {
         return 'admin';
       }
-      const saved = localStorage.getItem('copym_portal_mode') as PortalMode;
-      if (saved === 'admin' || saved === 'merchant') return saved;
+      if (path.startsWith('/merchant')) {
+        return 'merchant';
+      }
     } catch {
       // ignore
     }
@@ -292,7 +293,33 @@ export function App() {
     setIsAuthenticated(false);
   };
 
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    try {
+      const path = window.location.pathname.toLowerCase();
+      const cleanPath = path.replace(/^\/merchant\/?/, '');
+      const validTabs = [
+        'dashboard',
+        'deposits',
+        'exceptions',
+        'payouts',
+        'customers',
+        'balances',
+        'convert',
+        'statements',
+        'developers',
+        'team-security',
+        'settings'
+      ];
+      for (const tab of validTabs) {
+        if (cleanPath.startsWith(tab) || cleanPath === tab) {
+          return tab;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return 'dashboard';
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [activities, setActivities] = useState<Transaction[]>(INITIAL_ACTIVITIES);
   const [payouts, setPayouts] = useState<PayoutRecord[]>(INITIAL_PAYOUTS);
@@ -321,7 +348,6 @@ export function App() {
   // Sync URL history state smoothly with Portal Mode & Tabs
   useEffect(() => {
     try {
-      localStorage.setItem('copym_portal_mode', portalMode);
       if (portalMode === 'admin') {
         const routeMap: Record<AdminTabId, string> = {
           'admin-overview': '/admin/overview',
@@ -335,8 +361,20 @@ export function App() {
           window.history.replaceState(null, '', target);
         }
       } else {
-        if (window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/ops-7x9k')) {
-          window.history.replaceState(null, '', '/' + activeTab);
+        // Merchant Portal URL synchronization
+        const currentPath = window.location.pathname.toLowerCase();
+        if (currentPath.startsWith('/admin') || currentPath.includes('/ops-7x9k')) {
+          window.history.replaceState(null, '', '/merchant/' + activeTab);
+        } else if (currentPath.startsWith('/merchant')) {
+          const target = '/merchant/' + activeTab;
+          if (window.location.pathname !== target) {
+            window.history.replaceState(null, '', target);
+          }
+        } else if (currentPath !== '/') {
+          const target = '/' + activeTab;
+          if (window.location.pathname !== target) {
+            window.history.replaceState(null, '', target);
+          }
         }
       }
     } catch {
@@ -347,7 +385,7 @@ export function App() {
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname.toLowerCase();
-      if (path.includes('/admin') || path.includes('/ops-7x9k')) {
+      if (path.startsWith('/admin') || path.includes('/ops-7x9k')) {
         setPortalMode('admin');
         if (path.includes('/merchants')) setAdminTab('admin-merchants');
         else if (path.includes('/exceptions')) setAdminTab('admin-exceptions');
@@ -356,6 +394,26 @@ export function App() {
         else setAdminTab('admin-overview');
       } else {
         setPortalMode('merchant');
+        const cleanPath = path.replace(/^\/merchant\/?/, '');
+        const validTabs = [
+          'dashboard',
+          'deposits',
+          'exceptions',
+          'payouts',
+          'customers',
+          'balances',
+          'convert',
+          'statements',
+          'developers',
+          'team-security',
+          'settings'
+        ];
+        for (const tab of validTabs) {
+          if (cleanPath.startsWith(tab) || cleanPath === tab) {
+            setActiveTab(tab);
+            break;
+          }
+        }
       }
     };
     window.addEventListener('popstate', handlePopState);

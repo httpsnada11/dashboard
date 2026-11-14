@@ -276,16 +276,16 @@ export const AdminAuditPage: React.FC = () => {
 
         {/* Audit Log Table */}
         <div className="overflow-x-auto mt-4">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-xs min-w-[1050px]">
             <thead className="bg-gray-50/70 text-gray-400 uppercase tracking-wider text-[11px] border-b border-gray-100">
               <tr>
-                <th className="py-3.5 px-4 font-semibold">Timestamp (UTC)</th>
-                <th className="py-3.5 px-4 font-semibold">Operator</th>
-                <th className="py-3.5 px-4 font-semibold">Action / Event</th>
-                <th className="py-3.5 px-4 font-semibold">Target Entity</th>
-                <th className="py-3.5 px-4 font-semibold">Severity</th>
-                <th className="py-3.5 px-4 font-semibold">Cryptographic Hash</th>
-                <th className="py-3.5 px-4 font-semibold text-right">Verification</th>
+                <th className="py-3.5 px-4 font-semibold whitespace-nowrap">Timestamp (UTC)</th>
+                <th className="py-3.5 px-4 font-semibold whitespace-nowrap">Operator</th>
+                <th className="py-3.5 px-4 font-semibold whitespace-nowrap">Action / Event</th>
+                <th className="py-3.5 px-4 font-semibold whitespace-nowrap">Target Entity</th>
+                <th className="py-3.5 px-4 font-semibold whitespace-nowrap">Severity</th>
+                <th className="py-3.5 px-4 font-semibold whitespace-nowrap">Cryptographic Hash</th>
+                <th className="py-3.5 px-4 font-semibold text-right whitespace-nowrap">Verification</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 text-gray-700">
@@ -297,19 +297,19 @@ export const AdminAuditPage: React.FC = () => {
                       <span>{item.timestamp}</span>
                     </div>
                   </td>
-                  <td className="py-3.5 px-4">
+                  <td className="py-3.5 px-4 whitespace-nowrap">
                     <div className="font-semibold text-gray-900">{item.operator.split(' (')[0]}</div>
                     <div className="text-[11px] text-gray-500">{item.operatorRole} • {item.ip}</div>
                   </td>
-                  <td className="py-3.5 px-4 font-medium text-gray-800">
+                  <td className="py-3.5 px-4 font-medium text-gray-800 whitespace-nowrap">
                     {item.action}
                   </td>
                   <td className="py-3.5 px-4 text-gray-600 max-w-xs truncate" title={item.target}>
                     {item.target}
                   </td>
-                  <td className="py-3.5 px-4">
+                  <td className="py-3.5 px-4 whitespace-nowrap">
                     <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap ${
                         item.severity === 'Critical'
                           ? 'bg-red-50 text-red-600 border border-red-200'
                           : item.severity === 'Warning'
@@ -323,7 +323,7 @@ export const AdminAuditPage: React.FC = () => {
                       {item.severity}
                     </span>
                   </td>
-                  <td className="py-3.5 px-4">
+                  <td className="py-3.5 px-4 whitespace-nowrap">
                     <div className="flex items-center gap-1.5">
                       <span className="text-[11px] text-gray-500 font-mono bg-gray-100 px-2 py-0.5 rounded">
                         {item.hash.slice(0, 10)}...{item.hash.slice(-6)}
@@ -341,8 +341,8 @@ export const AdminAuditPage: React.FC = () => {
                       </button>
                     </div>
                   </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <div className="flex items-center justify-end gap-1.5">
+                  <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                    <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                       <button
                         onClick={() => handleVerifyIntegrity(item)}
                         className="px-2.5 py-1 text-[11px] rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors flex items-center gap-1 font-semibold"

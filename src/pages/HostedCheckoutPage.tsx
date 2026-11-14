@@ -10,11 +10,12 @@ import {
   Wallet,
   ArrowRight,
   ExternalLink,
-  ChevronDown
+  ChevronDown,
+  Clock
 } from 'lucide-react';
 import { CopyMLogo } from '../components/Graphics';
 
-export type PaymentState = 'awaiting' | 'confirming' | 'paid' | 'expired';
+export type PaymentState = 'awaiting' | 'detected' | 'confirming' | 'paid' | 'expired';
 
 export interface HostedCheckoutPageProps {
   invoiceId?: string;
@@ -23,6 +24,7 @@ export interface HostedCheckoutPageProps {
   amount?: string;
   initialNetwork?: string;
   onPaymentSuccess?: () => void;
+  returnUrl?: string;
 }
 
 interface NetworkConfig {
@@ -75,22 +77,24 @@ export const HostedCheckoutPage: React.FC<HostedCheckoutPageProps> = ({
   orderReference = 'ORD-948271',
   amount = '2,500.00',
   initialNetwork = 'tron',
-  onPaymentSuccess
+  onPaymentSuccess,
+  returnUrl = '/'
 }) => {
   const [selectedNetwork, setSelectedNetwork] = useState<NetworkConfig>(
     NETWORKS.find((n) => n.id === initialNetwork) || NETWORKS[0]
   );
   const [paymentState, setPaymentState] = useState<PaymentState>('awaiting');
-  const [timeLeft, setTimeLeft] = useState<number>(14 * 60 + 59); // 14 min 59 sec
+  const [timeLeft, setTimeLeft] = useState<number>(29 * 60 + 59); // 30-min window
+  const [redirectCountdown, setRedirectCountdown] = useState<number>(5);
   const [copiedField, setCopiedField] = useState<'address' | 'amount' | 'txid' | null>(null);
 
   // Web3 / MetaMask state
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [isProcessingWeb3, setIsProcessingWeb3] = useState(false);
-  const [confirmingBlocks, setConfirmingBlocks] = useState(8);
+  const [confirmingBlocks, setConfirmingBlocks] = useState(0);
 
-  // 15-Minute Countdown Timer
+  // 30-Minute Countdown Timer (Freezes on detection)
   useEffect(() => {
     if (paymentState !== 'awaiting') return;
 
@@ -108,6 +112,26 @@ export const HostedCheckoutPage: React.FC<HostedCheckoutPageProps> = ({
     return () => clearInterval(timer);
   }, [paymentState]);
 
+  // 5-Second Redirect Countdown once Paid
+  useEffect(() => {
+    if (paymentState !== 'paid') return;
+
+    const redirectTimer = setInterval(() => {
+      setRedirectCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(redirectTimer);
+          if (typeof window !== 'undefined') {
+            window.location.href = returnUrl;
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(redirectTimer);
+  }, [paymentState, returnUrl]);
+
   // Format minutes & seconds into separate digits for digital display
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
@@ -122,27 +146,36 @@ export const HostedCheckoutPage: React.FC<HostedCheckoutPageProps> = ({
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  // Simulate MetaMask / Web3 1-Click Pay
+  // Simulate MetaMask / Web3 1-Click Pay following 3-stage Ingestion Engine
   const handleConnectAndPay = () => {
     setIsProcessingWeb3(true);
     setTimeout(() => {
       setIsWalletConnected(true);
       setWalletAddress('0x71c8...4a91');
-      // Trigger confirming state
-      setPaymentState('confirming');
       setIsProcessingWeb3(false);
 
-      // Increment blocks
-      let block = 4;
-      const blockInterval = setInterval(() => {
-        block += 2;
+      // Stage 1: DETECTED (0 Confirmations - In Mempool)
+      setPaymentState('detected');
+      setConfirmingBlocks(0);
+
+      // Advance to Stage 2: CONFIRMING after 1.5s
+      setTimeout(() => {
+        setPaymentState('confirming');
+        let block = 3;
         setConfirmingBlocks(block);
-        if (block >= 12) {
-          clearInterval(blockInterval);
-          setPaymentState('paid');
-          onPaymentSuccess?.();
-        }
-      }, 1000);
+
+        const blockInterval = setInterval(() => {
+          block += 3;
+          setConfirmingBlocks(block);
+          if (block >= 12) {
+            clearInterval(blockInterval);
+            // Stage 3: CREDITED (Target Confirmations Reached)
+            setPaymentState('paid');
+            setRedirectCountdown(5);
+            onPaymentSuccess?.();
+          }
+        }, 900);
+      }, 1500);
     }, 1200);
   };
 
@@ -170,41 +203,32 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 py-6 px-3 sm:px-4 flex flex-col items-center justify-center font-sans">
-      {/* Simulation Bar For Interactive Testing */}
-      <div className="mb-4 w-full max-w-[420px] flex items-center justify-between bg-slate-800/90 backdrop-blur-md p-1.5 rounded-2xl border border-slate-700/80 shadow-xl select-none">
-        <span className="text-[11px] font-bold text-slate-400 pl-2.5">Simulate:</span>
-        <div className="flex gap-1">
-          {(['awaiting', 'confirming', 'paid', 'expired'] as const).map((st) => (
-            <button
-              key={st}
-              onClick={() => {
-                setPaymentState(st);
-                if (st === 'awaiting') setTimeLeft(14 * 60 + 59);
-              }}
-              className={`px-2.5 py-1 text-[11px] font-bold rounded-xl transition-all capitalize ${
-                paymentState === st
-                  ? 'bg-[#00C076] text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
-              }`}
-            >
-              {st}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Main Checkout Container (Mobile & Embeddable Responsive Card) */}
       <div className="w-full max-w-[420px] bg-white text-slate-900 rounded-[36px] shadow-2xl border border-slate-200 overflow-hidden relative pb-6 animate-fadeIn">
+        {/* Top Detection Amber Banner (Step 4 Ingestion Engine) */}
+        {paymentState === 'detected' && (
+          <div className="bg-amber-500 text-white px-4 py-2 text-xs font-bold flex items-center justify-center gap-1.5 animate-fadeIn select-none">
+            <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+            <span>Deposit detected! Awaiting blockchain confirmations...</span>
+          </div>
+        )}
+
         {/* 1. Top Countdown Bar */}
         <div className="p-4 pb-2 bg-[#F8FAFC] border-b border-slate-100">
           <div className="bg-white rounded-2xl p-3 px-4 shadow-2xs border border-slate-200/80 flex items-center justify-between">
             <div>
               <div className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">
-                Session Rate Lock
+                {paymentState === 'detected' || paymentState === 'confirming'
+                  ? 'Session Rate Frozen'
+                  : 'Session Rate Lock'}
               </div>
               <div className="text-xs font-bold text-slate-800">
                 {paymentState === 'expired'
                   ? 'Session Expired'
+                  : paymentState === 'detected' || paymentState === 'confirming'
+                  ? 'Timer Frozen on Detection'
+                  : paymentState === 'paid'
+                  ? 'Payment Settled'
                   : `${minutes}m ${seconds}s remaining`}
               </div>
             </div>
@@ -339,31 +363,55 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
               </div>
             )}
 
-            {/* Confirming State */}
-            {paymentState === 'confirming' && (
-              <div className="flex flex-col items-center justify-center w-full h-full text-center animate-fadeIn">
-                <div className="w-12 h-12 rounded-full border-4 border-sky-200 border-t-sky-600 animate-spin mb-3" />
-                <div className="text-xs font-extrabold text-sky-800">Tx Detected On-Chain</div>
-                <div className="text-[11px] font-mono text-sky-600 mt-1">
-                  Confirming {confirmingBlocks} / 12 blocks
+            {/* Stage 1: Detected State (In Mempool) */}
+            {paymentState === 'detected' && (
+              <div className="flex flex-col items-center justify-center w-full h-full text-center animate-fadeIn p-2">
+                <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mb-2 animate-pulse">
+                  <Clock className="w-6 h-6" />
                 </div>
-                <div className="text-[10px] text-slate-500 font-mono mt-2 truncate max-w-[190px]">
-                  Hash: 0x884a...91bc
+                <div className="text-xs font-black text-amber-900">Deposit Detected!</div>
+                <div className="text-[11px] text-amber-700 mt-0.5 font-medium leading-tight">
+                  Transaction entered mempool
+                </div>
+                <div className="mt-2 px-2.5 py-1 bg-amber-50 rounded-lg border border-amber-200 text-[10px] font-mono text-amber-800">
+                  0 / 12 Confirmations · Tx Pending
                 </div>
               </div>
             )}
 
-            {/* Paid State */}
+            {/* Stage 2: Confirming State (Block Confirmations Accruing) */}
+            {paymentState === 'confirming' && (
+              <div className="flex flex-col items-center justify-center w-full h-full text-center animate-fadeIn p-2">
+                <div className="w-12 h-12 rounded-full border-4 border-sky-200 border-t-sky-600 animate-spin mb-2" />
+                <div className="text-xs font-black text-sky-900">Confirming on Blockchain</div>
+                <div className="text-[11px] font-mono text-sky-600 font-bold mt-0.5">
+                  {confirmingBlocks} / 12 Block Confirmations
+                </div>
+                <div className="w-full bg-sky-100 rounded-full h-1.5 mt-2 overflow-hidden">
+                  <div
+                    className="bg-sky-600 h-full transition-all duration-300 rounded-full"
+                    style={{ width: `${(confirmingBlocks / 12) * 100}%` }}
+                  />
+                </div>
+                <div className="text-[9.5px] text-slate-400 font-mono mt-1.5 truncate max-w-[190px]">
+                  Tx: 0x884a9128...0c1b
+                </div>
+              </div>
+            )}
+
+            {/* Stage 3 & 4: Paid / Credited State */}
             {paymentState === 'paid' && (
-              <div className="flex flex-col items-center justify-center w-full h-full text-center animate-fadeIn">
-                <div className="w-14 h-14 rounded-full bg-emerald-100 text-[#00C076] flex items-center justify-center mb-2 animate-bounce">
+              <div className="flex flex-col items-center justify-center w-full h-full text-center animate-fadeIn p-2">
+                <div className="w-14 h-14 rounded-full bg-emerald-100 text-[#00C076] flex items-center justify-center mb-1.5 animate-bounce">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
-                <div className="text-sm font-extrabold text-emerald-800">Payment Credited</div>
-                <div className="text-[11px] font-mono text-emerald-600 mt-0.5">
-                  +{amount} {selectedNetwork.asset}
+                <div className="text-sm font-black text-emerald-900">Payment Successful!</div>
+                <div className="text-[12px] font-bold text-emerald-700 mt-0.5 font-mono">
+                  ${amount} {selectedNetwork.asset} Received
                 </div>
-                <div className="text-[10px] text-slate-400 mt-1">Settled on-chain</div>
+                <div className="text-[10px] text-slate-400 mt-1">
+                  Target confirmations & AML verified
+                </div>
               </div>
             )}
 
@@ -380,7 +428,7 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
                 <button
                   onClick={() => {
                     setPaymentState('awaiting');
-                    setTimeLeft(14 * 60 + 59);
+                    setTimeLeft(29 * 60 + 59);
                   }}
                   className="mt-2 px-3 py-1 bg-slate-900 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm"
                 >
@@ -439,7 +487,7 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
                   if (net) setSelectedNetwork(net);
                 }}
                 disabled={paymentState !== 'awaiting'}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 appearance-none focus:outline-none focus:border-[#00C076] transition cursor-pointer"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 appearance-none focus:outline-none focus:border-[#00C076] transition cursor-pointer disabled:opacity-60"
               >
                 {NETWORKS.map((n) => (
                   <option key={n.id} value={n.id}>
@@ -509,18 +557,37 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
             </div>
           )}
 
-          {/* Paid State Actions */}
+          {/* Paid State Actions: Download Receipt & 5-Second Redirect */}
           {paymentState === 'paid' && (
             <div className="pt-1 space-y-2">
-              <button
-                onClick={handleDownloadReceipt}
-                className="w-full py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl font-bold text-xs shadow-md transition flex items-center justify-center gap-2 select-none"
-              >
-                <Download className="w-4 h-4 text-[#00C076]" />
-                <span>Download Official Receipt (.txt)</span>
-              </button>
-              <div className="p-2.5 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-800 text-[11px] text-center font-medium">
-                Receipt #{orderReference} recorded into immutable ledger.
+              <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-emerald-900 text-xs text-center space-y-1">
+                <div className="font-extrabold flex items-center justify-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-[#00C076]" />
+                  <span>Double-Entry Ledger Posted (+$ {amount})</span>
+                </div>
+                <p className="text-[11px] text-emerald-700">
+                  Merchant available balance updated. Redirecting in{' '}
+                  <span className="font-bold font-mono text-emerald-900">{redirectCountdown}s</span>...
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={handleDownloadReceipt}
+                  className="flex-1 py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl font-bold text-xs shadow-md transition flex items-center justify-center gap-2 select-none"
+                >
+                  <Download className="w-4 h-4 text-[#00C076]" />
+                  <span>Download Receipt</span>
+                </button>
+                <button
+                  onClick={() => {
+                    if (typeof window !== 'undefined') window.location.href = returnUrl;
+                  }}
+                  className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md transition flex items-center justify-center gap-1 select-none"
+                >
+                  <span>Return Now</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
           )}

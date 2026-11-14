@@ -446,10 +446,10 @@ export const AdminPayoutsPage: React.FC = () => {
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-xs min-w-[1180px]">
             <thead className="bg-gray-50/75 border-b border-gray-100 text-gray-400 uppercase text-[10px] tracking-wider font-semibold">
               <tr>
-                <th className="py-3 px-4 w-8">
+                <th className="py-3 px-4 w-10 whitespace-nowrap">
                   <input
                     type="checkbox"
                     checked={selectedIds.length > 0 && selectedIds.length === filteredPayouts.length}
@@ -457,14 +457,14 @@ export const AdminPayoutsPage: React.FC = () => {
                     className="rounded text-blue-600 focus:ring-blue-500"
                   />
                 </th>
-                <th className="py-3 px-4">Payout Ref & Merchant</th>
-                <th className="py-3 px-4">Maker (Requester)</th>
-                <th className="py-3 px-4">Amount & Network</th>
-                <th className="py-3 px-4">Destination Address</th>
-                <th className="py-3 px-4">KYT Risk Score</th>
-                <th className="py-3 px-4">MPC Quorum</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4 text-right">Checker Action</th>
+                <th className="py-3 px-4 whitespace-nowrap">Payout Ref & Merchant</th>
+                <th className="py-3 px-4 whitespace-nowrap">Maker (Requester)</th>
+                <th className="py-3 px-4 whitespace-nowrap">Amount & Network</th>
+                <th className="py-3 px-4 whitespace-nowrap">Destination Address</th>
+                <th className="py-3 px-4 whitespace-nowrap">KYT Risk Score</th>
+                <th className="py-3 px-4 whitespace-nowrap">MPC Quorum</th>
+                <th className="py-3 px-4 whitespace-nowrap">Status</th>
+                <th className="py-3 px-4 text-right whitespace-nowrap">Checker Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -479,7 +479,7 @@ export const AdminPayoutsPage: React.FC = () => {
                     }`}
                   >
                     {/* Checkbox */}
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -489,7 +489,7 @@ export const AdminPayoutsPage: React.FC = () => {
                     </td>
 
                     {/* Ref & Merchant */}
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       <div className="font-semibold text-gray-900 flex items-center gap-1.5">
                         <span>{payout.payoutRef}</span>
                       </div>
@@ -500,13 +500,13 @@ export const AdminPayoutsPage: React.FC = () => {
                     </td>
 
                     {/* Maker */}
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       <div className="text-gray-900 font-medium">{payout.makerName}</div>
                       <span className="text-[10px] text-gray-400 block">{payout.makerRole}</span>
                     </td>
 
                     {/* Amount & Network */}
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       <div className="font-bold text-gray-900 text-sm">
                         {payout.amount}
                       </div>
@@ -516,12 +516,12 @@ export const AdminPayoutsPage: React.FC = () => {
                     </td>
 
                     {/* Destination Address */}
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       <div className="flex items-center gap-1.5 font-mono text-[11px] text-gray-700">
                         <span>{payout.destinationAddress}</span>
                         <button
                           onClick={() => handleCopy(payout.fullAddress, payout.id)}
-                          className="text-gray-400 hover:text-gray-700 transition"
+                          className="text-gray-400 hover:text-gray-700 transition cursor-pointer"
                           title="Copy Full Address"
                         >
                           {copiedId === payout.id ? (
@@ -537,7 +537,7 @@ export const AdminPayoutsPage: React.FC = () => {
                     </td>
 
                     {/* KYT Risk Score */}
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
                         <span
                           className={`w-2 h-2 rounded-full ${
@@ -563,9 +563,9 @@ export const AdminPayoutsPage: React.FC = () => {
                     </td>
 
                     {/* MPC Quorum */}
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-bold ${
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold whitespace-nowrap ${
                           payout.mpcStatus === '2/2 Quorum Met'
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                             : payout.mpcStatus === '1/2 Signed'
@@ -573,49 +573,49 @@ export const AdminPayoutsPage: React.FC = () => {
                             : 'bg-gray-100 text-gray-600 border border-gray-200'
                         }`}
                       >
-                        <Lock className="w-2.5 h-2.5" />
+                        <Lock className="w-2.5 h-2.5 shrink-0" />
                         <span>{payout.mpcStatus}</span>
                       </span>
                     </td>
 
                     {/* Status */}
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       {payout.status === 'Pending Checker' && (
-                        <span className="px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
                           Pending Checker
                         </span>
                       )}
                       {payout.status === 'Compliance Hold' && (
-                        <span className="px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-red-50 text-red-700 border border-red-200">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-red-50 text-red-700 border border-red-200 whitespace-nowrap">
                           Compliance Hold
                         </span>
                       )}
                       {payout.status === 'Completed' && (
-                        <span className="px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
                           Broadcasted
                         </span>
                       )}
                     </td>
 
                     {/* Checker Action */}
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
+                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                      <div className="inline-flex items-center justify-end gap-1.5 whitespace-nowrap">
                         {payout.status === 'Pending Checker' && (
                           <>
                             <button
                               onClick={() => setApproveModalPayout(payout)}
-                              className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[11px] font-bold transition flex items-center gap-1 shadow-2xs"
+                              className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[11px] font-bold transition inline-flex items-center gap-1.5 shadow-2xs whitespace-nowrap cursor-pointer shrink-0"
                               title="Co-Sign as Platform Checker"
                             >
-                              <Key className="w-3 h-3 text-blue-400" />
+                              <Key className="w-3.5 h-3.5 text-blue-400 shrink-0" />
                               <span>Co-Sign</span>
                             </button>
                             <button
                               onClick={() => setHoldModalPayout(payout)}
-                              className="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg text-[11px] font-bold transition flex items-center gap-1"
+                              className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg text-[11px] font-bold transition inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0"
                               title="Place on Compliance Hold"
                             >
-                              <PauseCircle className="w-3 h-3 text-red-600" />
+                              <PauseCircle className="w-3.5 h-3.5 text-red-600 shrink-0" />
                               <span>Hold</span>
                             </button>
                           </>
@@ -624,17 +624,17 @@ export const AdminPayoutsPage: React.FC = () => {
                         {payout.status === 'Compliance Hold' && (
                           <button
                             onClick={() => handleReleaseHold(payout)}
-                            className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-[11px] font-bold transition flex items-center gap-1"
+                            className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-[11px] font-bold transition inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0"
                             title="Release Compliance Hold"
                           >
-                            <PlayCircle className="w-3 h-3 text-emerald-600" />
+                            <PlayCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                             <span>Release</span>
                           </button>
                         )}
 
                         <button
                           onClick={() => setInspectPayout(payout)}
-                          className="p-1 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-700 transition"
+                          className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-700 transition cursor-pointer shrink-0 ml-0.5"
                           title="Inspect Payout Lifecycle"
                         >
                           <ChevronRight className="w-4 h-4" />

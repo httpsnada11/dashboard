@@ -217,7 +217,7 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
               onClick={() => setShowNetworkMenu(!showNetworkMenu)}
               className="px-3 py-1 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11px] font-medium transition-all shadow-sm flex items-center gap-1 select-none whitespace-nowrap"
             >
-              <span>Network: {selectedNetwork === 'All' ? 'All 6' : selectedNetwork}</span>
+              <span>Network: {selectedNetwork === 'All' ? 'All' : selectedNetwork}</span>
               <ChevronDown className="w-3 h-3 text-white" />
             </button>
 
@@ -234,7 +234,7 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
                       selectedNetwork === net ? 'font-bold text-[#00C076]' : 'text-gray-700'
                     }`}
                   >
-                    {net === 'All' ? 'All 6 Networks' : net}
+                    {net === 'All' ? 'All Networks' : net}
                   </button>
                 ))}
               </div>
@@ -246,7 +246,7 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
             onClick={handleExportCSV}
             className="px-3 py-1 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11px] font-medium transition-all shadow-sm flex items-center gap-1 select-none whitespace-nowrap"
           >
-            <span>Export CSV · 1,248 rows</span>
+            <span>Export CSV</span>
           </button>
         </div>
       </div>
@@ -353,7 +353,7 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
       {/* Table Pagination Footer */}
       <div className="flex items-center justify-between pt-1 px-1 text-xs select-none">
         <span className="text-[#6B7280] text-[11px] sm:text-[12px]">
-          Showing {filteredData.length} of 1,248
+          Showing {filteredData.length} records
         </span>
         <div className="flex items-center gap-2">
           <button

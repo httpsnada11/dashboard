@@ -308,42 +308,42 @@ export const AdminMerchantsPage: React.FC = () => {
 
         {/* Directory Table */}
         <div className="overflow-x-auto mt-4">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full text-left text-xs border-collapse min-w-[1020px]">
             <thead>
               <tr className="border-b border-gray-100 text-gray-400 uppercase font-semibold text-[10.5px] tracking-wider">
-                <th className="pb-3 pl-2">Merchant Entity</th>
-                <th className="pb-3">Jurisdiction</th>
-                <th className="pb-3">Director / Reg No.</th>
-                <th className="pb-3">AML Health</th>
-                <th className="pb-3">Assigned Daily Limit</th>
-                <th className="pb-3">KYB Status</th>
-                <th className="pb-3 pr-2 text-right">Adjudication</th>
+                <th className="pb-3 pl-2 whitespace-nowrap">Merchant Entity</th>
+                <th className="pb-3 whitespace-nowrap">Jurisdiction</th>
+                <th className="pb-3 whitespace-nowrap">Director / Reg No.</th>
+                <th className="pb-3 whitespace-nowrap">AML Health</th>
+                <th className="pb-3 whitespace-nowrap">Assigned Daily Limit</th>
+                <th className="pb-3 whitespace-nowrap">KYB Status</th>
+                <th className="pb-3 pr-2 text-right whitespace-nowrap">Adjudication</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100/80">
               {filteredMerchants.map((merchant) => (
                 <tr key={merchant.id} className="hover:bg-gray-50/70 transition-colors">
                   {/* Entity Name */}
-                  <td className="py-3.5 pl-2">
+                  <td className="py-3.5 pl-2 whitespace-nowrap">
                     <p className="font-bold text-gray-900 leading-tight">{merchant.businessName}</p>
                     <p className="text-[10.5px] text-gray-400 truncate max-w-xs">{merchant.legalEntity}</p>
                   </td>
 
                   {/* Jurisdiction */}
-                  <td className="py-3.5">
-                    <span className="px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 font-medium text-[11px]">
+                  <td className="py-3.5 whitespace-nowrap">
+                    <span className="px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 font-medium text-[11px] whitespace-nowrap">
                       {merchant.jurisdiction}
                     </span>
                   </td>
 
                   {/* Director & Reg No */}
-                  <td className="py-3.5">
+                  <td className="py-3.5 whitespace-nowrap">
                     <p className="font-semibold text-gray-800">{merchant.directorName}</p>
                     <p className="text-[10px] text-gray-400 font-mono">{merchant.registrationNo}</p>
                   </td>
 
                   {/* AML Health */}
-                  <td className="py-3.5">
+                  <td className="py-3.5 whitespace-nowrap">
                     <div className="flex items-center gap-1.5 font-mono font-bold">
                       <span className={`w-2 h-2 rounded-full ${merchant.amlScore > 85 ? 'bg-[#00C076]' : 'bg-red-500'}`} />
                       <span>{merchant.amlScore}%</span>
@@ -351,7 +351,7 @@ export const AdminMerchantsPage: React.FC = () => {
                   </td>
 
                   {/* Daily Limit */}
-                  <td className="py-3.5">
+                  <td className="py-3.5 whitespace-nowrap">
                     <div className="flex items-center gap-1.5">
                       <span className="font-bold font-mono text-gray-900">{merchant.dailyLimit}</span>
                       <button
@@ -369,9 +369,9 @@ export const AdminMerchantsPage: React.FC = () => {
                   </td>
 
                   {/* KYB Status */}
-                  <td className="py-3.5">
+                  <td className="py-3.5 whitespace-nowrap">
                     <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold text-[10.5px] ${
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold text-[10.5px] whitespace-nowrap ${
                         merchant.kybStatus === 'Approved'
                           ? 'bg-emerald-50 text-[#00C076] border border-emerald-200'
                           : merchant.kybStatus === 'Under Review'
@@ -385,8 +385,8 @@ export const AdminMerchantsPage: React.FC = () => {
                   </td>
 
                   {/* Action Buttons */}
-                  <td className="py-3.5 pr-2 text-right">
-                    <div className="flex items-center justify-end gap-1.5">
+                  <td className="py-3.5 pr-2 text-right whitespace-nowrap">
+                    <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                       <button
                         onClick={() => setSelectedMerchant(merchant)}
                         className="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold transition flex items-center gap-1"

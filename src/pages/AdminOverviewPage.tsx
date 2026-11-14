@@ -281,7 +281,7 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
                 <div className="p-3 bg-gray-50/80 rounded-xl flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Database className="w-3.5 h-3.5 text-blue-500" />
-                    <span className="font-semibold text-gray-900">PostgreSQL Primary Cluster</span>
+                    <span className="font-semibold text-gray-900">MySQL Primary Cluster</span>
                   </div>
                   <div className="text-right">
                     <span className="font-mono text-emerald-600 font-bold">1.1ms</span>
@@ -558,16 +558,16 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
 
         {/* Alerts Table */}
         <div className="overflow-x-auto mt-4">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full text-left text-xs border-collapse min-w-[1020px]">
             <thead>
               <tr className="border-b border-gray-100 text-gray-400 uppercase font-semibold text-[10.5px] tracking-wider">
-                <th className="pb-3 pl-2">Risk Score</th>
-                <th className="pb-3">Transaction / Hash</th>
-                <th className="pb-3">Amount</th>
-                <th className="pb-3">Merchant / Client</th>
-                <th className="pb-3">Detection Trigger</th>
-                <th className="pb-3">Status</th>
-                <th className="pb-3 pr-2 text-right">Adjudication</th>
+                <th className="pb-3 pl-2 whitespace-nowrap">Risk Score</th>
+                <th className="pb-3 whitespace-nowrap">Transaction / Hash</th>
+                <th className="pb-3 whitespace-nowrap">Amount</th>
+                <th className="pb-3 whitespace-nowrap">Merchant / Client</th>
+                <th className="pb-3 whitespace-nowrap">Detection Trigger</th>
+                <th className="pb-3 whitespace-nowrap">Status</th>
+                <th className="pb-3 pr-2 text-right whitespace-nowrap">Adjudication</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100/80">
@@ -578,9 +578,9 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
                 return (
                   <tr key={alert.id} className="hover:bg-gray-50/70 transition-colors">
                     {/* Risk Score Pill */}
-                    <td className="py-3.5 pl-2">
+                    <td className="py-3.5 pl-2 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg font-mono font-bold text-xs ${
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg font-mono font-bold text-xs whitespace-nowrap ${
                           isCritical
                             ? 'bg-red-50 text-red-600 border border-red-200'
                             : isHigh
@@ -594,7 +594,7 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
                     </td>
 
                     {/* TxHash */}
-                    <td className="py-3.5">
+                    <td className="py-3.5 whitespace-nowrap">
                       <div className="flex items-center gap-1.5 font-mono font-bold text-gray-900">
                         <span>{alert.txHash}</span>
                         <span className="text-[10px] text-gray-400 font-sans font-normal">
@@ -605,12 +605,12 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
                     </td>
 
                     {/* Amount */}
-                    <td className="py-3.5 font-bold font-mono text-gray-900">
+                    <td className="py-3.5 font-bold font-mono text-gray-900 whitespace-nowrap">
                       {alert.amount}
                     </td>
 
                     {/* Merchant / Client */}
-                    <td className="py-3.5">
+                    <td className="py-3.5 whitespace-nowrap">
                       <p className="font-semibold text-gray-900">{alert.merchant}</p>
                       <p className="text-[10.5px] text-gray-400 font-mono">{alert.client}</p>
                     </td>
@@ -623,9 +623,9 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
                     </td>
 
                     {/* Status */}
-                    <td className="py-3.5">
+                    <td className="py-3.5 whitespace-nowrap">
                       <span
-                        className={`inline-block px-2.5 py-0.5 rounded-full text-[10.5px] font-bold ${
+                        className={`inline-block px-2.5 py-0.5 rounded-full text-[10.5px] font-bold whitespace-nowrap ${
                           alert.status === 'Pending Action'
                             ? 'bg-amber-100 text-amber-800'
                             : alert.status === 'Frozen'
@@ -640,8 +640,8 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
                     </td>
 
                     {/* Action Buttons */}
-                    <td className="py-3.5 pr-2 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
+                    <td className="py-3.5 pr-2 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                         <button
                           onClick={() => setSelectedAlert(alert)}
                           className="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold transition"
