@@ -483,12 +483,11 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
                   )}
                 </button>
                 <a
-                  href={hostedCheckoutUrl}
+                  href={`/checkout/${orderReference}`}
                   target="_blank"
                   rel="noreferrer"
-                  onClick={(e) => e.preventDefault()}
                   className="p-1.5 hover:bg-gray-100 rounded text-[#00C076] transition"
-                  title="Open Hosted Checkout"
+                  title="Open Hosted Checkout in New Tab"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>

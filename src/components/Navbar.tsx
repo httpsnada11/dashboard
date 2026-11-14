@@ -1,7 +1,21 @@
 import React, { useState } from 'react';
-import { Search, Bell, ChevronDown, Key, Lock, Play, RotateCcw, ShieldCheck, User, LogOut, Menu, X } from 'lucide-react';
+import {
+  Search,
+  Bell,
+  ChevronDown,
+  Key,
+  Lock,
+  Play,
+  RotateCcw,
+  ShieldCheck,
+  User,
+  LogOut,
+  Menu,
+  X
+} from 'lucide-react';
 import { CopyMLogo } from './Graphics';
 import { AMLRiskBadge } from './AMLRiskBadge';
+import { PortalMode } from '../types';
 
 export interface NavbarProps {
   searchQuery: string;
@@ -15,6 +29,8 @@ export interface NavbarProps {
   mobileSidebarOpen: boolean;
   setMobileSidebarOpen: (open: boolean) => void;
   onSignOut?: () => void;
+  currentUser?: { name: string; email: string };
+  portalMode?: PortalMode;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -28,16 +44,22 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenSecurityModal,
   mobileSidebarOpen,
   setMobileSidebarOpen,
-  onSignOut
+  onSignOut,
+  currentUser,
+  portalMode = 'merchant'
 }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotificationMenu, setShowNotificationMenu] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
+  const fullDisplayName = currentUser?.name || 'Daniel Vance';
+  const displayName = fullDisplayName.trim().split(' ')[0] || fullDisplayName;
+  const displayEmail = currentUser?.email || 'daniel@gmail.com';
+
   return (
     <header className="w-full bg-white px-3 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between border-b border-gray-100/90 sticky top-0 z-40">
-      {/* Left: Mobile Hamburger Toggle + Brand Logo */}
-      <div className="flex items-center gap-2 sm:gap-3">
+      {/* Left: Mobile Hamburger Toggle + Brand Logo + Portal Mode Switcher */}
+      <div className="flex items-center gap-2 sm:gap-4">
         {/* Mobile Hamburger Button */}
         <button
           onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
@@ -48,7 +70,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </button>
 
         {/* Brand Logo */}
-        <div className="flex items-center gap-2 cursor-pointer select-none">
+        <div className="flex items-center gap-2 select-none">
           <CopyMLogo className="w-6 h-6 sm:w-7 sm:h-7" />
           <div className="flex items-baseline text-[18px] sm:text-[20px] tracking-tight">
             <span className="font-bold text-[#14171A]">CopyM</span>
@@ -59,13 +81,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Right Controls & Search Bar */}
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Search Bar (Desktop / Tablet) - Moved to right side towards profile section */}
-        <div className="w-44 sm:w-52 md:w-56 lg:w-64 xl:w-72 hidden md:block">
+        {/* Search Bar (Desktop / Tablet) */}
+        <div className="w-40 sm:w-48 md:w-56 lg:w-64 hidden md:block">
           <div className="relative flex items-center">
             <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3.5 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search..."
+              placeholder={portalMode === 'admin' ? "Search alerts, KYB, sweeps..." : "Search..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-7 py-1.5 bg-[#EAEBEF] hover:bg-[#E4E6EA] focus:bg-white text-[13px] text-gray-800 placeholder-gray-400 rounded-full border border-transparent focus:border-[#00C076] focus:outline-none transition-all duration-200"
@@ -169,7 +191,11 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="relative">
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="flex items-center gap-1.5 sm:gap-2 bg-[#00C076] hover:bg-[#00AA67] text-white pl-1 pr-2 sm:pr-2.5 py-1 rounded-full shadow-sm transition-all select-none"
+            className={`flex items-center gap-1.5 sm:gap-2 text-white pl-1 pr-2 sm:pr-2.5 py-1 rounded-full shadow-sm transition-all select-none ${
+              portalMode === 'admin'
+                ? 'bg-slate-900 hover:bg-slate-800 border border-slate-700'
+                : 'bg-[#00C076] hover:bg-[#00AA67]'
+            }`}
           >
             {/* Dark circular avatar */}
             <div className="w-6 h-6 rounded-full bg-[#111827] flex items-center justify-center overflow-hidden border border-white/20 flex-shrink-0">
@@ -178,9 +204,11 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Profile info */}
             <div className="text-left flex flex-col leading-none">
-              <span className="text-[11.5px] font-bold text-white tracking-wide">Daniel</span>
-              <span className="text-[9.5px] text-emerald-100/90 font-medium tracking-normal mt-0.5 hidden xs:inline">
-                daniel@gmail.com
+              <span className="text-[11.5px] font-bold text-white tracking-wide truncate max-w-[90px] sm:max-w-[120px]">
+                {displayName}
+              </span>
+              <span className="text-[9.5px] text-emerald-100/90 font-medium tracking-normal mt-0.5 hidden xs:inline truncate max-w-[120px]">
+                {portalMode === 'admin' ? 'SuperAdmin' : displayEmail}
               </span>
             </div>
 
@@ -189,11 +217,15 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           {showProfileMenu && (
-            <div className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-fadeIn">
+            <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-fadeIn">
               <div className="px-4 py-2 border-b border-gray-100">
-                <p className="text-xs font-semibold text-gray-900">Daniel Vance</p>
-                <p className="text-[11px] text-gray-500 truncate">daniel@gmail.com</p>
+                <p className="text-xs font-semibold text-gray-900 truncate">{fullDisplayName}</p>
+                <p className="text-[11px] text-gray-500 truncate">{displayEmail}</p>
+                <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700">
+                  {portalMode === 'admin' ? 'Platform SuperAdmin' : 'Merchant Owner'}
+                </span>
               </div>
+
               <button
                 onClick={() => { setShowProfileMenu(false); onOpenSecurityModal(); }}
                 className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
@@ -252,4 +284,3 @@ export const Navbar: React.FC<NavbarProps> = ({
     </header>
   );
 };
-

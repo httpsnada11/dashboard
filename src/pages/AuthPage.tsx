@@ -1,21 +1,32 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, ArrowLeft, RefreshCw, Sparkles, Lock } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, RefreshCw, Lock, ShieldCheck, ShieldAlert } from 'lucide-react';
 import copyMLogo from '../image/logo.png';
 import authHeroImg from '../assets/auth-hero.png';
+import { PortalMode } from '../types';
 
 export type AuthMode = 'login' | 'register' | 'mfa' | 'forgot';
 
 export interface AuthPageProps {
   onSuccessLogin: (merchantInfo?: { name: string; email: string }) => void;
   initialMode?: AuthMode;
+  portalMode?: PortalMode;
 }
 
-export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode = 'login' }) => {
+export const AuthPage: React.FC<AuthPageProps> = ({
+  onSuccessLogin,
+  initialMode = 'login',
+  portalMode = 'merchant'
+}) => {
+  const isAdmin = portalMode === 'admin';
   const [mode, setMode] = useState<AuthMode>(initialMode);
 
   // Form states - Login
-  const [loginEmail, setLoginEmail] = useState('merchant@gmail.com');
+  const [loginEmail, setLoginEmail] = useState(isAdmin ? 'admin@copym.com' : 'merchant@gmail.com');
   const [loginPassword, setLoginPassword] = useState('password123');
+  const [activeMerchantName, setActiveMerchantName] = useState(
+    isAdmin ? 'Sarah Chen (Platform SuperAdmin)' : 'Daniel Vance'
+  );
+  const [rememberDevice, setRememberDevice] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -28,6 +39,21 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(true);
 
+  // Live password strength calculation
+  const getPasswordStrength = (pass: string) => {
+    if (!pass) return { score: 0, text: '', color: 'bg-gray-200' };
+    let score = 0;
+    if (pass.length >= 8) score++;
+    if (/[0-9]/.test(pass)) score++;
+    if (/[a-z]/.test(pass) && /[A-Z]/.test(pass)) score++;
+    if (/[^A-Za-z0-9]/.test(pass)) score++;
+
+    if (score <= 1) return { score: 1, text: 'Weak', color: 'bg-red-400' };
+    if (score <= 2) return { score: 2, text: 'Fair', color: 'bg-amber-400' };
+    if (score <= 3) return { score: 3, text: 'Good', color: 'bg-blue-400' };
+    return { score: 4, text: 'Strong', color: 'bg-[#00875A]' };
+  };
+
   // Form states - MFA
   const [mfaDigits, setMfaDigits] = useState<string[]>(['', '', '', '', '', '']);
   const [focusedMfaIndex, setFocusedMfaIndex] = useState<number>(0);
@@ -39,13 +65,24 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
   const [forgotEmail, setForgotEmail] = useState('merchant@gmail.com');
   const [forgotSubmitted, setForgotSubmitted] = useState(false);
 
-  // Dummy Handler: Sign In
+  // Handler: Sign In
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!loginEmail.trim() || !loginPassword.trim()) {
-      setErrorMessage('Please enter both email address and password.');
+    const emailTrimmed = loginEmail.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailTrimmed || !emailRegex.test(emailTrimmed)) {
+      setErrorMessage(
+        isAdmin
+          ? 'Please enter a valid platform operator work email.'
+          : 'Please enter a valid merchant email address.'
+      );
+      return;
+    }
+    if (!loginPassword.trim()) {
+      setErrorMessage('Please enter your account password.');
       return;
     }
 
@@ -55,28 +92,31 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
       setIsSubmitting(false);
       // Advance to MFA verification (Task FE-01 compliance)
       setMode('mfa');
-    }, 600);
+    }, 500);
   };
 
-  // Dummy Handler: Quick direct login bypass
-  const handleQuickLogin = () => {
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      onSuccessLogin({
-        name: 'Daniel Vance',
-        email: loginEmail || 'merchant@gmail.com'
-      });
-    }, 400);
-  };
-
-  // Dummy Handler: Register
+  // Handler: Register with validation
   const handleRegisterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!regBusinessName.trim() || !regEmail.trim()) {
-      setErrorMessage('Please fill in your business name and work email.');
+    const emailTrimmed = regEmail.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!regBusinessName.trim()) {
+      setErrorMessage('Please enter your legal business or merchant name.');
+      return;
+    }
+    if (!emailTrimmed || !emailRegex.test(emailTrimmed)) {
+      setErrorMessage('Please enter a valid corporate or work email address.');
+      return;
+    }
+    if (regPassword.length < 8) {
+      setErrorMessage('Password must be at least 8 characters long.');
+      return;
+    }
+    if (regPassword !== regConfirmPassword) {
+      setErrorMessage('Passwords do not match. Please ensure both passwords match.');
       return;
     }
     if (!agreeTerms) {
@@ -85,14 +125,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
     }
 
     setIsSubmitting(true);
-    // Simulate registration
+    // Advance to 2FA verification setup
     setTimeout(() => {
       setIsSubmitting(false);
-      onSuccessLogin({
-        name: regBusinessName,
-        email: regEmail
-      });
-    }, 700);
+      setActiveMerchantName(regBusinessName.trim());
+      setLoginEmail(emailTrimmed);
+      setMode('mfa');
+    }, 600);
   };
 
   // Dummy Handler: MFA Verify
@@ -117,8 +156,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
     setTimeout(() => {
       setIsSubmitting(false);
       onSuccessLogin({
-        name: 'Daniel Vance',
-        email: loginEmail || 'merchant@gmail.com'
+        name: activeMerchantName || (isAdmin ? 'Sarah Chen (Platform SuperAdmin)' : 'Daniel Vance'),
+        email: loginEmail || (isAdmin ? 'admin@copym.com' : 'merchant@gmail.com')
       });
     }, 600);
   };
@@ -138,12 +177,20 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
     }
   };
 
-  // Dummy Handler: Backspace navigation in MFA
+  // Handler: Keyboard navigation in MFA (Backspace & Arrow keys)
   const handleMfaKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Backspace' && !mfaDigits[index] && index > 0) {
       setFocusedMfaIndex(index - 1);
       const prevInput = document.getElementById(`mfa-${index - 1}`);
       prevInput?.focus();
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      setFocusedMfaIndex(index - 1);
+      const prevInput = document.getElementById(`mfa-${index - 1}`);
+      prevInput?.focus();
+    } else if (e.key === 'ArrowRight' && index < 5) {
+      setFocusedMfaIndex(index + 1);
+      const nextInput = document.getElementById(`mfa-${index + 1}`);
+      nextInput?.focus();
     }
   };
 
@@ -212,7 +259,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
                     <span className="text-[#00875A]">Pay</span>
                   </h2>
                   <p className="text-[12.5px] text-[#6B7280] font-normal leading-tight">
-                    Merchant Operations Portal
+                    {isAdmin ? 'Platform Operations & Security Console' : 'Merchant Operations Portal'}
                   </p>
                 </div>
               </div>
@@ -220,16 +267,18 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
               {/* Title & Subtitle */}
               <div className="mb-6">
                 <h1 className="text-[26px] sm:text-[28px] font-bold text-[#14171A] tracking-tight">
-                  Welcome back
+                  {isAdmin ? 'Platform Admin Sign In' : 'Welcome back'}
                 </h1>
                 <p className="text-[13.5px] text-[#6B7280] mt-1">
-                  Log in with your registered merchant credentials.
+                  {isAdmin
+                    ? 'Enter authorized platform credentials with mandatory hardware/TOTP 2FA.'
+                    : 'Log in with your registered merchant credentials.'}
                 </p>
               </div>
 
               {/* Error Alert */}
               {errorMessage && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs">
+                <div role="alert" aria-live="polite" className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs animate-fadeIn">
                   {errorMessage}
                 </div>
               )}
@@ -239,13 +288,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
                 {/* Email Address */}
                 <div>
                   <label className="block text-[13px] font-semibold text-[#14171A] mb-1.5">
-                    Email Address
+                    {isAdmin ? 'Operator Work Email' : 'Email Address'}
                   </label>
                   <input
                     type="email"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="merchant@gmail.com"
+                    placeholder={isAdmin ? 'admin@copym.com' : 'merchant@gmail.com'}
                     required
                     className="w-full px-4 py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00875A] focus:ring-1 focus:ring-[#00875A] transition shadow-2xs"
                   />
@@ -255,7 +304,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="text-[13px] font-semibold text-[#14171A]">
-                      Password
+                      {isAdmin ? 'Platform Master Password' : 'Password'}
                     </label>
                     <button
                       type="button"
@@ -275,6 +324,20 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
                   />
                 </div>
 
+                {/* Remember device checkbox */}
+                <div className="flex items-center gap-2 pt-0.5">
+                  <input
+                    type="checkbox"
+                    id="rememberDevice"
+                    checked={rememberDevice}
+                    onChange={(e) => setRememberDevice(e.target.checked)}
+                    className="w-4 h-4 rounded text-[#00875A] focus:ring-[#00875A] accent-[#00875A] border-gray-300 cursor-pointer"
+                  />
+                  <label htmlFor="rememberDevice" className="text-xs text-[#6B7280] select-none cursor-pointer">
+                    Remember this device for 30 days
+                  </label>
+                </div>
+
                 {/* Submit Button */}
                 <div className="pt-2">
                   <button
@@ -288,40 +351,40 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
                         <span>Authenticating...</span>
                       </>
                     ) : (
-                      <span>Sign In to Portal</span>
+                      <>
+                        {isAdmin && <ShieldCheck className="w-4 h-4 text-white" />}
+                        <span>{isAdmin ? 'Authenticate & Proceed to 2FA' : 'Sign In to Portal'}</span>
+                      </>
                     )}
                   </button>
                 </div>
 
-                {/* Quick 1-Click Demo Sign-in Pill for reviewers */}
-                <div className="pt-2 flex items-center justify-between bg-emerald-50/70 border border-emerald-100 rounded-xl px-3 py-2 text-xs">
-                  <span className="text-[#00875A] font-medium flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    Sandbox Quick Test
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleQuickLogin}
-                    className="text-[#00875A] hover:underline font-bold text-xs"
-                  >
-                    Bypass to Console →
-                  </button>
-                </div>
-
-                {/* Register Link */}
-                <div className="pt-5 text-center text-sm text-[#6B7280]">
-                  Don't have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setErrorMessage(null);
-                      setMode('register');
-                    }}
-                    className="font-semibold text-[#00875A] hover:underline transition ml-1"
-                  >
-                    Register Merchant
-                  </button>
-                </div>
+                {/* Bottom Section: Merchant Register vs Admin Security Notice */}
+                {isAdmin ? (
+                  <div className="pt-6 border-t border-gray-100 text-center text-xs text-[#6B7280] space-y-1">
+                    <div className="flex items-center justify-center gap-1.5 font-semibold text-slate-800">
+                      <ShieldAlert className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Authorized Platform Personnel Only</span>
+                    </div>
+                    <p className="text-[11px] text-gray-400">
+                      High-privilege console. All operator actions & sessions are cryptographically logged to the audit trail.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="pt-5 text-center text-sm text-[#6B7280]">
+                    Don't have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setErrorMessage(null);
+                        setMode('register');
+                      }}
+                      className="font-semibold text-[#00875A] hover:underline transition ml-1"
+                    >
+                      Register Merchant
+                    </button>
+                  </div>
+                )}
               </form>
             </div>
           )}
@@ -331,18 +394,39 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
           {/* ========================================================= */}
           {mode === 'register' && (
             <div className="animate-fadeIn">
-              {/* Brand Header */}
-              <div className="flex items-center gap-2.5 mb-7">
-                <img
-                  src={copyMLogo}
-                  alt="CopyM Pay"
-                  className="w-8 h-8 object-contain flex-shrink-0"
-                />
-                <h2 className="text-[19px] font-bold text-[#14171A] tracking-tight leading-tight flex items-center gap-1">
-                  <span>CopyM</span>
-                  <span className="text-[#00875A]">Pay</span>
-                </h2>
-              </div>
+              {isAdmin ? (
+                <div className="py-8 text-center space-y-4">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-800 flex items-center justify-center mx-auto border border-slate-200">
+                    <Lock className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-bold text-gray-900">Platform Admin Registration Disabled</h1>
+                    <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto leading-relaxed">
+                      Platform SuperAdmin accounts cannot be self-registered. Operator credentials must be provisioned internally by DevSecOps via multi-party key ceremony.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setMode('login')}
+                    className="px-5 py-2.5 bg-[#00875A] hover:bg-[#00734D] text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
+                  >
+                    ← Return to Admin Sign In
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* Brand Header */}
+                  <div className="flex items-center gap-2.5 mb-7">
+                    <img
+                      src={copyMLogo}
+                      alt="CopyM Pay"
+                      className="w-8 h-8 object-contain flex-shrink-0"
+                    />
+                    <h2 className="text-[19px] font-bold text-[#14171A] tracking-tight leading-tight flex items-center gap-1">
+                      <span>CopyM</span>
+                      <span className="text-[#00875A]">Pay</span>
+                    </h2>
+                  </div>
 
               {/* Title & Subtitle */}
               <div className="mb-6">
@@ -356,7 +440,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
 
               {/* Error Alert */}
               {errorMessage && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs">
+                <div role="alert" aria-live="polite" className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs animate-fadeIn">
                   {errorMessage}
                 </div>
               )}
@@ -395,9 +479,16 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
 
                 {/* Password with Eye Toggle */}
                 <div>
-                  <label className="block text-[13px] font-semibold text-[#14171A] mb-1.5">
-                    Password
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-[13px] font-semibold text-[#14171A]">
+                      Password
+                    </label>
+                    {regPassword && (
+                      <span className="text-[11px] font-semibold text-gray-500">
+                        Strength: <span className={getPasswordStrength(regPassword).score >= 3 ? 'text-[#00875A]' : 'text-amber-600'}>{getPasswordStrength(regPassword).text}</span>
+                      </span>
+                    )}
+                  </div>
                   <div className="relative">
                     <input
                       type={showPassword ? 'text' : 'password'}
@@ -410,21 +501,44 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
                       className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                  <p className="text-[11.5px] text-[#6B7280] mt-1">
+                  {/* Live Segmented Strength Bar */}
+                  {regPassword && (
+                    <div className="grid grid-cols-4 gap-1 mt-1.5">
+                      {[1, 2, 3, 4].map((step) => {
+                        const strength = getPasswordStrength(regPassword);
+                        const isFilled = strength.score >= step;
+                        return (
+                          <div
+                            key={step}
+                            className={`h-1 rounded-full transition-all duration-300 ${isFilled ? strength.color : 'bg-gray-200'}`}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
+                  <p className="text-[11px] text-[#6B7280] mt-1">
                     Minimum 8 characters, 1 number, 1 special character
                   </p>
                 </div>
 
                 {/* Confirm Password with Eye Toggle */}
                 <div>
-                  <label className="block text-[13px] font-semibold text-[#14171A] mb-1.5">
-                    Confirm Password
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-[13px] font-semibold text-[#14171A]">
+                      Confirm Password
+                    </label>
+                    {regConfirmPassword && (
+                      <span className={`text-[11px] font-semibold ${regPassword === regConfirmPassword ? 'text-[#00875A]' : 'text-red-500'}`}>
+                        {regPassword === regConfirmPassword ? '✓ Passwords match' : '✕ Passwords do not match'}
+                      </span>
+                    )}
+                  </div>
                   <div className="relative">
                     <input
                       type={showConfirmPassword ? 'text' : 'password'}
@@ -432,11 +546,16 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
                       onChange={(e) => setRegConfirmPassword(e.target.value)}
                       placeholder="••••••••"
                       required
-                      className="w-full pl-4 pr-11 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00875A] focus:ring-1 focus:ring-[#00875A] transition shadow-2xs"
+                      className={`w-full pl-4 pr-11 py-2.5 sm:py-3 bg-white border rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:ring-1 transition shadow-2xs ${
+                        regConfirmPassword && regPassword !== regConfirmPassword
+                          ? 'border-red-300 focus:border-red-500 focus:ring-red-400'
+                          : 'border-[#E2E4E9] focus:border-[#00875A] focus:ring-[#00875A]'
+                      }`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
                       className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5"
                     >
                       {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -494,6 +613,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
                   </button>
                 </div>
               </form>
+              </>
+              )}
             </div>
           )}
 
@@ -515,7 +636,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
                     <span className="text-[#00875A]">Pay</span>
                   </h2>
                   <p className="text-[12.5px] text-[#6B7280] font-normal leading-tight">
-                    Merchant Operations Portal
+                    {isAdmin ? 'Platform Operations & Security Console' : 'Merchant Operations Portal'}
                   </p>
                 </div>
               </div>
@@ -525,15 +646,17 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
                   {/* Title & Subtitle */}
                   <div className="mb-6">
                     <h1 className="text-[26px] sm:text-[28px] font-bold text-[#14171A] tracking-tight">
-                      Verify your identity
+                      {isAdmin ? 'Platform SuperAdmin 2FA Gate' : 'Verify your identity'}
                     </h1>
                     <p className="text-[13.5px] text-[#6B7280] mt-1.5 leading-relaxed">
-                      Open your authenticator app and enter the 6-digit code for your CopyM Pay account.
+                      {isAdmin
+                        ? 'Enter your 6-digit hardware/TOTP authenticator security token to unlock administrative platform operations.'
+                        : 'Open your authenticator app and enter the 6-digit code for your CopyM Pay account.'}
                     </p>
                   </div>
 
                   {mfaError && (
-                    <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs">
+                    <div role="alert" aria-live="polite" className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs animate-fadeIn">
                       {mfaError}
                     </div>
                   )}
@@ -541,7 +664,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
                   <form onSubmit={handleMfaSubmit}>
                     {/* Verification Code Label */}
                     <label className="block text-[13px] font-semibold text-[#14171A] mb-2.5">
-                      Verification code
+                      {isAdmin ? 'Platform Security Token (6 Digits)' : 'Verification code'}
                     </label>
 
                     {/* 6 Digit Input Matrix */}
@@ -555,6 +678,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
                             type="text"
                             inputMode="numeric"
                             autoComplete="one-time-code"
+                            aria-label={`Verification digit ${i + 1} of 6`}
                             maxLength={1}
                             value={digit}
                             autoFocus={i === 0}
@@ -573,18 +697,33 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
                     </div>
 
                     {/* Helper Subtext below boxes */}
-                    <div className="flex items-center justify-between text-[12.5px] text-[#6B7280] mt-2.5 mb-6">
+                    <div className="flex items-center justify-between text-[12.5px] text-[#6B7280] mt-2.5 mb-4">
                       <span>Use the current code shown in your app.</span>
                       <button
                         type="button"
                         onClick={() => {
-                          setMfaDigits(['8', '4', '9', '2', '0', '1']);
+                          const demoCode = isAdmin ? ['1', '2', '3', '4', '5', '6'] : ['8', '4', '9', '2', '0', '1'];
+                          setMfaDigits(demoCode);
                           setFocusedMfaIndex(5);
                         }}
-                        className="text-[#00875A] hover:underline font-medium text-xs"
+                        className="text-[#00875A] hover:underline font-medium text-xs cursor-pointer"
                       >
-                        Paste code (849201)
+                        Paste code ({isAdmin ? '123456' : '849201'})
                       </button>
+                    </div>
+
+                    {/* Trust this device checkbox */}
+                    <div className="flex items-center gap-2 mb-5">
+                      <input
+                        type="checkbox"
+                        id="mfaRemember"
+                        checked={rememberDevice}
+                        onChange={(e) => setRememberDevice(e.target.checked)}
+                        className="w-4 h-4 rounded text-[#00875A] focus:ring-[#00875A] accent-[#00875A] border-gray-300 cursor-pointer"
+                      />
+                      <label htmlFor="mfaRemember" className="text-xs text-[#6B7280] select-none cursor-pointer">
+                        Trust this device for 30 days
+                      </label>
                     </div>
 
                     {/* Submit Button */}
@@ -596,10 +735,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
                       {isSubmitting ? (
                         <>
                           <RefreshCw className="w-4 h-4 animate-spin" />
-                          <span>Verifying & signing in...</span>
+                          <span>{isAdmin ? 'Verifying admin authorization...' : 'Verifying & signing in...'}</span>
                         </>
                       ) : (
-                        <span>Verify & sign in</span>
+                        <span>{isAdmin ? 'Verify & Access Admin Console' : 'Verify & sign in'}</span>
                       )}
                     </button>
 
@@ -729,10 +868,12 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
 
               <div className="mb-6">
                 <h1 className="text-[26px] font-bold text-[#14171A] tracking-tight">
-                  Reset your password
+                  {isAdmin ? 'Privileged Password Reset' : 'Reset your password'}
                 </h1>
                 <p className="text-[13.5px] text-[#6B7280] mt-1">
-                  Enter your registered work email to receive password reset instructions.
+                  {isAdmin
+                    ? 'Enter your platform administrator work email to initiate the Security Officer recovery protocol.'
+                    : 'Enter your registered work email to receive password reset instructions.'}
                 </p>
               </div>
 
@@ -766,7 +907,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccessLogin, initialMode 
                       type="email"
                       value={forgotEmail}
                       onChange={(e) => setForgotEmail(e.target.value)}
-                      placeholder="merchant@gmail.com"
+                      placeholder={isAdmin ? 'admin@copym.com' : 'merchant@gmail.com'}
                       required
                       className="w-full px-4 py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00875A] focus:ring-1 focus:ring-[#00875A] transition shadow-2xs"
                     />

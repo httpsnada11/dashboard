@@ -20,27 +20,42 @@ import {
   DepositsPage,
   ExceptionsPage,
   PayoutsPage,
+  CustomersPage,
   DevelopersPage,
   TeamSecurityPage,
   SettingsPage,
-  SectionView
-  // AuthPage (Temporarily commented out as requested)
+  SectionView,
+  AuthPage,
+  HostedCheckoutPage,
+  AdminOverviewPage,
+  AdminMerchantsPage,
+  AdminExceptionsPage,
+  AdminPayoutsPage,
+  AdminAuditPage
 } from './pages';
 
-import { Transaction, PayoutRecord } from './types';
+import { Transaction, PayoutRecord, PortalMode, AdminTabId } from './types';
 
 // Uniform Page Metadata matching the exact screenshot structure
 const PAGE_META: Record<string, { title: string; category: string }> = {
+  // Merchant Portal Routes
   dashboard: { title: 'Dashboard', category: 'Overview' },
   deposits: { title: 'Deposits', category: 'Money In' },
   exceptions: { title: 'Exceptions', category: 'Money In' },
   payouts: { title: 'Payouts', category: 'Money Out' },
+  customers: { title: 'Address book', category: 'Money Out' },
   balances: { title: 'Balances', category: 'Treasury' },
   convert: { title: 'Convert', category: 'Treasury' },
   statements: { title: 'Statements', category: 'Treasury' },
   developers: { title: 'Developers', category: 'Build' },
   'team-security': { title: 'Team & security', category: 'Account' },
   settings: { title: 'Settings', category: 'Account' },
+  // Platform Admin Portal Routes
+  'admin-overview': { title: 'AML & KYT Attention Queue', category: 'Platform Operations' },
+  'admin-merchants': { title: 'Merchant KYB Adjudication', category: 'Platform Compliance' },
+  'admin-exceptions': { title: 'Payment Exceptions & Cold Vault Sweeps', category: 'Treasury Operations' },
+  'admin-payouts': { title: 'Maker-Checker Approvals Queue', category: 'Platform Treasury' },
+  'admin-audit': { title: 'Immutable Audit Trail', category: 'Security & Governance' },
 };
 
 // Initial distinct payout dataset
@@ -99,74 +114,42 @@ const INITIAL_PAYOUTS: PayoutRecord[] = [
     fullRef: 'pay_4TM1557288aaK09',
     amount: '22,400.00',
     numericAmount: 22400,
-    network: 'USDC · Polygon',
-    customer: 'cust_90218',
-    destinationType: 'DESTINATION · PAYROLL DISBURSEMENT',
-    destinationAddress: '0x38bE..11aD',
-    fullAddress: '0x38bE8921bca9082ef45511aD',
-    requestedBy: 'Sarah Chen (Batch API)',
-    complianceText: 'Whitelisted merchant contract · Verified',
-    status: 'Needs approval',
-    createdAt: '28 Oct 2026, 11:30'
+    network: 'USDC · SOLANA',
+    customer: 'cust_99214',
+    destinationType: 'DESTINATION · TREASURY CONSOLIDATION',
+    destinationAddress: '7XqP..2vNp',
+    fullAddress: '7XqP110293847aa1928374bb2vNp',
+    requestedBy: 'Sarah Chen',
+    complianceText: 'Whitelisted cold multi-sig wallet',
+    status: 'Completed',
+    createdAt: '28 Oct 2026, 11:15'
   },
   {
     id: 'pay_5',
-    ref: 'pay_8HQ6..W32',
-    fullRef: 'pay_8HQ611094ba3W32',
-    amount: '6,150.00',
-    numericAmount: 6150,
+    ref: 'pay_2WP8..M33',
+    fullRef: 'pay_2WP800293118M33',
+    amount: '5,100.00',
+    numericAmount: 5100,
     network: 'USDT · TRON',
-    customer: 'cust_38104',
-    destinationType: 'DESTINATION · MERCHANT SWEEP',
-    destinationAddress: 'TF7mQ..09xP',
-    fullAddress: 'TF7mQqZ9z8VnLw7h4Jb1k8Pq5D2g09xP',
-    requestedBy: 'David Al-Mansoor',
-    complianceText: 'KYC verified · Dual sign-off approved',
-    status: 'In flight',
-    createdAt: '28 Oct 2026, 10:15'
-  },
-  {
-    id: 'pay_6',
-    ref: 'pay_2PL5..X71',
-    fullRef: 'pay_2PL590412ee8X71',
-    amount: '1,800.00',
-    numericAmount: 1800,
-    network: 'USDT · BEP-20',
-    customer: 'cust_72350',
+    customer: 'cust_47219',
     destinationType: 'DESTINATION · AFFILIATE COMMISSION',
-    destinationAddress: '0x7a2C..5eB9',
-    fullAddress: '0x7a2C88910ebca9082ef75eB9',
-    requestedBy: 'Alex Rivera',
-    complianceText: 'Tier 1 Automated clearance pass',
-    status: 'Completed',
-    createdAt: '27 Oct 2026, 18:20'
-  },
-  {
-    id: 'pay_7',
-    ref: 'pay_6ZF4..M90',
-    fullRef: 'pay_6ZF477123aa1M90',
-    amount: '35,000.00',
-    numericAmount: 35000,
-    network: 'USDC · ERC-20',
-    customer: 'cust_49821',
-    destinationType: 'DESTINATION · TREASURY REBALANCE',
-    destinationAddress: '0x15eA..77f0',
-    fullAddress: '0x15eA772180a9bC51098277f0',
-    requestedBy: 'Hannah Lindberg',
-    complianceText: 'Enterprise multi-sig quorum verified',
-    status: 'Completed',
-    createdAt: '27 Oct 2026, 16:05'
+    destinationAddress: 'TR7N..8b1A',
+    fullAddress: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
+    requestedBy: 'David Zhang',
+    complianceText: 'Under threshold ($10k) auto-approved',
+    status: 'In flight',
+    createdAt: '28 Oct 2026, 09:30'
   }
 ];
 
-// Initial dataset strictly matching the provided design
+// Initial distinct deposit/activity dataset
 const INITIAL_ACTIVITIES: Transaction[] = [
   {
     id: 'tx_1',
     type: 'Deposit',
     reference: 'dep_8Hq2..f31',
-    fullRef: 'dep_8Hq29014ba31f31',
-    customer: 'cust_10442',
+    fullRef: 'dep_8Hq288192001f31',
+    customer: 'cust_92104',
     network: 'USDT · TRON',
     amount: '+ 2,500.00',
     numericAmount: 2500,
@@ -176,26 +159,26 @@ const INITIAL_ACTIVITIES: Transaction[] = [
   {
     id: 'tx_2',
     type: 'Deposit',
-    reference: 'dep_8Hq1..a90',
-    fullRef: 'dep_8Hq15572bc89a90',
-    customer: 'cust_20981',
-    network: 'USDT · ERC-20',
-    amount: '+ 12,000.00',
-    numericAmount: 12000,
-    status: 'Confirming 7/12',
-    time: '6 min ago'
+    reference: 'dep_3Nk4..a19',
+    fullRef: 'dep_3Nk477102938a19',
+    customer: 'cust_44812',
+    network: 'USDT · TRON',
+    amount: '+ 1,200.00',
+    numericAmount: 1200,
+    status: 'Confirming (14/19)',
+    time: '9 min ago'
   },
   {
     id: 'tx_3',
-    type: 'Payout',
-    reference: 'po_5kT..77c',
-    fullRef: 'po_5kTr8941098e77c',
-    customer: 'cust_10213',
+    type: 'Deposit',
+    reference: 'dep_1Pp7..b82',
+    fullRef: 'dep_1Pp755910234b82',
+    customer: 'cust_77192',
     network: 'USDT · TRON',
-    amount: '- 4,200.00',
-    numericAmount: -4200,
-    status: 'Awaiting approval',
-    time: '14 min ago'
+    amount: '+ 5,000.00',
+    numericAmount: 5000,
+    status: 'Credited',
+    time: '18 min ago'
   },
   {
     id: 'tx_4',
@@ -224,7 +207,91 @@ const INITIAL_ACTIVITIES: Transaction[] = [
 ];
 
 export function App() {
-  // const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('copym_auth_session') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const [currentUser, setCurrentUser] = useState<{ name: string; email: string }>(() => {
+    try {
+      const savedName = localStorage.getItem('copym_merchant_name');
+      const savedEmail = localStorage.getItem('copym_merchant_email');
+      if (savedName) {
+        return { name: savedName, email: savedEmail || 'merchant@gmail.com' };
+      }
+    } catch {
+      // ignore
+    }
+    return { name: 'Daniel Vance', email: 'daniel@gmail.com' };
+  });
+
+  // Portal Mode: 'merchant' (Port 3000) or 'admin' (Port 3001)
+  const [portalMode, setPortalMode] = useState<PortalMode>(() => {
+    try {
+      // 1. Port-based detection: 3001 is dedicated Admin, 3000 is Merchant
+      if (window.location.port === '3001' || import.meta.env.MODE === 'admin') {
+        return 'admin';
+      }
+      if (window.location.port === '3000') {
+        return 'merchant';
+      }
+      // 2. URL Path-based detection
+      const path = window.location.pathname.toLowerCase();
+      if (path.includes('/admin') || path.includes('/ops-7x9k')) {
+        return 'admin';
+      }
+      const saved = localStorage.getItem('copym_portal_mode') as PortalMode;
+      if (saved === 'admin' || saved === 'merchant') return saved;
+    } catch {
+      // ignore
+    }
+    return 'merchant';
+  });
+
+  // Admin Portal Tab
+  const [adminTab, setAdminTab] = useState<AdminTabId>(() => {
+    try {
+      const path = window.location.pathname.toLowerCase();
+      if (path.includes('/merchants')) return 'admin-merchants';
+      if (path.includes('/exceptions')) return 'admin-exceptions';
+      if (path.includes('/payouts')) return 'admin-payouts';
+      if (path.includes('/audit')) return 'admin-audit';
+      if (path.includes('/overview')) return 'admin-overview';
+    } catch {
+      // ignore
+    }
+    return 'admin-overview';
+  });
+
+  const handleSuccessLogin = (merchantInfo?: { name: string; email: string }) => {
+    const defaultUser =
+      portalMode === 'admin'
+        ? { name: 'Sarah Chen (Platform SuperAdmin)', email: 'admin@copym.com' }
+        : { name: 'Daniel Vance', email: 'merchant@gmail.com' };
+    const user = merchantInfo || defaultUser;
+    setCurrentUser(user);
+    try {
+      localStorage.setItem('copym_auth_session', 'true');
+      localStorage.setItem('copym_merchant_name', user.name);
+      localStorage.setItem('copym_merchant_email', user.email);
+    } catch {
+      // ignore storage errors
+    }
+    setIsAuthenticated(true);
+  };
+
+  const handleSignOut = () => {
+    try {
+      localStorage.removeItem('copym_auth_session');
+    } catch {
+      // ignore
+    }
+    setIsAuthenticated(false);
+  };
+
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [activities, setActivities] = useState<Transaction[]>(INITIAL_ACTIVITIES);
@@ -251,7 +318,63 @@ export function App() {
   const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
 
-  const currentMeta = PAGE_META[activeTab] || PAGE_META.dashboard;
+  // Sync URL history state smoothly with Portal Mode & Tabs
+  useEffect(() => {
+    try {
+      localStorage.setItem('copym_portal_mode', portalMode);
+      if (portalMode === 'admin') {
+        const routeMap: Record<AdminTabId, string> = {
+          'admin-overview': '/admin/overview',
+          'admin-merchants': '/admin/merchants',
+          'admin-exceptions': '/admin/exceptions',
+          'admin-payouts': '/admin/payouts',
+          'admin-audit': '/admin/audit',
+        };
+        const target = routeMap[adminTab] || '/admin/overview';
+        if (window.location.pathname !== target) {
+          window.history.replaceState(null, '', target);
+        }
+      } else {
+        if (window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/ops-7x9k')) {
+          window.history.replaceState(null, '', '/' + activeTab);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, [portalMode, adminTab, activeTab]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname.toLowerCase();
+      if (path.includes('/admin') || path.includes('/ops-7x9k')) {
+        setPortalMode('admin');
+        if (path.includes('/merchants')) setAdminTab('admin-merchants');
+        else if (path.includes('/exceptions')) setAdminTab('admin-exceptions');
+        else if (path.includes('/payouts')) setAdminTab('admin-payouts');
+        else if (path.includes('/audit')) setAdminTab('admin-audit');
+        else setAdminTab('admin-overview');
+      } else {
+        setPortalMode('merchant');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Dynamically update document title based on portal mode and active tab
+  useEffect(() => {
+    if (portalMode === 'admin') {
+      document.title = 'CopyM Pay — Platform Admin Operations (:3001)';
+    } else {
+      document.title = 'CopyM Pay — Merchant Treasury Portal (:3000)';
+    }
+  }, [portalMode]);
+
+  const currentMeta =
+    portalMode === 'admin'
+      ? PAGE_META[adminTab] || PAGE_META['admin-overview']
+      : PAGE_META[activeTab] || PAGE_META.dashboard;
 
   // Handle Refresh
   const handleRefresh = () => {
@@ -282,16 +405,11 @@ export function App() {
     setActivities(prev => [completeTx, ...prev]);
   };
 
-  // Add Payout from modal - Directly prepends to both Payouts rows and Recent activities!
+  // Add Payout from modal - Directly prepends to both Payouts rows and Recent activities
   const handleAddPayout = (newPayoutItem: PayoutRecord) => {
-    // 1. Prepend directly to Payouts Cards Stack
     setPayouts(prev => [newPayoutItem, ...prev]);
-
-    // 2. Adjust vault balance
     setBalance(prev => Math.max(0, prev - newPayoutItem.numericAmount));
     setUsdtBalance(prev => Math.max(0, prev - newPayoutItem.numericAmount));
-
-    // 3. Add to Recent Activity table
     setActivities(prev => [{
       id: newPayoutItem.id,
       type: 'Payout',
@@ -301,56 +419,113 @@ export function App() {
       network: newPayoutItem.network,
       amount: `- ${newPayoutItem.amount}`,
       numericAmount: -newPayoutItem.numericAmount,
-      status: 'Awaiting approval',
+      status: 'In flight',
       time: 'Just now'
     }, ...prev]);
   };
 
-  // Execute Swap
-  const handleExecuteSwap = () => {
-    handleRefresh();
+  // Swap currency
+  const handleExecuteSwap = (fromAmount: number, toAmount: number) => {
+    setUsdtBalance(prev => Math.max(0, prev - fromAmount));
+    setBalance(prev => prev + toAmount);
+    setActivities(prev => [{
+      id: 'tx_swap_' + Date.now(),
+      type: 'Swap',
+      reference: 'swp_' + Math.random().toString(36).substring(2, 6),
+      fullRef: 'swp_conversion_internal',
+      customer: 'Self Treasury',
+      network: 'USDT -> USDC',
+      amount: `~ $${toAmount.toLocaleString()}`,
+      numericAmount: toAmount,
+      status: 'Completed',
+      time: 'Just now'
+    }, ...prev]);
   };
 
-  // Live simulation effect when "Play" is enabled
+  // Real-time Background Payment Simulator (Play mode)
   useEffect(() => {
     if (!isLiveSimulating) return;
 
     const interval = setInterval(() => {
-      const isDeposit = Math.random() > 0.4;
-      const amounts = [150, 480, 1200, 3100, 500];
-      const selectedAmt = amounts[Math.floor(Math.random() * amounts.length)];
-      const networks = ['USDT · TRON', 'USDT · ERC-20', 'USDC · ERC-20'];
-      const selectedNet = networks[Math.floor(Math.random() * networks.length)];
+      const networks = ['USDT · TRON', 'USDC · ERC-20', 'USDT · BSC'];
+      const chosenNet = networks[Math.floor(Math.random() * networks.length)];
+      const randAmt = (Math.floor(Math.random() * 45) + 5) * 50;
+      const refSuffix = Math.random().toString(36).substring(2, 5);
+      const custNum = Math.floor(10000 + Math.random() * 90000);
 
-      const newTx: Transaction = {
-        id: 'tx_' + Date.now(),
-        type: isDeposit ? 'Deposit' : 'Payout',
-        reference: `${isDeposit ? 'dep' : 'po'}_${Math.random().toString(36).substring(2, 6)}..${Math.random().toString(36).substring(2, 5)}`,
-        fullRef: `hash_${Math.random().toString(36).substring(2, 12)}`,
-        customer: `cust_${Math.floor(10000 + Math.random() * 90000)}`,
-        network: selectedNet,
-        amount: isDeposit ? `+ ${selectedAmt.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : `- ${selectedAmt.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
-        numericAmount: isDeposit ? selectedAmt : -selectedAmt,
-        status: isDeposit ? 'Credited' : 'Completed',
+      const incomingTx: Transaction = {
+        id: 'tx_sim_' + Date.now(),
+        type: 'Deposit',
+        reference: `dep_${refSuffix}..live`,
+        fullRef: `dep_${refSuffix}_live_generated_event`,
+        customer: `cust_${custNum}`,
+        network: chosenNet,
+        amount: `+ ${randAmt.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+        numericAmount: randAmt,
+        status: 'Credited',
         time: 'Just now'
       };
 
-      setActivities(prev => [newTx, ...prev.slice(0, 8)]);
-      if (isDeposit) {
-        setBalance(prev => prev + selectedAmt);
-        setUsdtBalance(prev => prev + selectedAmt);
-      } else {
-        setBalance(prev => Math.max(0, prev - selectedAmt));
-        setUsdtBalance(prev => Math.max(0, prev - selectedAmt));
-      }
-    }, 7000);
+      setActivities(prev => [incomingTx, ...prev.slice(0, 19)]);
+      setBalance(prev => prev + randAmt);
+      setUsdtBalance(prev => prev + randAmt);
+    }, 4500);
 
     return () => clearInterval(interval);
   }, [isLiveSimulating]);
 
-  // Dynamic Header Action based on current route
+  // Context-Aware Action Button for Uniform Page Header
   const renderHeaderAction = () => {
-    if (activeTab === 'deposits') {
+    // Admin Operations Actions
+    if (portalMode === 'admin') {
+      if (adminTab === 'admin-overview') {
+        return (
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-600 border border-red-200">
+              3 Critical KYT Flags
+            </span>
+          </div>
+        );
+      }
+      if (adminTab === 'admin-merchants') {
+        return (
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+              2 KYB Reviews Pending
+            </span>
+          </div>
+        );
+      }
+      if (adminTab === 'admin-exceptions') {
+        return (
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-600 border border-blue-200">
+              Hot-Vault Sweeps Active
+            </span>
+          </div>
+        );
+      }
+      if (adminTab === 'admin-payouts') {
+        return (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsPayoutModalOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11.5px] sm:text-[12px] font-semibold shadow-sm transition-all select-none"
+            >
+              <span className="text-sm font-bold leading-none">+</span>
+              <span>Submit Payout for Approval</span>
+            </button>
+          </div>
+        );
+      }
+      if (adminTab === 'admin-audit') {
+        return null;
+      }
+      return null;
+    }
+
+    // Merchant Portal Actions
+    if (activeTab === 'dashboard' || activeTab === 'deposits') {
       return (
         <button
           onClick={() => {
@@ -382,6 +557,16 @@ export function App() {
             <span className="text-sm font-bold leading-none">+</span>
             <span>Create payout</span>
           </button>
+        </div>
+      );
+    }
+
+    if (activeTab === 'customers') {
+      return (
+        <div className="flex items-center gap-2">
+          <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+            24h Anti-Theft Active
+          </span>
         </div>
       );
     }
@@ -430,16 +615,36 @@ export function App() {
     return null;
   };
 
-  /*
-  // Dedicated Auth & 2FA View (Temporarily commented out as requested)
-  if (!isAuthenticated) {
+  // Ticket FE-09: Public Payer Checkout Route (No Auth Required)
+  const isCheckoutRoute =
+    typeof window !== 'undefined' &&
+    (window.location.pathname.startsWith('/checkout') ||
+      window.location.pathname.startsWith('/c/'));
+
+  if (isCheckoutRoute) {
+    const pathParts = window.location.pathname.split('/');
+    const rawId = pathParts[pathParts.length - 1];
+    const invoiceId = rawId && rawId !== 'checkout' && rawId !== 'c' ? rawId : 'INV-8849-2041';
+
     return (
-      <AuthPage
-        onSuccessLogin={() => setIsAuthenticated(true)}
+      <HostedCheckoutPage
+        invoiceId={invoiceId}
+        merchantName="Apex Forex Global Ltd"
+        orderReference="ORD-948271"
+        amount="2,500.00"
       />
     );
   }
-  */
+
+  // Dedicated Auth & 2FA View
+  if (!isAuthenticated) {
+    return (
+      <AuthPage
+        onSuccessLogin={handleSuccessLogin}
+        portalMode={portalMode}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen lg:h-screen bg-white flex flex-col font-sans selection:bg-[#00C076] selection:text-white lg:overflow-hidden">
@@ -455,7 +660,9 @@ export function App() {
         onOpenSecurityModal={() => setIsSecurityModalOpen(true)}
         mobileSidebarOpen={mobileSidebarOpen}
         setMobileSidebarOpen={setMobileSidebarOpen}
-        // onSignOut={() => setIsAuthenticated(false)}
+        onSignOut={handleSignOut}
+        currentUser={currentUser}
+        portalMode={portalMode}
       />
 
       {/* Main Workspace: Sidebar on left + Large Rounded Canvas on right */}
@@ -464,6 +671,9 @@ export function App() {
         <Sidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
+          portalMode={portalMode}
+          adminTab={adminTab}
+          setAdminTab={setAdminTab}
           onOpenDevModal={() => setIsDevModalOpen(true)}
           onOpenSecurityModal={() => setIsSecurityModalOpen(true)}
           isOpen={mobileSidebarOpen}
@@ -472,6 +682,7 @@ export function App() {
           isRefreshing={isRefreshing}
           isLiveSimulating={isLiveSimulating}
           setIsLiveSimulating={setIsLiveSimulating}
+          userName={currentUser.name}
         />
 
         {/* Large Rounded Content Canvas */}
@@ -484,79 +695,100 @@ export function App() {
               action={renderHeaderAction()}
             />
 
-            {activeTab === 'dashboard' ? (
-              /* Dedicated Dashboard Overview Page */
-              <DashboardPage
-                balance={balance.toLocaleString('en-US')}
-                usdtBalance={usdtBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                onOpenDeposit={() => {
-                  setDepositModalInitial(null);
-                  setIsDepositModalOpen(true);
-                }}
-                onOpenPayout={() => setIsPayoutModalOpen(true)}
-                onOpenSwap={() => setIsSwapModalOpen(true)}
-                activities={activities}
-                searchQuery={searchQuery}
-                onSelectTransaction={(tx) => setSelectedTx(tx)}
-              />
-            ) : activeTab === 'deposits' ? (
-              /* Dedicated Deposits Page */
-              <DepositsPage
-                searchQuery={searchQuery}
-                onOpenNewDeposit={() => {
-                  setDepositModalInitial(null);
-                  setIsDepositModalOpen(true);
-                }}
-                onSelectDeposit={(dep) => setSelectedTx({
-                  id: dep.id,
-                  type: 'Deposit',
-                  reference: dep.depositId,
-                  fullRef: dep.refId,
-                  customer: dep.customer,
-                  network: dep.assetChain,
-                  amount: dep.received !== '—' ? `+ ${dep.received}` : `(Expected ${dep.expected})`,
-                  numericAmount: dep.numericReceived,
-                  status: dep.status,
-                  time: dep.created
-                })}
-              />
-            ) : activeTab === 'exceptions' ? (
-              /* Dedicated Exceptions Page */
-              <ExceptionsPage globalSearchQuery={searchQuery} />
-            ) : activeTab === 'payouts' ? (
-              /* Dedicated Payouts Page with Live State Synchronization */
-              <PayoutsPage
-                payouts={payouts}
-                setPayouts={setPayouts}
-                globalSearchQuery={searchQuery}
-                onOpenCreatePayout={() => setIsPayoutModalOpen(true)}
-              />
-            ) : activeTab === 'developers' ? (
-              /* Dedicated Developers Page matching Figma design */
-              <DevelopersPage
-                onOpenDocs={() => setIsDevModalOpen(true)}
-                openCreateKey={isCreateKeyOpen}
-                setOpenCreateKey={setIsCreateKeyOpen}
-              />
-            ) : activeTab === 'team-security' ? (
-              /* Dedicated Team & Security Page matching Figma design */
-              <TeamSecurityPage
-                openInviteMember={isInviteOpen}
-                setOpenInviteMember={setIsInviteOpen}
-                openReviewRoles={isRolesOpen}
-                setOpenReviewRoles={setIsRolesOpen}
-              />
-            ) : activeTab === 'settings' ? (
-              /* Dedicated Settings Page matching Figma design */
-              <SettingsPage />
+            {/* Portal-Mode Dependent Routing */}
+            {portalMode === 'admin' ? (
+              adminTab === 'admin-overview' ? (
+                /* Platform Admin AML & KYT Attention Queue */
+                <AdminOverviewPage />
+              ) : adminTab === 'admin-merchants' ? (
+                /* Merchant KYB Adjudication & Limits */
+                <AdminMerchantsPage />
+              ) : adminTab === 'admin-exceptions' ? (
+                /* Payment Exceptions & Automated Cold Sweeps */
+                <AdminExceptionsPage />
+              ) : adminTab === 'admin-payouts' ? (
+                /* Platform Maker-Checker Approvals Queue & MPC Co-Signer Gate */
+                <AdminPayoutsPage />
+              ) : (
+                /* Platform Immutable Audit Trail */
+                <AdminAuditPage />
+              )
             ) : (
-              <SectionView
-                activeTab={activeTab}
-                onOpenDeposit={() => setIsDepositModalOpen(true)}
-                onOpenPayout={() => setIsPayoutModalOpen(true)}
-                onOpenDevModal={() => setIsDevModalOpen(true)}
-                onOpenSecurityModal={() => setIsSecurityModalOpen(true)}
-              />
+              /* Merchant Portal Views */
+              activeTab === 'dashboard' ? (
+                <DashboardPage
+                  balance={balance.toLocaleString('en-US')}
+                  usdtBalance={usdtBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  onOpenDeposit={() => {
+                    setDepositModalInitial(null);
+                    setIsDepositModalOpen(true);
+                  }}
+                  onOpenPayout={() => setIsPayoutModalOpen(true)}
+                  onOpenSwap={() => setIsSwapModalOpen(true)}
+                  activities={activities}
+                  searchQuery={searchQuery}
+                  onSelectTransaction={(tx) => setSelectedTx(tx)}
+                />
+              ) : activeTab === 'deposits' ? (
+                <DepositsPage
+                  searchQuery={searchQuery}
+                  onOpenNewDeposit={() => {
+                    setDepositModalInitial(null);
+                    setIsDepositModalOpen(true);
+                  }}
+                  onSelectDeposit={(dep) => setSelectedTx({
+                    id: dep.id,
+                    type: 'Deposit',
+                    reference: dep.depositId,
+                    fullRef: dep.refId,
+                    customer: dep.customer,
+                    network: dep.assetChain,
+                    amount: dep.received !== '—' ? `+ ${dep.received}` : `(Expected ${dep.expected})`,
+                    numericAmount: dep.numericReceived,
+                    status: dep.status,
+                    time: dep.created
+                  })}
+                />
+              ) : activeTab === 'exceptions' ? (
+                <ExceptionsPage globalSearchQuery={searchQuery} />
+              ) : activeTab === 'payouts' ? (
+                <PayoutsPage
+                  payouts={payouts}
+                  setPayouts={setPayouts}
+                  globalSearchQuery={searchQuery}
+                  onOpenCreatePayout={() => setIsPayoutModalOpen(true)}
+                />
+              ) : activeTab === 'customers' ? (
+                /* FE-07: Address Book & Allowlisted Destinations with Cooling Period */
+                <CustomersPage
+                  onOpenPayoutWithDestination={() => {
+                    setIsPayoutModalOpen(true);
+                  }}
+                />
+              ) : activeTab === 'developers' ? (
+                <DevelopersPage
+                  onOpenDocs={() => setIsDevModalOpen(true)}
+                  openCreateKey={isCreateKeyOpen}
+                  setOpenCreateKey={setIsCreateKeyOpen}
+                />
+              ) : activeTab === 'team-security' ? (
+                <TeamSecurityPage
+                  openInviteMember={isInviteOpen}
+                  setOpenInviteMember={setIsInviteOpen}
+                  openReviewRoles={isRolesOpen}
+                  setOpenReviewRoles={setIsRolesOpen}
+                />
+              ) : activeTab === 'settings' ? (
+                <SettingsPage />
+              ) : (
+                <SectionView
+                  activeTab={activeTab}
+                  onOpenDeposit={() => setIsDepositModalOpen(true)}
+                  onOpenPayout={() => setIsPayoutModalOpen(true)}
+                  onOpenDevModal={() => setIsDevModalOpen(true)}
+                  onOpenSecurityModal={() => setIsSecurityModalOpen(true)}
+                />
+              )
             )}
           </div>
         </main>
@@ -603,7 +835,7 @@ export function App() {
       <SwapModal
         isOpen={isSwapModalOpen}
         onClose={() => setIsSwapModalOpen(false)}
-        onExecuteSwap={handleExecuteSwap}
+        onExecuteSwap={() => handleExecuteSwap(2500, 2500)}
       />
 
       <TransactionModal
@@ -614,20 +846,6 @@ export function App() {
           setIsDepositModalOpen(true);
         }}
       />
-
-      {/* Quick Demo Switcher Pill to Return to Auth View (Temporarily commented out) */}
-      {/*
-      <div className="fixed bottom-4 right-4 z-40 hidden sm:flex items-center gap-2 bg-[#14171A]/90 backdrop-blur-xs text-white px-3.5 py-1.5 rounded-full shadow-lg border border-gray-700/80 text-xs">
-        <span className="w-2 h-2 rounded-full bg-[#00C076] animate-pulse" />
-        <span className="text-gray-300 font-medium">Session: Daniel Vance</span>
-        <button
-          onClick={() => setIsAuthenticated(false)}
-          className="ml-1 text-[#00C076] hover:underline font-bold"
-        >
-          View Auth Screens →
-        </button>
-      </div>
-      */}
     </div>
   );
 }

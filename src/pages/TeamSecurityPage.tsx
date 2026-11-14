@@ -17,7 +17,7 @@ const INITIAL_MEMBERS: TeamMember[] = [
     id: 'mem_1',
     name: 'Nora Vale',
     isYou: true,
-    email: 'nora@harbor-demo.example',
+    email: 'nora@copym.com',
     role: 'Owner',
     roleDescription: 'Team & policies; approve only',
     status: 'Active',
@@ -29,7 +29,7 @@ const INITIAL_MEMBERS: TeamMember[] = [
     id: 'mem_2',
     name: 'Elias Rowan',
     isYou: false,
-    email: 'elias@harbor-demo.example',
+    email: 'elias@copym.com',
     role: 'Payout creator',
     roleDescription: 'Create payouts; cannot approve',
     status: 'Active',
@@ -41,7 +41,7 @@ const INITIAL_MEMBERS: TeamMember[] = [
     id: 'mem_3',
     name: 'Mira Arden',
     isYou: false,
-    email: 'mira@harbor-demo.example',
+    email: 'mira@copym.com',
     role: 'Payout approver',
     roleDescription: 'Approve payouts; cannot create',
     status: 'Active',
@@ -53,7 +53,7 @@ const INITIAL_MEMBERS: TeamMember[] = [
     id: 'mem_4',
     name: 'Theo Linden',
     isYou: false,
-    email: 'theo@harbor-demo.example',
+    email: 'theo@copym.com',
     role: 'Finance viewer',
     roleDescription: 'View balances & statements',
     status: 'Active',
@@ -65,7 +65,7 @@ const INITIAL_MEMBERS: TeamMember[] = [
     id: 'mem_5',
     name: 'Ada Marlow',
     isYou: false,
-    email: 'ada@harbor-demo.example',
+    email: 'ada@copym.com',
     role: 'Operations analyst',
     roleDescription: 'Deposits & exception review',
     status: 'Invited',
@@ -352,7 +352,7 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
 
   // Export Audit Log
   const handleExportAudit = () => {
-    showToast('Exporting harbor_audit_log_2026.csv...');
+    showToast('Exporting copym_audit_log_2026.csv...');
   };
 
   const filteredLogs = auditFilter === 'All'
@@ -654,7 +654,7 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
                 <input
                   type="email"
                   required
-                  placeholder="jordan@harbor-demo.example"
+                  placeholder="jordan@company.com"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#00C076]"

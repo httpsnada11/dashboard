@@ -20,8 +20,8 @@ export const SettingsPage: React.FC = () => {
   const [autoAmlFreeze, setAutoAmlFreeze] = useState(true);
 
   // General Settings State
-  const [orgName, setOrgName] = useState('Harbor Demo Global Ltd');
-  const [workspaceId] = useState('ws_harbor_live_09');
+  const [orgName, setOrgName] = useState('CopyM Global Ltd');
+  const [workspaceId] = useState('ws_copym_live_09');
   const [timezone, setTimezone] = useState('UTC (+00:00)');
   const [baseCurrency, setBaseCurrency] = useState('USD');
 

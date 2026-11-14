@@ -5,6 +5,7 @@ export type TabId =
   | 'deposits'
   | 'exceptions'
   | 'payouts'
+  | 'customers'
   | 'balances'
   | 'convert'
   | 'statements'
@@ -17,7 +18,7 @@ export interface PageMeta {
   category: string;
 }
 
-export type TransactionType = 'Deposit' | 'Payout';
+export type TransactionType = 'Deposit' | 'Payout' | 'Swap';
 
 export interface Transaction {
   id: string;
@@ -159,4 +160,110 @@ export interface RoleDefinition {
   role: string;
   description: string;
   permissions: string;
+}
+
+export type AddressStatus = 'Active' | 'Cooling Period' | 'Pending Approval';
+
+export interface AllowlistedAddress {
+  id: string;
+  customerId: string;
+  beneficiaryName: string;
+  category: 'Vendor Settlement' | 'First-Party Deposit' | 'OTC Liquidity Pool' | 'Affiliate Commission';
+  network: string;
+  address: string;
+  fullAddress: string;
+  status: AddressStatus;
+  coolingRemainingHours?: number;
+  coolingEndsAt?: string;
+  addedBy: string;
+  createdAt: string;
+  totalPaidOut: string;
+}
+
+// ==========================================
+// Platform Admin Operations Types & Models
+// ==========================================
+
+export type PortalMode = 'merchant' | 'admin';
+
+export type AdminTabId =
+  | 'admin-overview'
+  | 'admin-merchants'
+  | 'admin-exceptions'
+  | 'admin-payouts'
+  | 'admin-audit';
+
+export interface MerchantKYBRecord {
+  id: string;
+  businessName: string;
+  legalEntity: string;
+  jurisdiction: string;
+  registrationNo: string;
+  directorName: string;
+  kybStatus: 'Approved' | 'Under Review' | 'Action Required' | 'Rejected';
+  riskTier: 'Tier 1 (High Limits)' | 'Tier 2 (Standard)' | 'Tier 3 (Restricted)';
+  dailyLimit: string;
+  currentDailyVolume: string;
+  appliedDate: string;
+  amlScore: number;
+  documents: { name: string; type: string; verified: boolean }[];
+  whitelistedAssets?: string[];
+  rejectionReason?: string;
+}
+
+export interface AMLRiskAlert {
+  id: string;
+  txHash: string;
+  fullTxHash: string;
+  network: string;
+  amount: string;
+  riskScore: number;
+  riskLevel: 'Critical' | 'High' | 'Medium' | 'Low';
+  flagReason: string;
+  merchant: string;
+  client: string;
+  time: string;
+  status: 'Pending Action' | 'Frozen' | 'Approved Override' | 'Reported';
+}
+
+export interface AdminAuditEntry {
+  id: string;
+  operator: string;
+  operatorRole: string;
+  action: string;
+  target: string;
+  timestamp: string;
+  ip: string;
+  hash: string;
+  severity: 'Info' | 'Warning' | 'Critical';
+}
+
+export type AdminPayoutStatus =
+  | 'Pending Checker'
+  | 'Compliance Hold'
+  | 'MPC Co-Signing'
+  | 'Broadcasting'
+  | 'Completed'
+  | 'Rejected';
+
+export interface AdminPayoutItem {
+  id: string;
+  payoutRef: string;
+  merchantName: string;
+  merchantId: string;
+  makerName: string;
+  makerRole: string;
+  checkerName?: string;
+  amount: string;
+  numericAmount: number;
+  network: string;
+  destinationAddress: string;
+  fullAddress: string;
+  destinationType: string;
+  kytRiskScore: number;
+  kytRiskLevel: 'Clean' | 'Low' | 'Medium' | 'Critical';
+  mpcStatus: '0/2 Signed' | '1/2 Signed' | '2/2 Quorum Met';
+  status: AdminPayoutStatus;
+  holdReason?: string;
+  createdAt: string;
 }

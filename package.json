@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:merchant": "vite --port 3000",
+    "dev:admin": "vite --port 3001 --mode admin",
+    "dev:both": "node scripts/dev-both.mjs",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },

@@ -15,8 +15,13 @@ import {
   Settings as SettingsIcon,
   Wallet,
   ArrowLeftRight,
-  FileText
+  FileText,
+  ShieldAlert,
+  Users,
+  AlertOctagon,
+  CheckSquare
 } from 'lucide-react';
+import { PortalMode, AdminTabId } from '../types';
 
 export type TabId =
   | 'dashboard'
@@ -33,6 +38,9 @@ export type TabId =
 export interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  portalMode?: PortalMode;
+  adminTab?: AdminTabId;
+  setAdminTab?: (tab: AdminTabId) => void;
   onOpenDevModal?: () => void;
   onOpenSecurityModal?: () => void;
   isOpen?: boolean;
@@ -41,6 +49,7 @@ export interface SidebarProps {
   isRefreshing?: boolean;
   isLiveSimulating?: boolean;
   setIsLiveSimulating?: (active: boolean) => void;
+  userName?: string;
 }
 
 interface NavItem {
@@ -57,6 +66,9 @@ interface NavSection {
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   setActiveTab,
+  portalMode = 'merchant',
+  adminTab = 'admin-overview',
+  setAdminTab,
   onOpenDevModal,
   onOpenSecurityModal,
   isOpen = false,
@@ -64,9 +76,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onRefresh,
   isRefreshing,
   isLiveSimulating,
-  setIsLiveSimulating
+  setIsLiveSimulating,
+  userName = 'Daniel Vance'
 }) => {
-  const navSections: NavSection[] = [
+  const firstName = (userName || 'Daniel').trim().split(' ')[0] || 'Daniel';
+
+  // Standard Merchant Portal Navigation Sections
+  const merchantNavSections: NavSection[] = [
     {
       title: 'OVERVIEW',
       items: [
@@ -84,6 +100,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       title: 'MONEY OUT',
       items: [
         { id: 'payouts', label: 'Payouts', icon: 'payout' },
+        { id: 'customers', label: 'Address book', icon: 'users' },
       ]
     },
     {
@@ -109,14 +126,46 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   ];
 
+  // Dedicated Platform Admin Navigation Sections
+  const adminNavSections: NavSection[] = [
+    {
+      title: 'COMPLIANCE & AML',
+      items: [
+        { id: 'admin-overview', label: 'AML Attention Queue', icon: 'shield-alert' },
+        { id: 'admin-merchants', label: 'Merchant KYB', icon: 'users' },
+      ]
+    },
+    {
+      title: 'TREASURY OPS',
+      items: [
+        { id: 'admin-exceptions', label: 'Exceptions & Sweeps', icon: 'alert-octagon' },
+        { id: 'admin-payouts', label: 'Maker-Checker Queue', icon: 'check-square' },
+      ]
+    },
+    {
+      title: 'SECURITY & AUDIT',
+      items: [
+        { id: 'admin-audit', label: 'Immutable Audit Trail', icon: 'audit' },
+      ]
+    }
+  ];
+
+  const currentSections = portalMode === 'admin' ? adminNavSections : merchantNavSections;
+  const currentActive = portalMode === 'admin' ? adminTab : activeTab;
+
   const handleItemClick = (item: NavItem) => {
-    setActiveTab(item.id);
+    if (portalMode === 'admin') {
+      setAdminTab?.(item.id as AdminTabId);
+    } else {
+      setActiveTab(item.id);
+    }
     onClose?.();
   };
 
   const renderActiveIcon = (id: string) => {
     const iconClass = "w-3.5 h-3.5 text-white stroke-[2.2]";
     switch (id) {
+      // Merchant Icons
       case 'dashboard':
         return <Box className={iconClass} />;
       case 'deposits':
@@ -125,6 +174,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         return <AlertCircle className={iconClass} />;
       case 'payouts':
         return <ArrowUpFromLine className={iconClass} />;
+      case 'customers':
+        return <Users className={iconClass} />;
       case 'balances':
         return <Wallet className={iconClass} />;
       case 'convert':
@@ -137,6 +188,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
         return <ShieldCheck className={iconClass} />;
       case 'settings':
         return <SettingsIcon className={iconClass} />;
+
+      // Admin Icons
+      case 'admin-overview':
+        return <ShieldAlert className={iconClass} />;
+      case 'admin-merchants':
+        return <Users className={iconClass} />;
+      case 'admin-exceptions':
+        return <AlertOctagon className={iconClass} />;
+      case 'admin-payouts':
+        return <CheckSquare className={iconClass} />;
+      case 'admin-audit':
+        return <FileText className={iconClass} />;
       default:
         return <Box className={iconClass} />;
     }
@@ -145,6 +208,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const renderInactiveIcon = (id: string) => {
     const iconClass = "w-3.5 h-3.5 stroke-[1.8] text-[#64748B] group-hover:text-[#1E293B] transition-colors";
     switch (id) {
+      // Merchant Icons
       case 'dashboard':
         return <Box className={iconClass} />;
       case 'deposits':
@@ -153,6 +217,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         return <AlertCircle className={iconClass} />;
       case 'payouts':
         return <ArrowUpFromLine className={iconClass} />;
+      case 'customers':
+        return <Users className={iconClass} />;
       case 'balances':
         return <Wallet className={iconClass} />;
       case 'convert':
@@ -165,6 +231,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
         return <ShieldCheck className={iconClass} />;
       case 'settings':
         return <SettingsIcon className={iconClass} />;
+
+      // Admin Icons
+      case 'admin-overview':
+        return <ShieldAlert className={iconClass} />;
+      case 'admin-merchants':
+        return <Users className={iconClass} />;
+      case 'admin-exceptions':
+        return <AlertOctagon className={iconClass} />;
+      case 'admin-payouts':
+        return <CheckSquare className={iconClass} />;
+      case 'admin-audit':
+        return <FileText className={iconClass} />;
       default:
         return <Box className={iconClass} />;
     }
@@ -174,15 +252,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <div className="h-full flex flex-col justify-between select-none">
       <div>
         {/* Welcome Heading & Mobile Close Button */}
-        <div className="mb-4 flex items-start justify-between">
+        <div className="mb-3 flex items-start justify-between">
           <div>
-            <h2 className="text-[22px] leading-[1.12] font-semibold text-[#14171A]">
-              Welcome<br />
-              <span className="font-bold">Back, Daniel!</span>
-            </h2>
-            <p className="text-[10.5px] text-[#8E95A5] mt-1 font-normal tracking-tight">
-              checkout your recent financial activity
-            </p>
+            {portalMode === 'admin' ? (
+              <div>
+                <h2 className="text-[20px] leading-[1.12] font-bold text-[#14171A]">
+                  Admin Ops
+                </h2>
+                <p className="text-[10.5px] text-[#8E95A5] mt-0.5 font-normal tracking-tight">
+                  High-privilege platform controls
+                </p>
+              </div>
+            ) : (
+              <div>
+                <h2 className="text-[22px] leading-[1.12] font-semibold text-[#14171A]">
+                  Welcome<br />
+                  <span className="font-bold">Back, {firstName}!</span>
+                </h2>
+                <p className="text-[10.5px] text-[#8E95A5] mt-1 font-normal tracking-tight">
+                  checkout your recent financial activity
+                </p>
+              </div>
+            )}
           </div>
           {/* Close button on mobile */}
           <button
@@ -195,21 +286,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Nav Menu */}
         <nav className="flex flex-col gap-2.5 overflow-y-auto pr-0.5">
-          {navSections.map((section, idx) => (
+          {currentSections.map((section, idx) => (
             <div key={idx} className="flex flex-col gap-0.5">
               <span className="text-[9.5px] tracking-wider uppercase font-semibold text-[#8E95A5] px-2 mb-0.5">
                 {section.title}
               </span>
 
               {section.items.map((item) => {
-                const isActive = activeTab === item.id;
+                const isActive = currentActive === item.id;
+                const activeColorClass =
+                  portalMode === 'admin'
+                    ? 'bg-slate-900 text-white hover:bg-slate-800'
+                    : 'bg-[#00C076] text-white hover:bg-[#00B16D]';
 
                 if (isActive) {
                   return (
                     <button
                       key={item.id}
                       onClick={() => handleItemClick(item)}
-                      className="w-full flex items-center justify-between bg-[#00C076] text-white px-3 py-1.5 rounded-full shadow-sm hover:bg-[#00B16D] transition-all group"
+                      className={`w-full flex items-center justify-between ${activeColorClass} px-3 py-1.5 rounded-full shadow-sm transition-all group`}
                     >
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 flex items-center justify-center shrink-0">
@@ -305,4 +400,3 @@ export const Sidebar: React.FC<SidebarProps> = ({
     </>
   );
 };
-
