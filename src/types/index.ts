@@ -31,6 +31,7 @@ export interface Transaction {
   numericAmount: number;
   status: string;
   time: string;
+  flow?: string;
 }
 
 export interface PayoutRecord {
@@ -58,12 +59,13 @@ export interface DepositRecord {
   refId: string;
   customer: string;
   assetChain: string;
-  flow: 'Open' | 'Fixed';
+  flow: 'HPP' | 'H2H' | 'Open' | 'Fixed' | string;
   expected: string;
   received: string;
   numericReceived: number;
   status: string;
   created: string;
+  mode?: 'HPP' | 'H2H';
 }
 
 export interface ExceptionRecord {

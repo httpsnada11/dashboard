@@ -463,8 +463,8 @@ export const AdminPayoutsPage: React.FC = () => {
                 <th className="py-3 px-4 whitespace-nowrap">Destination Address</th>
                 <th className="py-3 px-4 whitespace-nowrap">KYT Risk Score</th>
                 <th className="py-3 px-4 whitespace-nowrap">MPC Quorum</th>
-                <th className="py-3 px-4 whitespace-nowrap">Status</th>
-                <th className="py-3 px-4 text-right whitespace-nowrap">Checker Action</th>
+                <th className="py-3 px-4 whitespace-nowrap min-w-[140px]">Status</th>
+                <th className="py-3 px-4 text-right whitespace-nowrap min-w-[190px]">Checker Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -579,26 +579,26 @@ export const AdminPayoutsPage: React.FC = () => {
                     </td>
 
                     {/* Status */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
+                    <td className="py-3.5 px-4 whitespace-nowrap min-w-[140px]">
                       {payout.status === 'Pending Checker' && (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0">
                           Pending Checker
                         </span>
                       )}
                       {payout.status === 'Compliance Hold' && (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-red-50 text-red-700 border border-red-200 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-red-50 text-red-700 border border-red-200 whitespace-nowrap shrink-0">
                           Compliance Hold
                         </span>
                       )}
                       {payout.status === 'Completed' && (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
                           Broadcasted
                         </span>
                       )}
                     </td>
 
                     {/* Checker Action */}
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                    <td className="py-3.5 px-4 text-right whitespace-nowrap min-w-[190px]">
                       <div className="inline-flex items-center justify-end gap-1.5 whitespace-nowrap">
                         {payout.status === 'Pending Checker' && (
                           <>

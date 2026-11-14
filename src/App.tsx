@@ -804,7 +804,8 @@ export function App() {
                     amount: dep.received !== '—' ? `+ ${dep.received}` : `(Expected ${dep.expected})`,
                     numericAmount: dep.numericReceived,
                     status: dep.status,
-                    time: dep.created
+                    time: dep.created,
+                    flow: dep.flow
                   })}
                 />
               ) : activeTab === 'exceptions' ? (
