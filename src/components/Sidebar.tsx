@@ -163,7 +163,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const renderActiveIcon = (id: string) => {
-    const iconClass = "w-3.5 h-3.5 text-white stroke-[2.2]";
+    const iconClass = "w-4 h-4 text-white stroke-[2.2]";
     switch (id) {
       // Merchant Icons
       case 'dashboard':
@@ -206,7 +206,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const renderInactiveIcon = (id: string) => {
-    const iconClass = "w-3.5 h-3.5 stroke-[1.8] text-[#64748B] group-hover:text-[#1E293B] transition-colors";
+    const iconClass = "w-4 h-4 stroke-[1.9] text-[#64748B] group-hover:text-[#1E293B] transition-colors";
     switch (id) {
       // Merchant Icons
       case 'dashboard':
@@ -252,24 +252,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <div className="h-full flex flex-col justify-between select-none">
       <div>
         {/* Welcome Heading & Mobile Close Button */}
-        <div className="mb-3 flex items-start justify-between">
+        <div className="mb-4 pb-2.5 border-b border-gray-100/80 flex items-start justify-between px-2.5">
           <div>
             {portalMode === 'admin' ? (
               <div>
-                <h2 className="text-[20px] leading-[1.12] font-bold text-[#14171A]">
+                <h2 className="text-[19px] leading-tight font-bold text-[#14171A]">
                   Admin Ops
                 </h2>
-                <p className="text-[10.5px] text-[#8E95A5] mt-0.5 font-normal tracking-tight">
+                <p className="text-[11px] text-[#8E95A5] mt-0.5 font-normal tracking-tight">
                   High-privilege platform controls
                 </p>
               </div>
             ) : (
               <div>
-                <h2 className="text-[22px] leading-[1.12] font-semibold text-[#14171A]">
+                <h2 className="text-[20px] leading-tight font-semibold text-[#14171A]">
                   Welcome<br />
                   <span className="font-bold">Back, {firstName}!</span>
                 </h2>
-                <p className="text-[10.5px] text-[#8E95A5] mt-1 font-normal tracking-tight">
+                <p className="text-[11px] text-[#8E95A5] mt-1 font-normal tracking-tight">
                   checkout your recent financial activity
                 </p>
               </div>
@@ -285,34 +285,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Nav Menu */}
-        <nav className="flex flex-col gap-2.5 overflow-y-auto pr-0.5">
+        <nav className="flex flex-col space-y-4 overflow-y-auto pr-0.5">
           {currentSections.map((section, idx) => (
-            <div key={idx} className="flex flex-col gap-0.5">
-              <span className="text-[9.5px] tracking-wider uppercase font-semibold text-[#8E95A5] px-2 mb-0.5">
+            <div key={idx} className="flex flex-col space-y-1">
+              <span className="text-[10px] tracking-wider uppercase font-bold text-[#8E95A5] px-2.5 mb-0.5 block select-none">
                 {section.title}
               </span>
 
               {section.items.map((item) => {
                 const isActive = currentActive === item.id;
-                const activeColorClass = 'bg-[#00C076] text-white hover:bg-[#00B16D]';
+                const activeColorClass = 'bg-[#00C076] text-white hover:bg-[#00B16D] shadow-xs';
 
                 if (isActive) {
                   return (
                     <button
                       key={item.id}
                       onClick={() => handleItemClick(item)}
-                      className={`w-full flex items-center justify-between ${activeColorClass} px-3 py-1.5 rounded-full shadow-sm transition-all group`}
+                      className={`w-full h-9 px-2.5 rounded-full flex items-center justify-between ${activeColorClass} transition-all group cursor-pointer`}
                     >
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-5 h-5 flex items-center justify-center shrink-0">
                           {renderActiveIcon(item.id)}
                         </div>
-                        <span className="text-[12.5px] font-medium tracking-tight">
+                        <span className="text-[12.5px] font-semibold tracking-tight leading-none truncate">
                           {item.label}
                         </span>
                       </div>
-                      <div className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                        <ChevronDown className="w-3 h-3 text-white" />
+                      <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shrink-0 ml-1">
+                        <ChevronDown className="w-3 h-3 text-white stroke-[2.5]" />
                       </div>
                     </button>
                   );
@@ -322,12 +322,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <button
                     key={item.id}
                     onClick={() => handleItemClick(item)}
-                    className="w-full flex items-center gap-2 px-3 py-1.5 rounded-full text-left transition-colors duration-150 group text-[#64748B] hover:text-[#1E293B] hover:bg-gray-100/60"
+                    className="w-full h-9 px-2.5 rounded-full flex items-center gap-2.5 text-left transition-colors duration-150 group text-[#64748B] hover:text-[#1E293B] hover:bg-gray-100/70 cursor-pointer"
                   >
-                    <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                    <div className="w-5 h-5 flex items-center justify-center shrink-0">
                       {renderInactiveIcon(item.id)}
                     </div>
-                    <span className="text-[12px] font-normal">
+                    <span className="text-[12.5px] font-medium tracking-tight leading-none truncate">
                       {item.label}
                     </span>
                   </button>
@@ -375,7 +375,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <>
       {/* 1. Desktop Static Docked Sidebar */}
-      <aside className="hidden lg:flex w-56 min-w-[215px] bg-white px-4 pt-3.5 pb-4 flex-col flex-shrink-0 border-r border-gray-100/80 overflow-y-auto">
+      <aside className="hidden lg:flex w-60 min-w-[235px] bg-white px-3.5 pt-3.5 pb-4 flex-col flex-shrink-0 border-r border-gray-100/80 overflow-y-auto">
         {sidebarContent}
       </aside>
 

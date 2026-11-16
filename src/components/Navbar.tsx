@@ -57,7 +57,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const displayEmail = currentUser?.email || 'daniel@gmail.com';
 
   return (
-    <header className="w-full bg-white px-3 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between border-b border-gray-100/90 sticky top-0 z-40">
+    <header className="w-full bg-white px-3 sm:px-6 lg:px-6 py-2.5 flex items-center justify-between border-b border-gray-100/90 sticky top-0 z-40">
       {/* Left: Mobile Hamburger Toggle + Brand Logo + Portal Mode Switcher */}
       <div className="flex items-center gap-2 sm:gap-4">
         {/* Mobile Hamburger Button */}

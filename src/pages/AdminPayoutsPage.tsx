@@ -193,11 +193,11 @@ export const AdminPayoutsPage: React.FC = () => {
       prev.map((item) =>
         item.id === holdModalPayout.id
           ? {
-              ...item,
-              status: 'Compliance Hold' as AdminPayoutStatus,
-              holdReason: finalReason,
-              mpcStatus: '0/2 Signed'
-            }
+            ...item,
+            status: 'Compliance Hold' as AdminPayoutStatus,
+            holdReason: finalReason,
+            mpcStatus: '0/2 Signed'
+          }
           : item
       )
     );
@@ -211,11 +211,11 @@ export const AdminPayoutsPage: React.FC = () => {
       prev.map((item) =>
         item.id === payout.id
           ? {
-              ...item,
-              status: 'Pending Checker' as AdminPayoutStatus,
-              holdReason: undefined,
-              mpcStatus: '1/2 Signed'
-            }
+            ...item,
+            status: 'Pending Checker' as AdminPayoutStatus,
+            holdReason: undefined,
+            mpcStatus: '1/2 Signed'
+          }
           : item
       )
     );
@@ -234,11 +234,11 @@ export const AdminPayoutsPage: React.FC = () => {
         prev.map((item) =>
           item.id === approveModalPayout.id
             ? {
-                ...item,
-                status: 'Completed' as AdminPayoutStatus,
-                checkerName: 'Sarah Chen (Platform SuperAdmin)',
-                mpcStatus: '2/2 Quorum Met'
-              }
+              ...item,
+              status: 'Completed' as AdminPayoutStatus,
+              checkerName: 'Sarah Chen (Platform SuperAdmin)',
+              mpcStatus: '2/2 Quorum Met'
+            }
             : item
         )
       );
@@ -257,11 +257,11 @@ export const AdminPayoutsPage: React.FC = () => {
       prev.map((item) =>
         selectedIds.includes(item.id) && item.status === 'Pending Checker'
           ? {
-              ...item,
-              status: 'Completed' as AdminPayoutStatus,
-              checkerName: 'Sarah Chen (Platform SuperAdmin)',
-              mpcStatus: '2/2 Quorum Met'
-            }
+            ...item,
+            status: 'Completed' as AdminPayoutStatus,
+            checkerName: 'Sarah Chen (Platform SuperAdmin)',
+            mpcStatus: '2/2 Quorum Met'
+          }
           : item
       )
     );
@@ -379,41 +379,37 @@ export const AdminPayoutsPage: React.FC = () => {
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none -mx-1 px-1 flex-nowrap shrink-0">
             <button
               onClick={() => setFilterTab('all')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap shrink-0 cursor-pointer ${
-                filterTab === 'all'
-                  ? 'bg-slate-900 text-white shadow-2xs'
-                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap shrink-0 cursor-pointer ${filterTab === 'all'
+                ? 'bg-slate-900 text-white shadow-2xs'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                }`}
             >
               All Payouts ({payouts.length})
             </button>
             <button
               onClick={() => setFilterTab('pending')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap shrink-0 cursor-pointer ${
-                filterTab === 'pending'
-                  ? 'bg-amber-500 text-white shadow-2xs'
-                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap shrink-0 cursor-pointer ${filterTab === 'pending'
+                ? 'bg-amber-500 text-white shadow-2xs'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                }`}
             >
               Pending Checker ({pendingCount})
             </button>
             <button
               onClick={() => setFilterTab('hold')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap shrink-0 cursor-pointer ${
-                filterTab === 'hold'
-                  ? 'bg-red-600 text-white shadow-2xs'
-                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap shrink-0 cursor-pointer ${filterTab === 'hold'
+                ? 'bg-red-600 text-white shadow-2xs'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                }`}
             >
               Compliance Hold ({holdCount})
             </button>
             <button
               onClick={() => setFilterTab('completed')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap shrink-0 cursor-pointer ${
-                filterTab === 'completed'
-                  ? 'bg-emerald-600 text-white shadow-2xs'
-                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap shrink-0 cursor-pointer ${filterTab === 'completed'
+                ? 'bg-emerald-600 text-white shadow-2xs'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                }`}
             >
               Completed ({payouts.filter((p) => p.status === 'Completed').length})
             </button>
@@ -469,8 +465,8 @@ export const AdminPayoutsPage: React.FC = () => {
                 <th className="py-3 px-4 whitespace-nowrap">Destination Address</th>
                 <th className="py-3 px-4 whitespace-nowrap">KYT Risk Score</th>
                 <th className="py-3 px-4 whitespace-nowrap">MPC Quorum</th>
-                <th className="py-3 px-4 whitespace-nowrap">Status</th>
-                <th className="py-3 px-4 text-right whitespace-nowrap">Checker Action</th>
+                <th className="py-3 px-4 whitespace-nowrap min-w-[140px]">Status</th>
+                <th className="py-3 px-4 text-right whitespace-nowrap min-w-[190px]">Checker Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -480,9 +476,8 @@ export const AdminPayoutsPage: React.FC = () => {
                 return (
                   <tr
                     key={payout.id}
-                    className={`hover:bg-gray-50/60 transition ${
-                      isSelected ? 'bg-blue-50/40' : ''
-                    }`}
+                    className={`hover:bg-gray-50/60 transition ${isSelected ? 'bg-blue-50/40' : ''
+                      }`}
                   >
                     {/* Checkbox */}
                     <td className="py-3.5 px-4 whitespace-nowrap">
@@ -546,22 +541,20 @@ export const AdminPayoutsPage: React.FC = () => {
                     <td className="py-3.5 px-4 whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
                         <span
-                          className={`w-2 h-2 rounded-full ${
-                            payout.kytRiskLevel === 'Clean'
-                              ? 'bg-emerald-500'
-                              : payout.kytRiskLevel === 'Low'
+                          className={`w-2 h-2 rounded-full ${payout.kytRiskLevel === 'Clean'
+                            ? 'bg-emerald-500'
+                            : payout.kytRiskLevel === 'Low'
                               ? 'bg-blue-500'
                               : 'bg-red-500 animate-pulse'
-                          }`}
+                            }`}
                         />
                         <span
-                          className={`font-semibold ${
-                            payout.kytRiskLevel === 'Clean'
-                              ? 'text-emerald-700'
-                              : payout.kytRiskLevel === 'Low'
+                          className={`font-semibold ${payout.kytRiskLevel === 'Clean'
+                            ? 'text-emerald-700'
+                            : payout.kytRiskLevel === 'Low'
                               ? 'text-blue-700'
                               : 'text-red-700'
-                          }`}
+                            }`}
                         >
                           Score {payout.kytRiskScore} ({payout.kytRiskLevel})
                         </span>
@@ -571,13 +564,12 @@ export const AdminPayoutsPage: React.FC = () => {
                     {/* MPC Quorum */}
                     <td className="py-3.5 px-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold whitespace-nowrap ${
-                          payout.mpcStatus === '2/2 Quorum Met'
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : payout.mpcStatus === '1/2 Signed'
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold whitespace-nowrap ${payout.mpcStatus === '2/2 Quorum Met'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : payout.mpcStatus === '1/2 Signed'
                             ? 'bg-amber-50 text-amber-700 border border-amber-200'
                             : 'bg-gray-100 text-gray-600 border border-gray-200'
-                        }`}
+                          }`}
                       >
                         <Lock className="w-2.5 h-2.5 shrink-0" />
                         <span>{payout.mpcStatus}</span>
@@ -585,26 +577,26 @@ export const AdminPayoutsPage: React.FC = () => {
                     </td>
 
                     {/* Status */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
+                    <td className="py-3.5 px-4 whitespace-nowrap min-w-[140px]">
                       {payout.status === 'Pending Checker' && (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0">
                           Pending Checker
                         </span>
                       )}
                       {payout.status === 'Compliance Hold' && (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-red-50 text-red-700 border border-red-200 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-red-50 text-red-700 border border-red-200 whitespace-nowrap shrink-0">
                           Compliance Hold
                         </span>
                       )}
                       {payout.status === 'Completed' && (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
                           Broadcasted
                         </span>
                       )}
                     </td>
 
                     {/* Checker Action */}
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                    <td className="py-3.5 px-4 text-right whitespace-nowrap min-w-[190px]">
                       <div className="inline-flex items-center justify-end gap-1.5 whitespace-nowrap">
                         {payout.status === 'Pending Checker' && (
                           <>
