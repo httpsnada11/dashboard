@@ -7,11 +7,7 @@ import {
   Clock,
   ShieldCheck,
   Wallet,
-  RotateCcw,
-  Globe,
-  Zap,
-  Code2,
-  Terminal
+  RotateCcw
 } from 'lucide-react';
 import { Transaction, DepositState } from '../types';
 
@@ -86,7 +82,6 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
 }) => {
   // Configurable fields according to user reference
   const [currentState, setCurrentState] = useState<DepositState>('Credited');
-  const [integrationMode, setIntegrationMode] = useState<'HPP' | 'H2H'>('HPP');
   const [selectedNetworkKey, setSelectedNetworkKey] = useState<string>('USDC (SEPOLIA)');
   const [orderReference, setOrderReference] = useState<string>('order_181632');
   const [customerId, setCustomerId] = useState<string>('cc001');
@@ -109,13 +104,6 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
       if (initialDeposit.customer) {
         setCustomerId(initialDeposit.customer);
       }
-      if (initialDeposit.flow) {
-        if (initialDeposit.flow.toUpperCase().includes('H2H')) {
-          setIntegrationMode('H2H');
-        } else {
-          setIntegrationMode('HPP');
-        }
-      }
       if (initialDeposit.status) {
         if (initialDeposit.status.includes('Confirming')) {
           setCurrentState('Confirming');
@@ -130,7 +118,6 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
     } else {
       // Default matching user prompt exactly
       setCurrentState('Credited');
-      setIntegrationMode('HPP');
       setSelectedNetworkKey('USDC (SEPOLIA)');
       setOrderReference('order_181632');
       setCustomerId('cc001');
@@ -167,33 +154,6 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
 
   const hostedCheckoutUrl = `https://pay.copym.com/checkout/${orderReference}`;
 
-  const rawUri = `${currentNetwork.chainName.toLowerCase()}:${currentNetwork.address}${
-    targetAmountType === 'fixed' ? `?amount=${fixedAmount}&token=${currentNetwork.token}` : ''
-  }`;
-
-  const h2hJsonResponse = JSON.stringify(
-    {
-      order_id: orderReference,
-      integration_mode: 'H2H_DIRECT',
-      status: currentState === 'Credited' ? 'PAID_CREDITED' : 'AWAITING_PAYMENT',
-      network: currentNetwork.chainName,
-      token: currentNetwork.token,
-      deposit_address: currentNetwork.address,
-      qr_uri: rawUri,
-      expected_amount: targetAmountType === 'choice' ? 'ANY' : fixedAmount,
-      customer_id: customerId,
-      expires_at: Math.floor(Date.now() / 1000) + secondsRemaining,
-      webhook_event: currentState === 'Credited' ? 'deposit.credited' : 'deposit.awaiting'
-    },
-    null,
-    2
-  );
-
-  const curlExample = `curl -X POST https://api.copym.com/v1/orders \\
-  -H "Authorization: Bearer sk_live_..." \\
-  -H "Content-Type: application/json" \\
-  -d '{"mode":"H2H","network":"${currentNetwork.chainName}","customer_id":"${customerId}"}'`;
-
   const handleCopy = (text: string, fieldName: string) => {
     navigator.clipboard?.writeText(text);
     setCopiedField(fieldName);
@@ -210,8 +170,7 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
         network: currentNetwork.name,
         amount: `+ ${amountValue}`,
         status: 'Credited',
-        time: 'Just now',
-        flow: integrationMode === 'HPP' ? 'HPP · Hosted' : 'H2H · Direct API'
+        time: 'Just now'
       });
     }
     onClose();
@@ -267,84 +226,17 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
           </div>
         </div>
 
-        {/* Integration Mode Switcher: HPP (Hosted Checkout) vs H2H (Host-to-Host API) */}
-        <div className="pt-3 pb-2 border-b border-gray-100">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10.5px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
-              <span>INTEGRATION FLOW</span>
-              <span className="text-gray-400 font-normal">· Select Cashier Model</span>
-            </span>
-            <span className="text-[11px] font-semibold text-[#00C076] flex items-center gap-1">
-              {integrationMode === 'HPP' ? (
-                <>
-                  <Globe className="w-3.5 h-3.5" />
-                  <span>Hosted Payment Page (HPP)</span>
-                </>
-              ) : (
-                <>
-                  <Zap className="w-3.5 h-3.5" />
-                  <span>Host-to-Host Direct API (H2H)</span>
-                </>
-              )}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 bg-gray-100/90 p-1 rounded-2xl border border-gray-200/60">
-            <button
-              type="button"
-              onClick={() => setIntegrationMode('HPP')}
-              className={`flex items-center justify-center gap-2.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                integrationMode === 'HPP'
-                  ? 'bg-white text-gray-900 shadow-xs border border-gray-200/80'
-                  : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
-              }`}
-            >
-              <Globe className={`w-4 h-4 ${integrationMode === 'HPP' ? 'text-[#00C076]' : 'text-gray-400'}`} />
-              <div className="text-left">
-                <span className="block leading-tight font-bold">Hosted Checkout (HPP)</span>
-                <span className="text-[9.5px] font-medium text-gray-400 block leading-tight">Redirect URL · No code</span>
-              </div>
-            </button>
-            <button
-              type="button"
-              onClick={() => setIntegrationMode('H2H')}
-              className={`flex items-center justify-center gap-2.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                integrationMode === 'H2H'
-                  ? 'bg-white text-gray-900 shadow-xs border border-gray-200/80'
-                  : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
-              }`}
-            >
-              <Zap className={`w-4 h-4 ${integrationMode === 'H2H' ? 'text-[#00C076]' : 'text-gray-400'}`} />
-              <div className="text-left">
-                <span className="block leading-tight font-bold">Direct API (H2H)</span>
-                <span className="text-[9.5px] font-medium text-gray-400 block leading-tight">Host-to-Host · White label</span>
-              </div>
-            </button>
-          </div>
-        </div>
-
         {/* Main Body: QR Code & Wallet Scan + Metadata Details */}
         <div className="py-4 grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
           {/* Left Column: QR Code + Scan Instruction (5 cols) */}
           <div className="md:col-span-5 flex flex-col items-center justify-between bg-gradient-to-b from-gray-50 to-gray-100/70 p-4 sm:p-5 rounded-2xl border border-gray-200/80 text-center">
             <div>
               <div className="flex items-center justify-center gap-1.5 mb-1 text-gray-900 font-bold text-xs sm:text-[13px]">
-                {integrationMode === 'HPP' ? (
-                  <>
-                    <Wallet className="w-4 h-4 text-[#00C076]" />
-                    <span>Scan to Pay with Any Crypto Wallet</span>
-                  </>
-                ) : (
-                  <>
-                    <Code2 className="w-4 h-4 text-[#00C076]" />
-                    <span>Native Cashier QR Code</span>
-                  </>
-                )}
+                <Wallet className="w-4 h-4 text-[#00C076]" />
+                <span>Scan to Pay with Any Crypto Wallet</span>
               </div>
               <p className="text-[10.5px] text-gray-500 max-w-[210px] mx-auto leading-tight mb-3">
-                {integrationMode === 'HPP'
-                  ? 'MetaMask, Trust Wallet, Phantom, Rainbow, Ledger or exchange app'
-                  : 'Render directly inside your CRM, native trader room, or mobile app'}
+                MetaMask, Trust Wallet, Phantom, Rainbow, Ledger or exchange app
               </p>
             </div>
 
@@ -431,29 +323,10 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
               </svg>
             </div>
 
-            {integrationMode === 'HPP' ? (
-              <div className="mt-3 flex items-center gap-1.5 text-[10px] text-gray-500 font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#00C076]" />
-                <span>Scan with any mobile crypto wallet</span>
-              </div>
-            ) : (
-              <div className="mt-3 w-full">
-                <button
-                  type="button"
-                  onClick={() => handleCopy(rawUri, 'rawUri')}
-                  className="w-full py-1.5 px-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg text-[10px] font-mono text-gray-700 flex items-center justify-between transition cursor-pointer shadow-2xs"
-                >
-                  <span className="truncate max-w-[130px]">{rawUri}</span>
-                  <span className="text-[#00C076] font-bold shrink-0 flex items-center gap-1">
-                    {copiedField === 'rawUri' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                    <span>{copiedField === 'rawUri' ? 'Copied' : 'Copy URI'}</span>
-                  </span>
-                </button>
-                <span className="text-[9.5px] text-gray-400 block mt-1">
-                  Native Mobile / Web Embed Ready
-                </span>
-              </div>
-            )}
+            <div className="mt-3 flex items-center gap-1.5 text-[10px] text-gray-500 font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00C076]" />
+              <span>Scan with any mobile crypto wallet</span>
+            </div>
           </div>
 
           {/* Right Column: Exact Metadata Specifications (7 cols) */}
@@ -563,7 +436,7 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
                   Assigned Deposit Address ({currentNetwork.chainName})
                 </span>
                 <span className="text-[10px] text-emerald-600 font-semibold bg-emerald-100/60 px-2 py-0.5 rounded-full">
-                  {integrationMode === 'HPP' ? 'Verified Safe' : 'Direct Ingestion Address'}
+                  Verified Safe
                 </span>
               </div>
               <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-gray-200">
@@ -572,7 +445,7 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
                 </span>
                 <button
                   onClick={() => handleCopy(currentNetwork.address, 'assignedAddress')}
-                  className="px-2.5 py-1 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-md text-xs font-bold transition flex items-center gap-1 shadow-2xs whitespace-nowrap cursor-pointer"
+                  className="px-2.5 py-1 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-md text-xs font-bold transition flex items-center gap-1 shadow-2xs whitespace-nowrap"
                 >
                   {copiedField === 'assignedAddress' ? (
                     <>
@@ -589,104 +462,37 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
               </div>
             </div>
 
-            {/* Dynamic Integration Area: HPP Hosted URL vs H2H Server API Payload */}
-            {integrationMode === 'HPP' ? (
-              /* Payer Hosted Checkout URL (HPP) */
-              <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-200 animate-fadeIn">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10.5px] uppercase font-bold tracking-wider text-gray-600">
-                    Payer Hosted Checkout URL
-                  </span>
-                  <span className="text-[10px] text-blue-600 font-semibold bg-blue-50 border border-blue-200/60 px-2 py-0.5 rounded-full">
-                    Redirect Cashier
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-gray-200">
-                  <span className="font-mono text-xs text-gray-600 truncate flex-1">
-                    {hostedCheckoutUrl}
-                  </span>
-                  <button
-                    onClick={() => handleCopy(hostedCheckoutUrl, 'hostedUrl')}
-                    className="p-1.5 hover:bg-gray-100 rounded text-gray-500 transition cursor-pointer"
-                    title="Copy Hosted Checkout Link"
-                  >
-                    {copiedField === 'hostedUrl' ? (
-                      <Check className="w-3.5 h-3.5 text-[#00C076]" />
-                    ) : (
-                      <Copy className="w-3.5 h-3.5" />
-                    )}
-                  </button>
-                  <a
-                    href={`/checkout/${orderReference}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="p-1.5 hover:bg-gray-100 rounded text-[#00C076] transition cursor-pointer"
-                    title="Open Hosted Checkout in New Tab"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                </div>
-                <p className="text-[10.5px] text-gray-500 mt-2 leading-relaxed">
-                  <span className="font-semibold text-gray-700">HPP Flow:</span> COPYm Pay renders the customer checkout with live 30-min timer, network selector, and Web3 one-click pay.
-                </p>
+            {/* Payer Hosted Checkout URL */}
+            <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-200">
+              <span className="text-[10.5px] uppercase font-bold tracking-wider text-gray-600 block mb-1">
+                Payer Hosted Checkout URL
+              </span>
+              <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-gray-200">
+                <span className="font-mono text-xs text-gray-600 truncate flex-1">
+                  {hostedCheckoutUrl}
+                </span>
+                <button
+                  onClick={() => handleCopy(hostedCheckoutUrl, 'hostedUrl')}
+                  className="p-1.5 hover:bg-gray-100 rounded text-gray-500 transition"
+                  title="Copy Hosted Checkout Link"
+                >
+                  {copiedField === 'hostedUrl' ? (
+                    <Check className="w-3.5 h-3.5 text-[#00C076]" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                </button>
+                <a
+                  href={`/checkout/${orderReference}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="p-1.5 hover:bg-gray-100 rounded text-[#00C076] transition"
+                  title="Open Hosted Checkout in New Tab"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
               </div>
-            ) : (
-              /* Direct Server-to-Server API Payload (H2H) */
-              <div className="bg-slate-900 text-slate-100 p-3.5 rounded-xl border border-slate-800 animate-fadeIn font-mono text-[11px]">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400 flex items-center gap-1.5">
-                    <Terminal className="w-3 h-3 text-[#00C076]" />
-                    <span>POST /v1/orders Payload</span>
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => handleCopy(h2hJsonResponse, 'h2hJson')}
-                      className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] transition flex items-center gap-1 cursor-pointer"
-                    >
-                      {copiedField === 'h2hJson' ? (
-                        <>
-                          <Check className="w-3 h-3 text-emerald-400" />
-                          <span className="text-emerald-400">Copied</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3 h-3" />
-                          <span>Copy JSON</span>
-                        </>
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleCopy(curlExample, 'curl')}
-                      className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] transition flex items-center gap-1 cursor-pointer"
-                    >
-                      {copiedField === 'curl' ? (
-                        <>
-                          <Check className="w-3 h-3 text-emerald-400" />
-                          <span className="text-emerald-400">Copied</span>
-                        </>
-                      ) : (
-                        <>
-                          <Code2 className="w-3 h-3" />
-                          <span>cURL</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800/80 text-[10.5px] leading-relaxed max-h-32 overflow-y-auto scrollbar-thin">
-                  <pre className="text-slate-300 whitespace-pre font-mono">
-                    {h2hJsonResponse}
-                  </pre>
-                </div>
-
-                <p className="text-[10px] text-slate-400 mt-2 leading-relaxed">
-                  <span className="font-semibold text-emerald-400">H2H Flow:</span> Embed address & QR inside your native trader room. Webhook status updates will dispatch to your backend.
-                </p>
-              </div>
-            )}
+            </div>
 
             {/* Deposit Settled & Credited On-Chain Notice (Prominent Callout) */}
             {currentState === 'Credited' && (
@@ -729,25 +535,19 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
 
         {/* Modal Action Buttons */}
         <div className="pt-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2 flex-wrap text-[11px] text-gray-500 font-mono">
-            <span>ID: <strong className="text-gray-800">{orderReference}</strong></span>
-            <span>·</span>
-            <span className="px-2 py-0.5 rounded-full bg-gray-100 font-bold text-gray-700">
-              {integrationMode === 'HPP' ? '🌐 HPP · Hosted Cashier' : '⚡ H2H · Direct Server API'}
-            </span>
-            <span>·</span>
-            <span>Webhook: <strong className="text-[#00C076]">deposit.credited</strong></span>
+          <div className="text-[11px] text-gray-500 font-mono">
+            ID: <span className="text-gray-800 font-bold">{orderReference}</span> · Webhook event: <span className="text-[#00C076] font-bold">deposit.credited</span>
           </div>
           <div className="flex items-center gap-2.5 w-full sm:w-auto">
             <button
               onClick={onClose}
-              className="flex-1 sm:flex-initial px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl text-xs font-semibold transition cursor-pointer"
+              className="flex-1 sm:flex-initial px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl text-xs font-semibold transition"
             >
               Close
             </button>
             <button
               onClick={handleConfirmCredit}
-              className="flex-1 sm:flex-initial px-5 py-2 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer"
+              className="flex-1 sm:flex-initial px-5 py-2 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5"
             >
               <Check className="w-3.5 h-3.5" />
               <span>Credit Deposit to Ledger</span>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, Check, ChevronDown, Globe, Zap, Plus } from 'lucide-react';
+import { Copy, Check, ChevronDown } from 'lucide-react';
 import { DepositRecord } from '../types';
 
 const DEPOSITS_DATA: DepositRecord[] = [
@@ -9,7 +9,7 @@ const DEPOSITS_DATA: DepositRecord[] = [
     refId: 'ref: CRM-DEP-90124',
     customer: 'cust_10442',
     assetChain: 'USDT · TRON',
-    flow: 'HPP · Hosted',
+    flow: 'Open',
     expected: '—',
     received: '2,500.00',
     numericReceived: 2500,
@@ -22,7 +22,7 @@ const DEPOSITS_DATA: DepositRecord[] = [
     refId: 'ref: CRM-DEP-90117',
     customer: 'cust_20981',
     assetChain: 'USDT · ERC-20',
-    flow: 'H2H · Direct',
+    flow: 'Fixed',
     expected: '12,000.00',
     received: '12,000.00',
     numericReceived: 12000,
@@ -35,7 +35,7 @@ const DEPOSITS_DATA: DepositRecord[] = [
     refId: 'ref: CRM-DEP-90110',
     customer: 'cust_31120',
     assetChain: 'USDT · TRON',
-    flow: 'HPP · Hosted',
+    flow: 'Fixed',
     expected: '800.00',
     received: '—',
     numericReceived: 0,
@@ -48,7 +48,7 @@ const DEPOSITS_DATA: DepositRecord[] = [
     refId: 'ref: CRM-DEP-90103',
     customer: 'cust_30017',
     assetChain: 'USDC · ERC-20',
-    flow: 'H2H · Direct',
+    flow: 'Fixed',
     expected: '950.00',
     received: '950.00',
     numericReceived: 950,
@@ -61,7 +61,7 @@ const DEPOSITS_DATA: DepositRecord[] = [
     refId: 'ref: CRM-DEP-90096',
     customer: 'cust_10213',
     assetChain: 'USDT · BEP-20',
-    flow: 'HPP · Hosted',
+    flow: 'Open',
     expected: '—',
     received: '5,120.00',
     numericReceived: 5120,
@@ -74,7 +74,7 @@ const DEPOSITS_DATA: DepositRecord[] = [
     refId: 'ref: CRM-DEP-90089',
     customer: 'cust_40551',
     assetChain: 'USDT · TRON',
-    flow: 'HPP · Hosted',
+    flow: 'Fixed',
     expected: '300.00',
     received: '—',
     numericReceived: 0,
@@ -87,7 +87,7 @@ const DEPOSITS_DATA: DepositRecord[] = [
     refId: 'ref: CRM-DEP-90082',
     customer: 'cust_11872',
     assetChain: 'USDT · TRON',
-    flow: 'H2H · Direct',
+    flow: 'Open',
     expected: '—',
     received: '6,400.00',
     numericReceived: 6400,
@@ -100,7 +100,7 @@ const DEPOSITS_DATA: DepositRecord[] = [
     refId: 'ref: CRM-DEP-90075',
     customer: 'cust_22301',
     assetChain: 'USDT · ERC-20',
-    flow: 'HPP · Hosted',
+    flow: 'Open',
     expected: '—',
     received: '1,000.00',
     numericReceived: 1000,
@@ -117,15 +117,12 @@ export interface DepositsPageProps {
 
 export const DepositsPage: React.FC<DepositsPageProps> = ({
   searchQuery = '',
-  onOpenNewDeposit,
   onSelectDeposit
 }) => {
   const [activeFilter, setActiveFilter] = useState('all');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedNetwork, setSelectedNetwork] = useState('All');
   const [showNetworkMenu, setShowNetworkMenu] = useState(false);
-  const [selectedFlow, setSelectedFlow] = useState('All');
-  const [showFlowMenu, setShowFlowMenu] = useState(false);
 
   const filterTabs = [
     { id: 'all', label: 'All 1,248' },
@@ -174,7 +171,6 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
       row.refId.toLowerCase().includes(searchQuery.toLowerCase()) ||
       row.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
       row.assetChain.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      row.flow.toLowerCase().includes(searchQuery.toLowerCase()) ||
       row.status.toLowerCase().includes(searchQuery.toLowerCase());
 
     const currentTab = filterTabs.find(t => t.id === activeFilter);
@@ -186,12 +182,7 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
       selectedNetwork === 'All' ||
       row.assetChain.toLowerCase().includes(selectedNetwork.toLowerCase());
 
-    const matchesFlow =
-      selectedFlow === 'All' ||
-      (selectedFlow === 'HPP' && row.flow.includes('HPP')) ||
-      (selectedFlow === 'H2H' && row.flow.includes('H2H'));
-
-    return matchesSearch && matchesStatus && matchesNetwork && matchesFlow;
+    return matchesSearch && matchesStatus && matchesNetwork;
   });
 
   return (
@@ -219,65 +210,12 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
         </div>
 
         {/* Right: Secondary Action Pills */}
-        {/* Right: Secondary Action Pills & New Deposit Button */}
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-          {/* New Deposit Button */}
-          {onOpenNewDeposit && (
-            <button
-              onClick={onOpenNewDeposit}
-              className="px-3.5 py-1 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11px] font-bold transition-all shadow-sm flex items-center gap-1.5 select-none whitespace-nowrap cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>New Deposit Order</span>
-            </button>
-          )}
-
-          {/* Flow Filter Pill (HPP vs H2H) */}
-          <div className="relative">
-            <button
-              onClick={() => {
-                setShowFlowMenu(!showFlowMenu);
-                setShowNetworkMenu(false);
-              }}
-              className="px-3 py-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 rounded-full text-[11px] font-semibold transition-all shadow-2xs flex items-center gap-1 select-none whitespace-nowrap cursor-pointer"
-            >
-              <span className="text-gray-400">Flow:</span>
-              <span className="text-gray-900 font-bold">{selectedFlow === 'All' ? 'All (HPP + H2H)' : selectedFlow}</span>
-              <ChevronDown className="w-3 h-3 text-gray-400" />
-            </button>
-
-            {showFlowMenu && (
-              <div className="absolute right-0 mt-1.5 w-44 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-40 text-xs animate-fadeIn">
-                {[
-                  { id: 'All', label: 'All Flows (HPP & H2H)' },
-                  { id: 'HPP', label: '🌐 HPP · Hosted Cashier' },
-                  { id: 'H2H', label: '⚡ H2H · Direct API' }
-                ].map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setSelectedFlow(item.id);
-                      setShowFlowMenu(false);
-                    }}
-                    className={`w-full px-3 py-1.5 text-left hover:bg-gray-50 text-xs transition ${
-                      selectedFlow === item.id ? 'font-bold text-[#00C076] bg-emerald-50/50' : 'text-gray-700'
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
           {/* Network Filter Pill */}
           <div className="relative">
             <button
-              onClick={() => {
-                setShowNetworkMenu(!showNetworkMenu);
-                setShowFlowMenu(false);
-              }}
-              className="px-3 py-1 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11px] font-medium transition-all shadow-sm flex items-center gap-1 select-none whitespace-nowrap cursor-pointer"
+              onClick={() => setShowNetworkMenu(!showNetworkMenu)}
+              className="px-3 py-1 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11px] font-medium transition-all shadow-sm flex items-center gap-1 select-none whitespace-nowrap"
             >
               <span>Network: {selectedNetwork === 'All' ? 'All' : selectedNetwork}</span>
               <ChevronDown className="w-3 h-3 text-white" />
@@ -306,7 +244,7 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
           {/* Export CSV Pill */}
           <button
             onClick={handleExportCSV}
-            className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-[11px] font-semibold transition-all shadow-2xs flex items-center gap-1 select-none whitespace-nowrap cursor-pointer"
+            className="px-3 py-1 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11px] font-medium transition-all shadow-sm flex items-center gap-1 select-none whitespace-nowrap"
           >
             <span>Export CSV</span>
           </button>
@@ -316,7 +254,7 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
       {/* Modern Fitted Table Container with Smooth Horizontal Scroll on Mobile */}
       <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
-          <table className="w-full text-left border-collapse min-w-[780px]">
+          <table className="w-full text-left border-collapse min-w-[740px]">
             {/* Dark Sleek Header Bar */}
             <thead>
               <tr className="bg-[#18191B] text-white text-[12px] sm:text-[12.5px] font-medium tracking-normal select-none">
@@ -378,18 +316,8 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
                     </td>
 
                     {/* Flow */}
-                    <td className="py-2.5 sm:py-3 px-3 whitespace-nowrap">
-                      {row.flow.includes('H2H') ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-purple-50 text-purple-700 border border-purple-200/80 shadow-2xs">
-                          <Zap className="w-2.5 h-2.5 text-purple-600 shrink-0" />
-                          <span>H2H · Direct</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-blue-50 text-blue-700 border border-blue-200/80 shadow-2xs">
-                          <Globe className="w-2.5 h-2.5 text-blue-600 shrink-0" />
-                          <span>HPP · Hosted</span>
-                        </span>
-                      )}
+                    <td className="py-2.5 sm:py-3 px-3 text-[#4B5563]">
+                      {row.flow}
                     </td>
 
                     {/* Expected */}
