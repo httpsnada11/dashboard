@@ -191,11 +191,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="relative">
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className={`flex items-center gap-1.5 sm:gap-2 text-white pl-1 pr-2 sm:pr-2.5 py-1 rounded-full shadow-sm transition-all select-none ${
-              portalMode === 'admin'
-                ? 'bg-slate-900 hover:bg-slate-800 border border-slate-700'
-                : 'bg-[#00C076] hover:bg-[#00AA67]'
-            }`}
+            className="flex items-center gap-1.5 sm:gap-2 text-white pl-1 pr-2 sm:pr-2.5 py-1 rounded-full shadow-sm transition-all select-none bg-[#00C076] hover:bg-[#00AA67] cursor-pointer"
           >
             {/* Dark circular avatar */}
             <div className="w-6 h-6 rounded-full bg-[#111827] flex items-center justify-center overflow-hidden border border-white/20 flex-shrink-0">

@@ -162,41 +162,41 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
 
       {/* Sub-navigation Switcher: Threats Queue vs System Health */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-2 rounded-2xl border border-gray-100 shadow-2xs">
-        <div className="flex items-center gap-1.5 bg-gray-100/80 p-1 rounded-xl">
+        <div className="flex items-center gap-1.5 bg-gray-100/80 p-1 rounded-xl overflow-x-auto scrollbar-none flex-nowrap -mx-0.5 px-0.5">
           <button
             onClick={() => setActiveOverviewTab('threats')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer ${
               activeOverviewTab === 'threats'
                 ? 'bg-white text-gray-900 shadow-2xs'
                 : 'text-gray-500 hover:text-gray-900'
             }`}
           >
-            <ShieldAlert className="w-3.5 h-3.5 text-red-500" />
+            <ShieldAlert className="w-3.5 h-3.5 text-red-500 shrink-0" />
             <span>AML / KYT Risk Queue</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-red-100 text-red-700 font-bold">
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-red-100 text-red-700 font-bold shrink-0">
               {alerts.filter((a) => a.status === 'Pending Action').length} Pending
             </span>
           </button>
 
           <button
             onClick={() => setActiveOverviewTab('system-health')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer ${
               activeOverviewTab === 'system-health'
                 ? 'bg-white text-gray-900 shadow-2xs'
                 : 'text-gray-500 hover:text-gray-900'
             }`}
           >
-            <Activity className="w-3.5 h-3.5 text-emerald-500 animate-pulse" />
+            <Activity className="w-3.5 h-3.5 text-emerald-500 animate-pulse shrink-0" />
             <span>System Health & MPC Nodes</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 text-emerald-800 font-bold">
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 text-emerald-800 font-bold shrink-0">
               All Systems Operational
             </span>
           </button>
         </div>
 
-        <div className="flex items-center gap-2 px-3 text-xs text-gray-400">
-          <Clock className="w-3.5 h-3.5" />
-          <span>Last sync: Just now (15s polling)</span>
+        <div className="flex items-center gap-2 px-2 sm:px-3 text-xs text-gray-400">
+          <Clock className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">Last sync: Just now (15s polling)</span>
         </div>
       </div>
 
@@ -354,14 +354,14 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
                 />
               </div>
 
-              <div className="flex items-center justify-between text-xs pt-1">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs pt-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
                   <span className="font-bold text-gray-900">Cold Multi-Sig Vault: $27,859,500.00 (92.9%)</span>
                   <span className="text-gray-400 font-mono text-[10.5px]">Fireblocks Fund001</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
                   <span className="font-bold text-gray-900">Hot Operational: $2,140,500.00 (7.1%)</span>
                   <span className="text-gray-400 font-mono text-[10.5px]">Disbursement Float</span>
                 </div>
@@ -556,8 +556,14 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
           </div>
         </div>
 
+        {/* Mobile Swipe Hint */}
+        <div className="lg:hidden flex items-center justify-between text-[11px] text-gray-400 mt-3 pt-2 border-t border-gray-100">
+          <span>↔ Swipe horizontally to view full threat details</span>
+          <span className="text-[#00C076] font-semibold text-[10.5px]">Touch scroll active</span>
+        </div>
+
         {/* Alerts Table */}
-        <div className="overflow-x-auto mt-4">
+        <div className="overflow-x-auto mt-3">
           <table className="w-full text-left text-xs border-collapse min-w-[1020px]">
             <thead>
               <tr className="border-b border-gray-100 text-gray-400 uppercase font-semibold text-[10.5px] tracking-wider">
@@ -689,8 +695,8 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
 
       {/* Inspect Modal Drawer */}
       {selectedAlert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-fadeIn overflow-y-auto">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-lg w-full p-4 sm:p-6 shadow-2xl border border-gray-100 space-y-4 my-auto max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2">
                 <ShieldAlert className="w-5 h-5 text-red-500" />
@@ -714,7 +720,7 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div className="p-2.5 bg-gray-50 rounded-xl">
                   <span className="text-gray-400 block text-[10px] uppercase font-bold">Risk Score</span>
                   <span className="text-sm font-mono font-bold text-red-600">
@@ -741,13 +747,13 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
               </div>
             </div>
 
-            <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
+            <div className="pt-3 border-t border-gray-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
               <button
                 onClick={() => {
                   handleAction(selectedAlert.id, 'Frozen');
                   setSelectedAlert(null);
                 }}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-xs shadow-sm transition"
+                className="w-full sm:w-auto px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-xs shadow-sm transition cursor-pointer"
               >
                 Freeze Wallet
               </button>
@@ -756,7 +762,7 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
                   handleAction(selectedAlert.id, 'Approved Override');
                   setSelectedAlert(null);
                 }}
-                className="px-4 py-2 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl font-bold text-xs shadow-sm transition"
+                className="w-full sm:w-auto px-4 py-2.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl font-bold text-xs shadow-sm transition cursor-pointer"
               >
                 Clear False Positive
               </button>

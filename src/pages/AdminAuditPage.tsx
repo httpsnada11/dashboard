@@ -274,8 +274,14 @@ export const AdminAuditPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Mobile Swipe Hint */}
+        <div className="lg:hidden flex items-center justify-between text-[11px] text-gray-400 mt-3 pt-2 border-t border-gray-100">
+          <span>↔ Swipe horizontally to inspect operator, target & hash</span>
+          <span className="text-[#00C076] font-semibold text-[10.5px]">Touch scroll active</span>
+        </div>
+
         {/* Audit Log Table */}
-        <div className="overflow-x-auto mt-4">
+        <div className="overflow-x-auto mt-3">
           <table className="w-full text-left text-xs min-w-[1050px]">
             <thead className="bg-gray-50/70 text-gray-400 uppercase tracking-wider text-[11px] border-b border-gray-100">
               <tr>
@@ -377,30 +383,30 @@ export const AdminAuditPage: React.FC = () => {
 
       {/* Log Detail Modal */}
       {selectedLog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-          <div className="relative w-full max-w-2xl bg-white border border-gray-200 rounded-3xl shadow-2xl p-6 text-gray-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-fadeIn overflow-y-auto">
+          <div className="relative w-full max-w-2xl bg-white border border-gray-200 rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 text-gray-800 my-auto max-h-[92vh] overflow-y-auto">
             <button
               onClick={() => setSelectedLog(null)}
-              className="absolute top-5 right-5 p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+              className="absolute top-4 sm:top-5 right-4 sm:right-5 p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center gap-3 mb-5">
-              <span className="p-2.5 rounded-2xl bg-emerald-50 text-[#00C076] border border-emerald-100">
-                <FileCheck2 className="w-6 h-6" />
+            <div className="flex items-center gap-3 mb-4 sm:mb-5 pr-8">
+              <span className="p-2 sm:p-2.5 rounded-2xl bg-emerald-50 text-[#00C076] border border-emerald-100 shrink-0">
+                <FileCheck2 className="w-5 h-5 sm:w-6 sm:h-6" />
               </span>
-              <div>
-                <h3 className="text-lg font-bold text-gray-900">Cryptographic Audit Entry</h3>
-                <p className="text-xs text-gray-400 font-mono">Record ID: {selectedLog.id}</p>
+              <div className="min-w-0">
+                <h3 className="text-base sm:text-lg font-bold text-gray-900 truncate">Cryptographic Audit Entry</h3>
+                <p className="text-[11px] sm:text-xs text-gray-400 font-mono truncate">Record ID: {selectedLog.id}</p>
               </div>
             </div>
 
-            <div className="space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3 p-3.5 rounded-2xl bg-gray-50 border border-gray-100">
+            <div className="space-y-3 sm:space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 p-3 sm:p-3.5 rounded-2xl bg-gray-50 border border-gray-100">
                 <div>
                   <span className="text-gray-400 block mb-0.5 font-medium">Operator:</span>
-                  <span className="font-bold text-gray-900">{selectedLog.operator}</span>
+                  <span className="font-bold text-gray-900 break-words">{selectedLog.operator}</span>
                 </div>
                 <div>
                   <span className="text-gray-400 block mb-0.5 font-medium">Role / Permission:</span>
@@ -418,7 +424,7 @@ export const AdminAuditPage: React.FC = () => {
 
               <div>
                 <span className="text-gray-400 block mb-1 font-medium">Event Action & Target:</span>
-                <div className="p-3.5 bg-gray-50 rounded-2xl border border-gray-100 font-mono text-xs text-gray-800 space-y-1">
+                <div className="p-3 sm:p-3.5 bg-gray-50 rounded-2xl border border-gray-100 font-mono text-xs text-gray-800 space-y-1">
                   <div><strong className="text-blue-600">Action:</strong> {selectedLog.action}</div>
                   <div><strong className="text-gray-500">Target:</strong> {selectedLog.target}</div>
                 </div>
@@ -426,11 +432,11 @@ export const AdminAuditPage: React.FC = () => {
 
               <div>
                 <span className="text-gray-400 block mb-1 font-medium">Immutable SHA-256 Digest:</span>
-                <div className="p-3.5 bg-gray-900 rounded-2xl border border-gray-800 font-mono text-[11px] text-emerald-400 break-all flex items-center justify-between gap-2 shadow-inner">
+                <div className="p-3 sm:p-3.5 bg-gray-900 rounded-2xl border border-gray-800 font-mono text-[10.5px] sm:text-[11px] text-emerald-400 break-all flex items-center justify-between gap-2 shadow-inner">
                   <span>{selectedLog.hash}</span>
                   <button
                     onClick={() => handleCopyHash(selectedLog.hash)}
-                    className="p-1 hover:text-white text-gray-400 shrink-0"
+                    className="p-1 hover:text-white text-gray-400 shrink-0 cursor-pointer"
                   >
                     {copiedHash === selectedLog.hash ? (
                       <Check className="w-4 h-4 text-[#00C076]" />
@@ -441,19 +447,19 @@ export const AdminAuditPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-800">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-800">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-[#00C076]" />
-                  <span className="font-semibold text-[11.5px]">WORM Hardware Enforced • Signer Hardware ID #YUBI-8842-109</span>
+                  <span className="font-semibold text-[11px] sm:text-[11.5px]">WORM Hardware Enforced • Signer Hardware ID #YUBI-8842-109</span>
                 </div>
-                <span className="font-mono text-[10px] uppercase font-bold text-[#00C076]">Non-Repudiable</span>
+                <span className="font-mono text-[10px] uppercase font-bold text-[#00C076] self-start sm:self-auto">Non-Repudiable</span>
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end">
+            <div className="mt-5 sm:mt-6 flex justify-end">
               <button
                 onClick={() => setSelectedLog(null)}
-                className="px-4 py-2 text-xs font-bold rounded-full bg-gray-900 hover:bg-gray-800 text-white transition-colors"
+                className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold rounded-xl sm:rounded-full bg-gray-900 hover:bg-gray-800 text-white transition-colors cursor-pointer"
               >
                 Close Inspector
               </button>

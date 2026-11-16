@@ -376,10 +376,10 @@ export const AdminPayoutsPage: React.FC = () => {
         {/* Controls Toolbar */}
         <div className="p-4 sm:p-5 border-b border-gray-100 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
           {/* Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none -mx-1 px-1 flex-nowrap shrink-0">
             <button
               onClick={() => setFilterTab('all')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap shrink-0 cursor-pointer ${
                 filterTab === 'all'
                   ? 'bg-slate-900 text-white shadow-2xs'
                   : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
@@ -389,7 +389,7 @@ export const AdminPayoutsPage: React.FC = () => {
             </button>
             <button
               onClick={() => setFilterTab('pending')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap shrink-0 cursor-pointer ${
                 filterTab === 'pending'
                   ? 'bg-amber-500 text-white shadow-2xs'
                   : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
@@ -399,7 +399,7 @@ export const AdminPayoutsPage: React.FC = () => {
             </button>
             <button
               onClick={() => setFilterTab('hold')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap shrink-0 cursor-pointer ${
                 filterTab === 'hold'
                   ? 'bg-red-600 text-white shadow-2xs'
                   : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
@@ -409,7 +409,7 @@ export const AdminPayoutsPage: React.FC = () => {
             </button>
             <button
               onClick={() => setFilterTab('completed')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap shrink-0 cursor-pointer ${
                 filterTab === 'completed'
                   ? 'bg-emerald-600 text-white shadow-2xs'
                   : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
@@ -442,6 +442,12 @@ export const AdminPayoutsPage: React.FC = () => {
               />
             </div>
           </div>
+        </div>
+
+        {/* Mobile Swipe Hint */}
+        <div className="lg:hidden flex items-center justify-between text-[11px] text-gray-400 p-3 bg-gray-50/50 border-b border-gray-100">
+          <span>↔ Swipe horizontally to review Maker, Destination & Quorum</span>
+          <span className="text-[#00C076] font-semibold text-[10.5px]">Touch scroll active</span>
         </div>
 
         {/* Table */}
@@ -651,11 +657,11 @@ export const AdminPayoutsPage: React.FC = () => {
 
       {/* MODAL 1: Compliance Hold Modal */}
       {holdModalPayout && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-xs animate-fadeIn overflow-y-auto">
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-4 my-auto max-h-[92vh] overflow-y-auto">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center border border-red-100">
+                <div className="w-10 h-10 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center border border-red-100 shrink-0">
                   <AlertTriangle className="w-5 h-5" />
                 </div>
                 <div>
@@ -712,16 +718,16 @@ export const AdminPayoutsPage: React.FC = () => {
               />
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-2">
               <button
                 onClick={() => setHoldModalPayout(null)}
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold transition"
+                className="w-full sm:w-auto px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold transition cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={executeComplianceHold}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+                className="w-full sm:w-auto px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
               >
                 <PauseCircle className="w-4 h-4" />
                 <span>Confirm Compliance Hold</span>
@@ -733,11 +739,11 @@ export const AdminPayoutsPage: React.FC = () => {
 
       {/* MODAL 2: Maker-Checker MPC Approval Modal */}
       {approveModalPayout && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-xs animate-fadeIn overflow-y-auto">
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-4 my-auto max-h-[92vh] overflow-y-auto">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100 shrink-0">
                   <Key className="w-5 h-5" />
                 </div>
                 <div>
@@ -786,17 +792,17 @@ export const AdminPayoutsPage: React.FC = () => {
               <span className="text-[10.5px] text-gray-400 block text-center">Enter your registered 6-digit platform authenticator security code</span>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-2">
               <button
                 onClick={() => setApproveModalPayout(null)}
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold transition"
+                className="w-full sm:w-auto px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold transition cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 disabled={isSubmittingMpc}
                 onClick={executeMpcApproval}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                className="w-full sm:w-auto px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50 cursor-pointer"
               >
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
                 <span>{isSubmittingMpc ? 'Deriving MPC Keys...' : 'Execute MPC Co-Sign'}</span>
@@ -809,7 +815,7 @@ export const AdminPayoutsPage: React.FC = () => {
       {/* DRAWER: Inspect Payout Lifecycle */}
       {inspectPayout && (
         <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/40 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white h-full w-full max-w-lg shadow-2xl p-6 overflow-y-auto space-y-6">
+          <div className="bg-white h-full w-full max-w-full sm:max-w-lg shadow-2xl p-4 sm:p-6 overflow-y-auto space-y-6">
             <div className="flex items-start justify-between">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">

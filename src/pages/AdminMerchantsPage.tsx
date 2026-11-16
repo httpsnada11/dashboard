@@ -306,8 +306,14 @@ export const AdminMerchantsPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Mobile Swipe Hint */}
+        <div className="lg:hidden flex items-center justify-between text-[11px] text-gray-400 mt-3 pt-2 border-t border-gray-100">
+          <span>↔ Swipe horizontally to view full merchant adjudication data</span>
+          <span className="text-[#00C076] font-semibold text-[10.5px]">Touch scroll active</span>
+        </div>
+
         {/* Directory Table */}
-        <div className="overflow-x-auto mt-4">
+        <div className="overflow-x-auto mt-3">
           <table className="w-full text-left text-xs border-collapse min-w-[1020px]">
             <thead>
               <tr className="border-b border-gray-100 text-gray-400 uppercase font-semibold text-[10.5px] tracking-wider">
@@ -423,8 +429,8 @@ export const AdminMerchantsPage: React.FC = () => {
 
       {/* Documents Inspection Drawer / Modal */}
       {selectedMerchant && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-fadeIn overflow-y-auto">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-lg w-full p-4 sm:p-6 shadow-2xl border border-gray-100 space-y-4 my-auto max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-[#00C076]" />
@@ -531,23 +537,23 @@ export const AdminMerchantsPage: React.FC = () => {
               </div>
             )}
 
-            <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+            <div className="pt-3 border-t border-gray-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <span className="text-xs text-gray-500">
                 Current Status: <strong className="text-gray-900">{selectedMerchant.kybStatus}</strong>
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 {selectedMerchant.kybStatus !== 'Approved' && (
                   <>
                     <button
                       onClick={() => handleUpdateStatus(selectedMerchant.id, 'Approved')}
-                      className="px-3 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl font-bold text-xs shadow-sm transition"
+                      className="flex-1 sm:flex-initial px-3 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl font-bold text-xs shadow-sm transition cursor-pointer"
                     >
                       1-Click Approve
                     </button>
                     {!showRejectBox && selectedMerchant.kybStatus !== 'Rejected' && (
                       <button
                         onClick={() => setShowRejectBox(true)}
-                        className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-xl font-bold text-xs transition"
+                        className="flex-1 sm:flex-initial px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-xl font-bold text-xs transition cursor-pointer"
                       >
                         Reject...
                       </button>
@@ -559,7 +565,7 @@ export const AdminMerchantsPage: React.FC = () => {
                     setSelectedMerchant(null);
                     setShowRejectBox(false);
                   }}
-                  className="px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl font-semibold text-xs transition"
+                  className="flex-1 sm:flex-initial px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl font-semibold text-xs transition cursor-pointer"
                 >
                   Close
                 </button>
@@ -571,8 +577,8 @@ export const AdminMerchantsPage: React.FC = () => {
 
       {/* Adjust Daily Limit Modal */}
       {editingLimitMerchant && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-fadeIn overflow-y-auto">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-md w-full p-4 sm:p-6 shadow-2xl border border-gray-100 space-y-4 my-auto max-h-[92vh] overflow-y-auto">
             <h3 className="font-bold text-gray-900 text-base">Adjust Merchant Daily Limit</h3>
             <p className="text-xs text-gray-500">
               Configure authorized automated payout and deposit settlement threshold for{' '}
@@ -597,13 +603,13 @@ export const AdminMerchantsPage: React.FC = () => {
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 onClick={() => setEditingLimitMerchant(null)}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-xs font-semibold"
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-xs font-semibold cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveLimit}
-                className="px-5 py-2 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-xs font-bold shadow-sm"
+                className="px-5 py-2 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-xs font-bold shadow-sm cursor-pointer"
               >
                 Save Limit
               </button>

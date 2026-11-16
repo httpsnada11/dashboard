@@ -138,7 +138,7 @@ export const AdminExceptionsPage: React.FC = () => {
           <button
             onClick={handleTriggerSweep}
             disabled={isSweeping}
-            className="px-4 py-2 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm disabled:opacity-50 cursor-pointer"
+            className="w-full md:w-auto px-4 py-2.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isSweeping ? 'animate-spin' : ''}`} />
             <span>{isSweeping ? 'Executing Sweep...' : 'Trigger Cold Storage Sweep'}</span>
@@ -168,8 +168,14 @@ export const AdminExceptionsPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Mobile Swipe Hint */}
+        <div className="lg:hidden flex items-center justify-between text-[11px] text-gray-400 mt-3 pt-2 border-t border-gray-100">
+          <span>↔ Swipe horizontally to view full exception resolution queue</span>
+          <span className="text-[#00C076] font-semibold text-[10.5px]">Touch scroll active</span>
+        </div>
+
         {/* Exceptions Table */}
-        <div className="overflow-x-auto mt-4">
+        <div className="overflow-x-auto mt-3">
           <table className="w-full text-left text-xs border-collapse min-w-[980px]">
             <thead>
               <tr className="border-b border-gray-100 text-gray-400 uppercase font-semibold text-[10.5px] tracking-wider">

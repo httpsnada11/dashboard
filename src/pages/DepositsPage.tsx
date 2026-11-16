@@ -218,6 +218,7 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
           })}
         </div>
 
+        {/* Right: Secondary Action Pills */}
         {/* Right: Secondary Action Pills & New Deposit Button */}
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           {/* New Deposit Button */}

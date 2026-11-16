@@ -744,7 +744,7 @@ export function App() {
         />
 
         {/* Large Rounded Content Canvas */}
-        <main className="flex-1 bg-[#EAEBED] rounded-t-2xl sm:rounded-tl-[32px] overflow-y-auto px-3.5 py-3.5 sm:px-6 sm:py-5 lg:px-8 transition-all">
+        <main className="flex-1 bg-[#EAEBED] rounded-t-2xl sm:rounded-tl-[32px] overflow-y-auto px-2.5 py-3 sm:px-6 sm:py-5 lg:px-8 transition-all">
           <div className="w-full flex flex-col max-w-7xl mx-auto">
             {/* Uniform Page Header across EVERY page */}
             <PageHeader
