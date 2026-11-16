@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COPYm Pay — Dual Integration Cashier Simulator (HPP vs H2H)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    code, pre, .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .scrollbar-thin::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    .phone-shadow {
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35), 0 0 0 12px #0f172a, 0 0 0 14px #334155;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-[#00C076] selection:text-white">
+
+  <!-- Top Bar Navigation -->
+  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50 px-6 py-3.5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#00C076] to-emerald-400 flex items-center justify-center font-black text-slate-950 text-sm shadow-md shadow-emerald-500/20">
+        CM
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="font-extrabold text-base tracking-tight text-white">COPYm Pay</span>
+          <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[#00C076] text-[10.5px] font-bold">Simulator Studio</span>
+        </div>
+        <p class="text-[11px] text-slate-400">CoinsPaid-Style Dual Cashier Architecture (HPP vs H2H)</p>
+      </div>
+    </div>
+
+    <!-- Merchant Identifier -->
+    <div class="flex items-center gap-3 text-xs">
+      <div class="bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700/60 flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-[#00C076] animate-pulse"></span>
+        <span class="text-slate-300 font-semibold">Apex Forex Markets Ltd</span>
+        <span class="text-[10px] text-slate-400 font-mono">#mord_broker_8412</span>
+      </div>
+      <a href="https://copympay.com" target="_blank" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold transition text-xs flex items-center gap-1.5">
+        <span>Production Docs</span>
+        <i data-lucide="external-link" class="w-3.5 h-3.5 text-slate-400"></i>
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Hero Studio Layout -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+    
+    <!-- LEFT PANEL: Configuration & Simulator Controls (5 Cols) -->
+    <div class="lg:col-span-5 space-y-6">
+      
+      <!-- 1. The Core Architecture Switcher Card -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="layers" class="w-3.5 h-3.5 text-[#00C076]"></i>
+            Select Cashier Integration Mode
+          </span>
+          <span id="activeModeBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-[#00C076] border border-emerald-500/30">
+            HPP Selected
+          </span>
+        </div>
+
+        <!-- Segmented Mode Control -->
+        <div class="grid grid-cols-2 gap-2 bg-slate-950 p-1.5 rounded-2xl border border-slate-800/80">
+          <!-- Button 1: HPP -->
+          <button id="btnHpp" onclick="switchMode('HPP')" class="relative py-3 px-3 rounded-xl text-left transition-all duration-200 border bg-[#00C076] text-white border-emerald-400/40 shadow-lg shadow-emerald-500/10 group">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-black tracking-tight flex items-center gap-1.5">
+                <i data-lucide="globe" class="w-4 h-4"></i>
+                HPP · Hosted
+              </span>
+              <span class="text-[9.5px] px-1.5 py-0.2 bg-black/20 rounded font-mono font-bold">Standard</span>
+            </div>
+            <p class="text-[10.5px] opacity-90 leading-tight">
+              Customer redirects to COPYm managed checkout. Live timer & Web3.
+            </p>
+          </button>
+
+          <!-- Button 2: H2H -->
+          <button id="btnH2h" onclick="switchMode('H2H')" class="relative py-3 px-3 rounded-xl text-left transition-all duration-200 border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 group">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-black tracking-tight flex items-center gap-1.5">
+                <i data-lucide="zap" class="w-4 h-4 text-purple-400"></i>
+                H2H · White-Label
+              </span>
+              <span class="text-[9.5px] px-1.5 py-0.2 bg-purple-500/20 text-purple-300 rounded font-mono font-bold">80% Brokers</span>
+            </div>
+            <p class="text-[10.5px] opacity-80 leading-tight">
+              0 redirects. QR & address render 100% inside your native CRM.
+            </p>
+          </button>
+        </div>
+
+        <!-- Dynamic Architecture Micro-Note -->
+        <div id="modeExplainer" class="mt-3.5 p-3 rounded-xl bg-slate-950/70 border border-slate-800 text-[11px] text-slate-300 flex items-start gap-2.5">
+          <i data-lucide="info" class="w-4 h-4 text-[#00C076] shrink-0 mt-0.5"></i>
+          <div>
+            <span class="font-bold text-white">How HPP Works:</span> Payer clicks deposit on your site and is seamlessly forwarded to your hosted payment page (<code class="text-emerald-400 text-[10px]">copympay.com/c/ord_...</code>). Once confirmed, auto-redirects back in 3s.
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Interactive Order Parameters -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="sliders" class="w-3.5 h-3.5 text-blue-400"></i>
+            Order Parameters
+          </span>
+          <span class="text-[10px] text-slate-500 font-mono">Live Session Data</span>
+        </div>
+
+        <!-- Amount -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Deposit Amount (USDT)</label>
+          <div class="flex items-center gap-2">
+            <div class="relative flex-1">
+              <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-sm">$</span>
+              <input id="inputAmount" type="text" value="250.00" oninput="updateAmount(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-2 text-sm font-bold text-white font-mono focus:outline-none focus:border-[#00C076] transition" />
+            </div>
+            <!-- Quick Chips -->
+            <div class="flex items-center gap-1">
+              <button onclick="setAmount('100.00')" class="px-2.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition font-mono">$100</button>
+              <button onclick="setAmount('250.00')" class="px-2.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition font-mono">$250</button>
+              <button onclick="setAmount('1000.00')" class="px-2.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition font-mono">$1K</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Network Selector -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Default Crypto Network</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button onclick="setNetwork('TRON')" id="netTron" class="py-2 px-2.5 rounded-xl border bg-slate-800 border-emerald-500 text-white font-bold text-xs flex flex-col items-center gap-0.5 transition">
+              <span class="text-[11px]">TRON</span>
+              <span class="text-[9.5px] text-emerald-400 font-mono">TRC-20</span>
+            </button>
+            <button onclick="setNetwork('ETH')" id="netEth" class="py-2 px-2.5 rounded-xl border bg-slate-950 border-slate-800 text-slate-400 hover:text-white font-bold text-xs flex flex-col items-center gap-0.5 transition">
+              <span class="text-[11px]">Ethereum</span>
+              <span class="text-[9.5px] text-slate-500 font-mono">ERC-20</span>
+            </button>
+            <button onclick="setNetwork('BSC')" id="netBsc" class="py-2 px-2.5 rounded-xl border bg-slate-950 border-slate-800 text-slate-400 hover:text-white font-bold text-xs flex flex-col items-center gap-0.5 transition">
+              <span class="text-[11px]">BNB Chain</span>
+              <span class="text-[9.5px] text-slate-500 font-mono">BEP-20</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Simulated Actions -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Simulate Blockchain Lifecycle</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="triggerState('detected')" class="py-2 px-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5">
+              <i data-lucide="radio" class="w-3.5 h-3.5"></i>
+              <span>1. Mempool Detect</span>
+            </button>
+            <button onclick="triggerState('confirming')" class="py-2 px-3 bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/30 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5">
+              <i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i>
+              <span>2. Confirm Blocks</span>
+            </button>
+            <button onclick="triggerState('paid')" class="py-2 px-3 bg-emerald-500/10 hover:bg-emerald-500/20 text-[#00C076] border border-emerald-500/30 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5">
+              <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+              <span>3. Settle Ledger</span>
+            </button>
+            <button onclick="triggerState('awaiting')" class="py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+              <span>Reset State</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Real-Time Developer API Inspector -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-3 font-mono">
+        <div class="flex items-center justify-between text-xs border-b border-slate-800 pb-2">
+          <span class="text-slate-400 font-bold flex items-center gap-1.5">
+            <i data-lucide="terminal" class="w-3.5 h-3.5 text-purple-400"></i>
+            <span id="apiInspectorTitle">POST /v1/orders (HPP Request)</span>
+          </span>
+          <button onclick="copyPayload()" class="text-[11px] text-[#00C076] hover:underline flex items-center gap-1">
+            <i data-lucide="copy" class="w-3 h-3"></i>
+            <span id="copyPayloadBtnText">Copy Payload</span>
+          </button>
+        </div>
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/80 text-[10.5px] text-slate-300 max-h-40 overflow-y-auto scrollbar-thin">
+          <pre id="apiPayloadCode" class="whitespace-pre">{
+  "amount": "250.00",
+  "currency": "USDT",
+  "merchant_order_id": "DEP_10092",
+  "mode": "HPP",
+  "allowed_networks": ["TRON", "ETH", "BSC"]
+}</pre>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT PANEL: Live Interactive Device Viewport (7 Cols) -->
+    <div class="lg:col-span-7 flex flex-col items-center">
+      
+      <!-- Device Banner Indicator -->
+      <div class="mb-3 flex items-center gap-2 text-xs font-semibold text-slate-400">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+        <span id="deviceBannerText">Rendering Customer Screen: COPYm Hosted Checkout (HPP)</span>
+      </div>
+
+      <!-- The Mobile Mockup Container -->
+      <div class="w-full max-w-[390px] h-[740px] bg-slate-900 rounded-[44px] phone-shadow relative overflow-hidden flex flex-col border border-slate-700/80 transition-all duration-300">
+        
+        <!-- Phone Speaker & Camera Island -->
+        <div class="w-full flex justify-center pt-3 pb-1 z-30 pointer-events-none select-none">
+          <div class="h-4 w-28 bg-black rounded-full flex items-center justify-center gap-2 px-2">
+            <div class="w-2 h-2 rounded-full bg-slate-800"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-slate-900"></div>
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- VIEW A: COPYM HOSTED PAYMENT PAGE (HPP)        -->
+        <!-- ============================================== -->
+        <div id="viewHpp" class="flex-1 flex flex-col overflow-y-auto scrollbar-thin p-4 pt-1 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-white transition-opacity duration-300">
+          
+          <!-- HPP Session Header -->
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-[#00C076] flex items-center justify-center font-bold text-slate-950 text-xs">
+                CM
+              </div>
+              <div>
+                <span class="text-xs font-bold text-white block leading-tight">COPYm <span class="text-[#00C076]">Pay</span></span>
+                <span class="text-[9px] text-slate-400">Official Checkout Gateway</span>
+              </div>
+            </div>
+
+            <!-- Rate Lock Countdown -->
+            <div class="flex items-center gap-1.5 bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-700/60 font-mono text-[10.5px]">
+              <i data-lucide="clock" class="w-3 h-3 text-amber-400"></i>
+              <span id="hppTimer" class="font-bold text-amber-300">29:48</span>
+            </div>
+          </div>
+
+          <!-- Merchant & Amount Card -->
+          <div class="mt-3 bg-gradient-to-br from-emerald-600 to-teal-800 rounded-2xl p-4 text-center shadow-lg relative overflow-hidden">
+            <span class="text-[10px] font-bold text-emerald-100 uppercase tracking-wider block">Paying Verified Merchant</span>
+            <h3 class="text-sm font-extrabold text-white mt-0.5">Apex Forex Markets Global</h3>
+            <div class="my-2">
+              <span class="text-3xl font-black text-white font-mono" id="hppAmountDisplay">$250.00</span>
+              <span class="text-xs font-bold text-emerald-200 ml-1" id="hppAssetBadge">USDT</span>
+            </div>
+            <span class="inline-block text-[10px] bg-black/20 text-emerald-200 px-2 py-0.5 rounded-full font-mono">Invoice #INV-9921-48</span>
+          </div>
+
+          <!-- Dynamic State Display Area -->
+          <div class="mt-3.5 bg-slate-800/70 border border-slate-700/70 rounded-2xl p-4 flex flex-col items-center text-center relative">
+            
+            <!-- 1. Awaiting State -->
+            <div id="hppStateAwaiting" class="w-full flex flex-col items-center">
+              <span class="text-[10.5px] font-bold uppercase tracking-wider text-slate-400 mb-2">Scan with Binance, Trust or TronLink</span>
+              
+              <!-- High-Contrast Mockup QR -->
+              <div class="w-40 h-40 bg-white p-2.5 rounded-2xl shadow-xl flex items-center justify-center relative">
+                <svg viewBox="0 0 100 100" class="w-full h-full" fill="none">
+                  <rect x="5" y="5" width="28" height="28" rx="4" fill="#0f172a" />
+                  <rect x="10" y="10" width="18" height="18" rx="2" fill="#ffffff" />
+                  <rect x="14" y="14" width="10" height="10" rx="1.5" fill="#00C076" />
+                  <rect x="67" y="5" width="28" height="28" rx="4" fill="#0f172a" />
+                  <rect x="72" y="10" width="18" height="18" rx="2" fill="#ffffff" />
+                  <rect x="76" y="14" width="10" height="10" rx="1.5" fill="#00C076" />
+                  <rect x="5" y="67" width="28" height="28" rx="4" fill="#0f172a" />
+                  <rect x="10" y="72" width="18" height="18" rx="2" fill="#ffffff" />
+                  <rect x="14" y="76" width="10" height="10" rx="1.5" fill="#00C076" />
+                  <circle cx="50" cy="50" r="14" fill="#00C076" />
+                  <path d="M47 50L53 50M50 47L50 53" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                  <rect x="38" y="10" width="8" height="8" rx="1" fill="#0f172a" />
+                  <rect x="52" y="10" width="8" height="8" rx="1" fill="#0f172a" />
+                  <rect x="10" y="42" width="8" height="8" rx="1" fill="#0f172a" />
+                  <rect x="75" y="42" width="8" height="8" rx="1" fill="#0f172a" />
+                  <rect x="40" y="78" width="8" height="8" rx="1" fill="#0f172a" />
+                  <rect x="55" y="78" width="8" height="8" rx="1" fill="#0f172a" />
+                  <rect x="80" y="78" width="8" height="8" rx="1" fill="#0f172a" />
+                </svg>
+              </div>
+
+              <!-- Address Pill with First & Last 6 Highlighted -->
+              <div class="mt-3 w-full bg-slate-900 border border-slate-700 p-2 rounded-xl flex items-center justify-between text-xs">
+                <span class="font-mono text-[11px] truncate px-1 text-slate-300">
+                  <span class="text-white font-bold" id="hppAddrFirst">TYDZSx</span>...<span class="text-white font-bold" id="hppAddrLast">99q5k8</span>
+                </span>
+                <button onclick="copyAddress()" class="p-1.5 hover:bg-slate-800 text-[#00C076] rounded-lg transition" title="Copy Address">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- 2. Detected State (Mempool) -->
+            <div id="hppStateDetected" class="hidden w-full py-4 flex flex-col items-center animate-fadeIn">
+              <div class="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mb-2 animate-pulse border border-amber-500/40">
+                <i data-lucide="clock" class="w-6 h-6"></i>
+              </div>
+              <h4 class="text-sm font-black text-amber-300">Deposit Detected in Mempool</h4>
+              <p class="text-[11px] text-slate-400 mt-1">Timer frozen. Awaiting blockchain validation...</p>
+              <div class="mt-3 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono text-[10.5px]">
+                Tx: 0x8f4c...91a2 (0 Confirmations)
+              </div>
+            </div>
+
+            <!-- 3. Confirming State -->
+            <div id="hppStateConfirming" class="hidden w-full py-4 flex flex-col items-center animate-fadeIn">
+              <div class="w-12 h-12 rounded-full border-4 border-sky-400/20 border-t-sky-400 animate-spin mb-2"></div>
+              <h4 class="text-sm font-black text-sky-300">Confirming on Blockchain</h4>
+              <span id="hppBlockCounter" class="text-xs font-mono font-bold text-sky-400 mt-1">8 / 19 Block Confirmations</span>
+              <div class="w-48 bg-slate-700 h-1.5 rounded-full mt-2.5 overflow-hidden">
+                <div class="bg-sky-400 h-full rounded-full transition-all duration-300" style="width: 45%;"></div>
+              </div>
+            </div>
+
+            <!-- 4. Paid State -->
+            <div id="hppStatePaid" class="hidden w-full py-4 flex flex-col items-center animate-fadeIn">
+              <div class="w-14 h-14 rounded-full bg-emerald-500/20 text-[#00C076] border border-emerald-500/40 flex items-center justify-center mb-2 animate-bounce">
+                <i data-lucide="check-circle-2" class="w-8 h-8"></i>
+              </div>
+              <h4 class="text-base font-black text-white">Payment Received!</h4>
+              <p class="text-xs font-bold text-[#00C076] mt-0.5">$250.00 USDT Settled on TRON</p>
+              <span class="text-[10px] text-slate-400 mt-2">Auto-redirecting back to Apex Markets in 3s...</span>
+            </div>
+
+          </div>
+
+          <!-- Web3 MetaMask 1-Click Pay Button -->
+          <div class="mt-3.5">
+            <button onclick="triggerWeb3Pay()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold border border-slate-700 flex items-center justify-center gap-2 transition shadow-md group">
+              <span class="w-2 h-2 rounded-full bg-[#00C076]"></span>
+              <span>Pay with MetaMask (1-Click Web3)</span>
+              <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition"></i>
+            </button>
+            <p class="text-[9.5px] text-slate-500 text-center mt-1">Zero gas overhead · Instant escrow allocation</p>
+          </div>
+
+          <!-- Footer Trust Badge -->
+          <div class="mt-auto pt-3 border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-500">
+            <span class="flex items-center gap-1">
+              <i data-lucide="shield-check" class="w-3 h-3 text-[#00C076]"></i>
+              256-Bit Escrow Vault
+            </span>
+            <span>COPYm Pay Gateway</span>
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- VIEW B: WHITE-LABEL NATIVE BROKER CRM (H2H)    -->
+        <!-- ============================================== -->
+        <div id="viewH2h" class="hidden flex-1 flex flex-col overflow-y-auto scrollbar-thin p-4 pt-1 bg-slate-950 text-white transition-opacity duration-300">
+          
+          <!-- Broker's Branded In-App Navigation Bar -->
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800/80">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center font-black text-white text-xs">
+                A
+              </div>
+              <div>
+                <span class="text-xs font-bold text-white block leading-tight">ApexTrader Pro</span>
+                <span class="text-[9px] text-indigo-400 font-semibold">MT5 Trading Account #94821</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="text-[9px] text-slate-400 block">Available Float</span>
+              <span class="text-xs font-mono font-bold text-emerald-400">$12,450.00</span>
+            </div>
+          </div>
+
+          <!-- White-Label In-App Cashier Card (100% Native) -->
+          <div class="mt-3 bg-slate-900 border border-slate-800 rounded-2xl p-4 text-center">
+            <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Fast Crypto Ingestion</span>
+            <h3 class="text-sm font-extrabold text-white mt-0.5">Fund Your Live Account</h3>
+            <div class="my-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 inline-block">
+              <span class="text-xs text-slate-400">Amount to Credit: </span>
+              <span class="text-xl font-mono font-black text-white" id="h2hAmountDisplay">$250.00</span>
+              <span class="text-xs font-bold text-indigo-400 ml-1">USDT</span>
+            </div>
+
+            <!-- In-App QR (Zero Gateway Branding) -->
+            <div class="flex flex-col items-center mt-2">
+              <div class="w-36 h-36 bg-white p-2 rounded-xl shadow flex items-center justify-center">
+                <svg viewBox="0 0 100 100" class="w-full h-full" fill="none">
+                  <rect x="5" y="5" width="28" height="28" rx="4" fill="#0f172a" />
+                  <rect x="10" y="10" width="18" height="18" rx="2" fill="#ffffff" />
+                  <rect x="14" y="14" width="10" height="10" rx="1.5" fill="#4f46e5" />
+                  <rect x="67" y="5" width="28" height="28" rx="4" fill="#0f172a" />
+                  <rect x="72" y="10" width="18" height="18" rx="2" fill="#ffffff" />
+                  <rect x="76" y="14" width="10" height="10" rx="1.5" fill="#4f46e5" />
+                  <rect x="5" y="67" width="28" height="28" rx="4" fill="#0f172a" />
+                  <rect x="10" y="72" width="18" height="18" rx="2" fill="#ffffff" />
+                  <rect x="14" y="76" width="10" height="10" rx="1.5" fill="#4f46e5" />
+                  <circle cx="50" cy="50" r="14" fill="#4f46e5" />
+                  <path d="M47 50L53 50M50 47L50 53" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </div>
+
+              <!-- Address Box Inside Broker UI -->
+              <div class="mt-2.5 w-full bg-slate-950 border border-slate-800 p-2 rounded-xl text-left">
+                <div class="flex items-center justify-between text-[10px] text-slate-400 mb-0.5">
+                  <span>TRON TRC-20 Address</span>
+                  <span class="text-emerald-400 font-semibold">Direct Deposit</span>
+                </div>
+                <div class="flex items-center justify-between text-xs font-mono">
+                  <span class="text-white truncate">TYDZSxdv27HY99q5k8P...</span>
+                  <button onclick="copyAddress()" class="text-indigo-400 hover:text-indigo-300 font-bold text-[11px] shrink-0 ml-1">Copy</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- In-App SSE Stream Badge -->
+            <div class="mt-3 p-2 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-left text-[10.5px]">
+              <div class="flex items-center gap-1.5 text-indigo-300 font-bold">
+                <span class="w-2 h-2 rounded-full bg-indigo-400 animate-ping"></span>
+                <span>Native SSE Stream Active</span>
+              </div>
+              <p class="text-slate-400 text-[9.5px] mt-0.5">Traders stay inside your app. Balance credits automatically once verified.</p>
+            </div>
+          </div>
+
+          <!-- Bottom Broker Trading Buttons -->
+          <div class="mt-auto pt-3 border-t border-slate-800 flex items-center justify-between text-[10.5px]">
+            <button class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition">
+              Return to Live MT5 Terminal
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Interactive JavaScript Logic -->
+  <script>
+    // Lucide Icons init
+    lucide.createIcons();
+
+    let currentMode = 'HPP';
+    let currentNetwork = 'TRON';
+    let currentAmount = '250.00';
+    let currentState = 'awaiting';
+
+    const sampleAddresses = {
+      TRON: { first: 'TYDZSx', last: '99q5k8', full: 'TYDZSxdv27HY99q5k8Pv2L7M' },
+      ETH: { first: '0x948f', last: '335e23', full: '0x948f21E04A918bca48721c098Ac1237FeE335e23' },
+      BSC: { first: '0x38bE', last: '7Fee33', full: '0x38bE8921bca9082ef45511aD9012437FeE335e23' }
+    };
+
+    function switchMode(mode) {
+      currentMode = mode;
+      const btnHpp = document.getElementById('btnHpp');
+      const btnH2h = document.getElementById('btnH2h');
+      const viewHpp = document.getElementById('viewHpp');
+      const viewH2h = document.getElementById('viewH2h');
+      const badge = document.getElementById('activeModeBadge');
+      const banner = document.getElementById('deviceBannerText');
+      const explainer = document.getElementById('modeExplainer');
+      const apiTitle = document.getElementById('apiInspectorTitle');
+      const apiCode = document.getElementById('apiPayloadCode');
+
+      if (mode === 'HPP') {
+        btnHpp.className = "relative py-3 px-3 rounded-xl text-left transition-all duration-200 border bg-[#00C076] text-white border-emerald-400/40 shadow-lg shadow-emerald-500/10 group";
+        btnH2h.className = "relative py-3 px-3 rounded-xl text-left transition-all duration-200 border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 group";
+        
+        viewHpp.classList.remove('hidden');
+        viewH2h.classList.add('hidden');
+        
+        badge.innerText = 'HPP Selected';
+        badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-[#00C076] border border-emerald-500/30';
+        banner.innerText = 'Rendering Customer Screen: COPYm Hosted Checkout (HPP)';
+
+        explainer.innerHTML = `<i data-lucide="info" class="w-4 h-4 text-[#00C076] shrink-0 mt-0.5"></i>
+          <div><span class="font-bold text-white">How HPP Works:</span> Payer clicks deposit on your site and is forwarded to your hosted payment page (<code class="text-emerald-400 text-[10px]">copympay.com/c/ord_...</code>). Once confirmed, auto-redirects back in 3s.</div>`;
+
+        apiTitle.innerText = 'POST /v1/orders (HPP Request)';
+        apiCode.innerText = JSON.stringify({
+          amount: currentAmount,
+          currency: "USDT",
+          merchant_order_id: "DEP_10092",
+          mode: "HPP",
+          allowed_networks: ["TRON", "ETH", "BSC"]
+        }, null, 2);
+
+      } else {
+        btnH2h.className = "relative py-3 px-3 rounded-xl text-left transition-all duration-200 border bg-purple-600 text-white border-purple-400/40 shadow-lg shadow-purple-500/10 group";
+        btnHpp.className = "relative py-3 px-3 rounded-xl text-left transition-all duration-200 border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 group";
+        
+        viewHpp.classList.add('hidden');
+        viewH2h.classList.remove('hidden');
+
+        badge.innerText = 'H2H Selected';
+        badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/30';
+        banner.innerText = 'Rendering Customer Screen: 100% White-Label Native Broker Cashier (H2H)';
+
+        explainer.innerHTML = `<i data-lucide="zap" class="w-4 h-4 text-purple-400 shrink-0 mt-0.5"></i>
+          <div><span class="font-bold text-white">How H2H Works:</span> Merchant calls <code class="text-purple-300 text-[10px]">POST /v1/orders</code> with selected network. COPYm returns address & QR directly via API. Payer never leaves your website.</div>`;
+
+        apiTitle.innerText = 'POST /v1/orders (H2H Direct API)';
+        apiCode.innerText = JSON.stringify({
+          amount: currentAmount,
+          currency: "USDT",
+          merchant_order_id: "DEP_10092",
+          mode: "H2H_DIRECT",
+          network: currentNetwork,
+          customer_id: "trader_alex_8492"
+        }, null, 2);
+      }
+      lucide.createIcons();
+    }
+
+    function setAmount(val) {
+      document.getElementById('inputAmount').value = val;
+      updateAmount(val);
+    }
+
+    function updateAmount(val) {
+      currentAmount = val || '0.00';
+      document.getElementById('hppAmountDisplay').innerText = '$' + currentAmount;
+      document.getElementById('h2hAmountDisplay').innerText = '$' + currentAmount;
+      switchMode(currentMode);
+    }
+
+    function setNetwork(net) {
+      currentNetwork = net;
+      ['TRON', 'ETH', 'BSC'].forEach(n => {
+        const btn = document.getElementById('net' + n.charAt(0) + n.slice(1).toLowerCase());
+        if (n === net) {
+          btn.className = "py-2 px-2.5 rounded-xl border bg-slate-800 border-emerald-500 text-white font-bold text-xs flex flex-col items-center gap-0.5 transition";
+        } else {
+          btn.className = "py-2 px-2.5 rounded-xl border bg-slate-950 border-slate-800 text-slate-400 hover:text-white font-bold text-xs flex flex-col items-center gap-0.5 transition";
+        }
+      });
+
+      const addr = sampleAddresses[net] || sampleAddresses.TRON;
+      document.getElementById('hppAddrFirst').innerText = addr.first;
+      document.getElementById('hppAddrLast').innerText = addr.last;
+      document.getElementById('hppAssetBadge').innerText = net === 'ETH' ? 'USDC' : 'USDT';
+      switchMode(currentMode);
+    }
+
+    function triggerState(state) {
+      currentState = state;
+      const sAwaiting = document.getElementById('hppStateAwaiting');
+      const sDetected = document.getElementById('hppStateDetected');
+      const sConfirming = document.getElementById('hppStateConfirming');
+      const sPaid = document.getElementById('hppStatePaid');
+
+      [sAwaiting, sDetected, sConfirming, sPaid].forEach(el => el.classList.add('hidden'));
+
+      if (state === 'awaiting') sAwaiting.classList.remove('hidden');
+      if (state === 'detected') sDetected.classList.remove('hidden');
+      if (state === 'confirming') {
+        sConfirming.classList.remove('hidden');
+        let blk = 3;
+        const interval = setInterval(() => {
+          blk += 3;
+          if (blk > 19) {
+            clearInterval(interval);
+            triggerState('paid');
+          } else {
+            document.getElementById('hppBlockCounter').innerText = `${blk} / 19 Block Confirmations`;
+          }
+        }, 600);
+      }
+      if (state === 'paid') sPaid.classList.remove('hidden');
+    }
+
+    function triggerWeb3Pay() {
+      triggerState('detected');
+      setTimeout(() => triggerState('confirming'), 1200);
+    }
+
+    function copyAddress() {
+      alert('Address copied to clipboard!');
+    }
+
+    function copyPayload() {
+      const text = document.getElementById('apiPayloadCode').innerText;
+      navigator.clipboard.writeText(text);
+      const btn = document.getElementById('copyPayloadBtnText');
+      btn.innerText = 'Copied!';
+      setTimeout(() => btn.innerText = 'Copy Payload', 1800);
+    }
+  </script>
+</body>
+</html>

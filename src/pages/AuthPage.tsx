@@ -51,7 +51,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
     if (score <= 1) return { score: 1, text: 'Weak', color: 'bg-red-400' };
     if (score <= 2) return { score: 2, text: 'Fair', color: 'bg-amber-400' };
     if (score <= 3) return { score: 3, text: 'Good', color: 'bg-blue-400' };
-    return { score: 4, text: 'Strong', color: 'bg-[#00875A]' };
+    return { score: 4, text: 'Strong', color: 'bg-[#00C076]' };
   };
 
   // Form states - MFA
@@ -224,52 +224,52 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
   return (
     <div className="min-h-screen w-full bg-white flex flex-col lg:flex-row items-stretch select-none font-sans">
-      {/* LEFT COLUMN: 3D Hand Holding CopyM Green Token */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10 lg:p-16 relative bg-[#FAFAFA] lg:bg-white overflow-hidden border-b lg:border-b-0 lg:border-r border-gray-100">
-        {/* Subtle radial ambient background glow */}
+      {/* LEFT COLUMN: 3D Hand Holding CopyM Green Token (Hidden on mobile for clean & focused experience, scaled & centered on desktop) */}
+      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-8 lg:p-12 xl:p-16 relative bg-[#FAFAFA] lg:bg-white overflow-hidden border-b lg:border-b-0 lg:border-r border-gray-100 min-h-screen">
+        {/* Subtle ambient radial background glow */}
         <div className="absolute inset-0 bg-radial from-emerald-500/10 via-transparent to-transparent opacity-60 pointer-events-none" />
 
-        <div className="relative z-10 max-w-[420px] sm:max-w-[480px] lg:max-w-[540px] flex flex-col items-center justify-center">
+        <div className="relative z-10 w-full max-w-[380px] xl:max-w-[420px] flex items-center justify-center">
           <img
             src={authHeroImg}
             alt="CopyM Pay 3D Token"
-            className="w-full h-auto object-contain drop-shadow-[0_25px_35px_rgba(0,135,90,0.18)] transition-transform duration-700 hover:scale-[1.02]"
+            className="w-full h-auto object-contain drop-shadow-[0_20px_35px_rgba(0,192,118,0.15)] transition-transform duration-700 hover:scale-[1.02]"
           />
         </div>
       </div>
 
       {/* RIGHT COLUMN: Authentication Forms */}
-      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center px-6 py-10 sm:px-12 lg:px-20 bg-white">
-        <div className="w-full max-w-[440px] mx-auto">
+      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center px-6 py-10 sm:px-12 lg:px-16 xl:px-20 bg-white min-h-screen">
+        <div className="w-full max-w-[400px] mx-auto">
           {/* ========================================================= */}
-          {/* SCREEN 1: LOGIN / SIGN IN (Matches Image 2 Exactly)      */}
+          {/* SCREEN 1: LOGIN / SIGN IN (Matches Exact Spec)            */}
           {/* ========================================================= */}
           {mode === 'login' && (
             <div className="animate-fadeIn">
-              {/* Brand Header */}
-              <div className="flex items-center gap-3 mb-8">
+              {/* Brand Header: Centered on mobile, Left-aligned on desktop */}
+              <div className="flex items-center justify-center lg:justify-start gap-2.5 mb-7 sm:mb-8">
                 <img
                   src={copyMLogo}
                   alt="CopyM Pay"
-                  className="w-9 h-9 object-contain flex-shrink-0"
+                  className="w-8 h-8 object-contain flex-shrink-0"
                 />
-                <div>
-                  <h2 className="text-[19px] font-bold text-[#14171A] tracking-tight leading-tight flex items-center gap-1">
-                    <span>CopyM</span>
-                    <span className="text-[#00875A]">Pay</span>
-                  </h2>
-                  <p className="text-[12.5px] text-[#6B7280] font-normal leading-tight">
-                    {isAdmin ? 'Platform Operations & Security Console' : 'Merchant Operations Portal'}
-                  </p>
-                </div>
+                <h2 className="text-xl font-bold text-[#14171A] tracking-tight leading-tight flex items-center gap-1">
+                  <span>CopyM</span>
+                  <span className="text-[#00C076]">Pay</span>
+                </h2>
+                {isAdmin && (
+                  <span className="ml-1 px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase bg-slate-900 text-white rounded-md">
+                    Admin
+                  </span>
+                )}
               </div>
 
-              {/* Title & Subtitle */}
-              <div className="mb-6">
-                <h1 className="text-[26px] sm:text-[28px] font-bold text-[#14171A] tracking-tight">
+              {/* Title & Subtitle: Centered on mobile, Left-aligned on desktop */}
+              <div className="text-center lg:text-left mb-6 sm:mb-7">
+                <h1 className="text-2xl sm:text-[28px] font-bold text-[#14171A] tracking-tight leading-tight">
                   {isAdmin ? 'Platform Admin Sign In' : 'Welcome back'}
                 </h1>
-                <p className="text-[13.5px] text-[#6B7280] mt-1">
+                <p className="text-[13px] text-[#6B7280] mt-1.5 leading-relaxed">
                   {isAdmin
                     ? 'Enter authorized platform credentials with mandatory hardware/TOTP 2FA.'
                     : 'Log in with your registered merchant credentials.'}
@@ -283,11 +283,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 </div>
               )}
 
-              {/* Form */}
+              {/* Form: Consistent left alignment & full-width matching button */}
               <form onSubmit={handleLoginSubmit} className="space-y-4">
                 {/* Email Address */}
                 <div>
-                  <label className="block text-[13px] font-semibold text-[#14171A] mb-1.5">
+                  <label className="block text-xs font-semibold text-[#14171A] mb-1.5">
                     {isAdmin ? 'Operator Work Email' : 'Email Address'}
                   </label>
                   <input
@@ -296,20 +296,20 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     onChange={(e) => setLoginEmail(e.target.value)}
                     placeholder={isAdmin ? 'admin@copym.com' : 'merchant@gmail.com'}
                     required
-                    className="w-full px-4 py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00875A] focus:ring-1 focus:ring-[#00875A] transition shadow-2xs"
+                    className="w-full px-3.5 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00C076] focus:ring-1 focus:ring-[#00C076] transition shadow-2xs"
                   />
                 </div>
 
                 {/* Password with Forgot password? link */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-[13px] font-semibold text-[#14171A]">
+                    <label className="text-xs font-semibold text-[#14171A]">
                       {isAdmin ? 'Platform Master Password' : 'Password'}
                     </label>
                     <button
                       type="button"
                       onClick={() => setMode('forgot')}
-                      className="text-[13px] font-medium text-[#00875A] hover:underline transition"
+                      className="text-xs font-semibold text-[#00C076] hover:underline transition cursor-pointer"
                     >
                       Forgot password?
                     </button>
@@ -320,7 +320,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     onChange={(e) => setLoginPassword(e.target.value)}
                     placeholder="••••••••••••"
                     required
-                    className="w-full px-4 py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00875A] focus:ring-1 focus:ring-[#00875A] transition shadow-2xs"
+                    className="w-full px-3.5 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00C076] focus:ring-1 focus:ring-[#00C076] transition shadow-2xs"
                   />
                 </div>
 
@@ -331,19 +331,19 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     id="rememberDevice"
                     checked={rememberDevice}
                     onChange={(e) => setRememberDevice(e.target.checked)}
-                    className="w-4 h-4 rounded text-[#00875A] focus:ring-[#00875A] accent-[#00875A] border-gray-300 cursor-pointer"
+                    className="w-4 h-4 rounded text-[#00C076] focus:ring-[#00C076] accent-[#00C076] border-gray-300 cursor-pointer"
                   />
                   <label htmlFor="rememberDevice" className="text-xs text-[#6B7280] select-none cursor-pointer">
                     Remember this device for 30 days
                   </label>
                 </div>
 
-                {/* Submit Button */}
+                {/* Submit Button (Exact full width matching inputs, signature #00C076) */}
                 <div className="pt-2">
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-3.5 bg-[#00875A] hover:bg-[#00734D] text-white rounded-xl text-sm font-semibold tracking-wide transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
+                    className="w-full py-3 sm:py-3.5 bg-[#00C076] hover:bg-[#00AA67] active:bg-[#00965B] text-white rounded-xl text-sm font-bold tracking-wide transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
                   >
                     {isSubmitting ? (
                       <>
@@ -359,7 +359,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   </button>
                 </div>
 
-                {/* Bottom Section: Merchant Register vs Admin Security Notice */}
+                {/* Bottom Section: Clean centered Register Merchant / Admin Security Notice */}
                 {isAdmin ? (
                   <div className="pt-6 border-t border-gray-100 text-center text-xs text-[#6B7280] space-y-1">
                     <div className="flex items-center justify-center gap-1.5 font-semibold text-slate-800">
@@ -371,7 +371,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     </p>
                   </div>
                 ) : (
-                  <div className="pt-5 text-center text-sm text-[#6B7280]">
+                  <div className="pt-5 text-center text-xs text-[#6B7280]">
                     Don't have an account?{' '}
                     <button
                       type="button"
@@ -379,7 +379,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         setErrorMessage(null);
                         setMode('register');
                       }}
-                      className="font-semibold text-[#00875A] hover:underline transition ml-1"
+                      className="font-semibold text-[#00C076] hover:underline transition ml-1 cursor-pointer"
                     >
                       Register Merchant
                     </button>
@@ -390,7 +390,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
           )}
 
           {/* ========================================================= */}
-          {/* SCREEN 2: REGISTER (Matches Image 3 Exactly)              */}
+          {/* SCREEN 2: REGISTER                                         */}
           {/* ========================================================= */}
           {mode === 'register' && (
             <div className="animate-fadeIn">
@@ -408,7 +408,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   <button
                     type="button"
                     onClick={() => setMode('login')}
-                    className="px-5 py-2.5 bg-[#00875A] hover:bg-[#00734D] text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
+                    className="px-5 py-2.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
                   >
                     ← Return to Admin Sign In
                   </button>
@@ -416,239 +416,239 @@ export const AuthPage: React.FC<AuthPageProps> = ({
               ) : (
                 <>
                   {/* Brand Header */}
-                  <div className="flex items-center gap-2.5 mb-7">
+                  <div className="flex items-center justify-center lg:justify-start gap-2.5 mb-7 sm:mb-8">
                     <img
                       src={copyMLogo}
                       alt="CopyM Pay"
                       className="w-8 h-8 object-contain flex-shrink-0"
                     />
-                    <h2 className="text-[19px] font-bold text-[#14171A] tracking-tight leading-tight flex items-center gap-1">
+                    <h2 className="text-xl font-bold text-[#14171A] tracking-tight leading-tight flex items-center gap-1">
                       <span>CopyM</span>
-                      <span className="text-[#00875A]">Pay</span>
+                      <span className="text-[#00C076]">Pay</span>
                     </h2>
                   </div>
 
-              {/* Title & Subtitle */}
-              <div className="mb-6">
-                <h1 className="text-[26px] sm:text-[28px] font-bold text-[#14171A] tracking-tight">
-                  Get started with CopyM-Pay
-                </h1>
-                <p className="text-[13.5px] text-[#6B7280] mt-1">
-                  Create your merchant account to start accepting crypto payments.
-                </p>
-              </div>
-
-              {/* Error Alert */}
-              {errorMessage && (
-                <div role="alert" aria-live="polite" className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs animate-fadeIn">
-                  {errorMessage}
-                </div>
-              )}
-
-              {/* Form */}
-              <form onSubmit={handleRegisterSubmit} className="space-y-3.5">
-                {/* Business Name */}
-                <div>
-                  <label className="block text-[13px] font-semibold text-[#14171A] mb-1.5">
-                    Business Name
-                  </label>
-                  <input
-                    type="text"
-                    value={regBusinessName}
-                    onChange={(e) => setRegBusinessName(e.target.value)}
-                    placeholder="Apex Forex Global"
-                    required
-                    className="w-full px-4 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00875A] focus:ring-1 focus:ring-[#00875A] transition shadow-2xs"
-                  />
-                </div>
-
-                {/* Work Email Address */}
-                <div>
-                  <label className="block text-[13px] font-semibold text-[#14171A] mb-1.5">
-                    Work Email Address
-                  </label>
-                  <input
-                    type="email"
-                    value={regEmail}
-                    onChange={(e) => setRegEmail(e.target.value)}
-                    placeholder="name@company.com"
-                    required
-                    className="w-full px-4 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00875A] focus:ring-1 focus:ring-[#00875A] transition shadow-2xs"
-                  />
-                </div>
-
-                {/* Password with Eye Toggle */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-[13px] font-semibold text-[#14171A]">
-                      Password
-                    </label>
-                    {regPassword && (
-                      <span className="text-[11px] font-semibold text-gray-500">
-                        Strength: <span className={getPasswordStrength(regPassword).score >= 3 ? 'text-[#00875A]' : 'text-amber-600'}>{getPasswordStrength(regPassword).text}</span>
-                      </span>
-                    )}
+                  {/* Title & Subtitle */}
+                  <div className="text-center lg:text-left mb-6 sm:mb-7">
+                    <h1 className="text-2xl sm:text-[28px] font-bold text-[#14171A] tracking-tight leading-tight">
+                      Get started with CopyM-Pay
+                    </h1>
+                    <p className="text-[13px] text-[#6B7280] mt-1.5 leading-relaxed">
+                      Create your merchant account to start accepting crypto payments.
+                    </p>
                   </div>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={regPassword}
-                      onChange={(e) => setRegPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                      className="w-full pl-4 pr-11 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00875A] focus:ring-1 focus:ring-[#00875A] transition shadow-2xs"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  {/* Live Segmented Strength Bar */}
-                  {regPassword && (
-                    <div className="grid grid-cols-4 gap-1 mt-1.5">
-                      {[1, 2, 3, 4].map((step) => {
-                        const strength = getPasswordStrength(regPassword);
-                        const isFilled = strength.score >= step;
-                        return (
-                          <div
-                            key={step}
-                            className={`h-1 rounded-full transition-all duration-300 ${isFilled ? strength.color : 'bg-gray-200'}`}
-                          />
-                        );
-                      })}
+
+                  {/* Error Alert */}
+                  {errorMessage && (
+                    <div role="alert" aria-live="polite" className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs animate-fadeIn">
+                      {errorMessage}
                     </div>
                   )}
-                  <p className="text-[11px] text-[#6B7280] mt-1">
-                    Minimum 8 characters, 1 number, 1 special character
-                  </p>
-                </div>
 
-                {/* Confirm Password with Eye Toggle */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-[13px] font-semibold text-[#14171A]">
-                      Confirm Password
-                    </label>
-                    {regConfirmPassword && (
-                      <span className={`text-[11px] font-semibold ${regPassword === regConfirmPassword ? 'text-[#00875A]' : 'text-red-500'}`}>
-                        {regPassword === regConfirmPassword ? '✓ Passwords match' : '✕ Passwords do not match'}
-                      </span>
-                    )}
-                  </div>
-                  <div className="relative">
-                    <input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      value={regConfirmPassword}
-                      onChange={(e) => setRegConfirmPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                      className={`w-full pl-4 pr-11 py-2.5 sm:py-3 bg-white border rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:ring-1 transition shadow-2xs ${
-                        regConfirmPassword && regPassword !== regConfirmPassword
-                          ? 'border-red-300 focus:border-red-500 focus:ring-red-400'
-                          : 'border-[#E2E4E9] focus:border-[#00875A] focus:ring-[#00875A]'
-                      }`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5"
-                    >
-                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
+                  {/* Form */}
+                  <form onSubmit={handleRegisterSubmit} className="space-y-3.5">
+                    {/* Business Name */}
+                    <div>
+                      <label className="block text-xs font-semibold text-[#14171A] mb-1.5">
+                        Business Name
+                      </label>
+                      <input
+                        type="text"
+                        value={regBusinessName}
+                        onChange={(e) => setRegBusinessName(e.target.value)}
+                        placeholder="Apex Forex Global"
+                        required
+                        className="w-full px-3.5 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00C076] focus:ring-1 focus:ring-[#00C076] transition shadow-2xs"
+                      />
+                    </div>
 
-                {/* Checkbox: Terms of Service & Privacy Policy */}
-                <div className="flex items-start gap-2.5 pt-1">
-                  <input
-                    type="checkbox"
-                    id="terms"
-                    checked={agreeTerms}
-                    onChange={(e) => setAgreeTerms(e.target.checked)}
-                    className="mt-1 w-4 h-4 rounded text-[#00875A] focus:ring-[#00875A] border-gray-300 accent-[#00875A] cursor-pointer"
-                  />
-                  <label htmlFor="terms" className="text-xs text-[#6B7280] leading-snug cursor-pointer">
-                    I agree to the{' '}
-                    <span className="text-[#00875A] hover:underline font-medium">Terms of Service</span>{' '}
-                    and{' '}
-                    <span className="text-[#00875A] hover:underline font-medium">Privacy Policy</span>
-                  </label>
-                </div>
+                    {/* Work Email Address */}
+                    <div>
+                      <label className="block text-xs font-semibold text-[#14171A] mb-1.5">
+                        Work Email Address
+                      </label>
+                      <input
+                        type="email"
+                        value={regEmail}
+                        onChange={(e) => setRegEmail(e.target.value)}
+                        placeholder="name@company.com"
+                        required
+                        className="w-full px-3.5 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00C076] focus:ring-1 focus:ring-[#00C076] transition shadow-2xs"
+                      />
+                    </div>
 
-                {/* Submit Button */}
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full py-3.5 bg-[#00875A] hover:bg-[#00734D] text-white rounded-xl text-sm font-semibold tracking-wide transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                        <span>Creating Merchant Account...</span>
-                      </>
-                    ) : (
-                      <span>Create Merchant Account</span>
-                    )}
-                  </button>
-                </div>
+                    {/* Password with Eye Toggle */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-semibold text-[#14171A]">
+                          Password
+                        </label>
+                        {regPassword && (
+                          <span className="text-[11px] font-semibold text-gray-500">
+                            Strength: <span className={getPasswordStrength(regPassword).score >= 3 ? 'text-[#00C076]' : 'text-amber-600'}>{getPasswordStrength(regPassword).text}</span>
+                          </span>
+                        )}
+                      </div>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={regPassword}
+                          onChange={(e) => setRegPassword(e.target.value)}
+                          placeholder="••••••••"
+                          required
+                          className="w-full pl-3.5 pr-11 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00C076] focus:ring-1 focus:ring-[#00C076] transition shadow-2xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          aria-label={showPassword ? 'Hide password' : 'Show password'}
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      {/* Live Segmented Strength Bar */}
+                      {regPassword && (
+                        <div className="grid grid-cols-4 gap-1 mt-1.5">
+                          {[1, 2, 3, 4].map((step) => {
+                            const strength = getPasswordStrength(regPassword);
+                            const isFilled = strength.score >= step;
+                            return (
+                              <div
+                                key={step}
+                                className={`h-1 rounded-full transition-all duration-300 ${isFilled ? strength.color : 'bg-gray-200'}`}
+                              />
+                            );
+                          })}
+                        </div>
+                      )}
+                      <p className="text-[11px] text-[#6B7280] mt-1">
+                        Minimum 8 characters, 1 number, 1 special character
+                      </p>
+                    </div>
 
-                {/* Bottom Sign In Link */}
-                <div className="pt-4 text-center text-sm text-[#6B7280]">
-                  Already have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setErrorMessage(null);
-                      setMode('login');
-                    }}
-                    className="font-semibold text-[#00875A] hover:underline transition ml-1"
-                  >
-                    Sign In
-                  </button>
-                </div>
-              </form>
-              </>
+                    {/* Confirm Password with Eye Toggle */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-semibold text-[#14171A]">
+                          Confirm Password
+                        </label>
+                        {regConfirmPassword && (
+                          <span className={`text-[11px] font-semibold ${regPassword === regConfirmPassword ? 'text-[#00C076]' : 'text-red-500'}`}>
+                            {regPassword === regConfirmPassword ? '✓ Passwords match' : '✕ Passwords do not match'}
+                          </span>
+                        )}
+                      </div>
+                      <div className="relative">
+                        <input
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          value={regConfirmPassword}
+                          onChange={(e) => setRegConfirmPassword(e.target.value)}
+                          placeholder="••••••••"
+                          required
+                          className={`w-full pl-3.5 pr-11 py-2.5 sm:py-3 bg-white border rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:ring-1 transition shadow-2xs ${
+                            regConfirmPassword && regPassword !== regConfirmPassword
+                              ? 'border-red-300 focus:border-red-500 focus:ring-red-400'
+                              : 'border-[#E2E4E9] focus:border-[#00C076] focus:ring-[#00C076]'
+                          }`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5"
+                        >
+                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Checkbox: Terms of Service & Privacy Policy */}
+                    <div className="flex items-start gap-2.5 pt-1">
+                      <input
+                        type="checkbox"
+                        id="terms"
+                        checked={agreeTerms}
+                        onChange={(e) => setAgreeTerms(e.target.checked)}
+                        className="mt-0.5 w-4 h-4 rounded text-[#00C076] focus:ring-[#00C076] border-gray-300 accent-[#00C076] cursor-pointer"
+                      />
+                      <label htmlFor="terms" className="text-xs text-[#6B7280] leading-snug cursor-pointer">
+                        I agree to the{' '}
+                        <span className="text-[#00C076] hover:underline font-medium">Terms of Service</span>{' '}
+                        and{' '}
+                        <span className="text-[#00C076] hover:underline font-medium">Privacy Policy</span>
+                      </label>
+                    </div>
+
+                    {/* Submit Button */}
+                    <div className="pt-2">
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="w-full py-3.5 bg-[#00C076] hover:bg-[#00AA67] active:bg-[#00965B] text-white rounded-xl text-sm font-bold tracking-wide transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                            <span>Creating Merchant Account...</span>
+                          </>
+                        ) : (
+                          <span>Create Merchant Account</span>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Bottom Sign In Link */}
+                    <div className="pt-4 text-center text-xs text-[#6B7280]">
+                      Already have an account?{' '}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setErrorMessage(null);
+                          setMode('login');
+                        }}
+                        className="font-semibold text-[#00C076] hover:underline transition ml-1 cursor-pointer"
+                      >
+                        Sign In
+                      </button>
+                    </div>
+                  </form>
+                </>
               )}
             </div>
           )}
 
           {/* ========================================================= */}
-          {/* SCREEN 3: 2FA VERIFICATION (Matches Uploaded Image Exactly)*/}
+          {/* SCREEN 3: 2FA VERIFICATION                                 */}
           {/* ========================================================= */}
           {mode === 'mfa' && (
             <div className="animate-fadeIn">
               {/* Brand Header */}
-              <div className="flex items-center gap-3 mb-8">
+              <div className="flex items-center justify-center lg:justify-start gap-2.5 mb-7 sm:mb-8">
                 <img
                   src={copyMLogo}
                   alt="CopyM Pay"
-                  className="w-9 h-9 object-contain flex-shrink-0"
+                  className="w-8 h-8 object-contain flex-shrink-0"
                 />
-                <div>
-                  <h2 className="text-[19px] font-bold text-[#14171A] tracking-tight leading-tight flex items-center gap-1">
-                    <span>CopyM</span>
-                    <span className="text-[#00875A]">Pay</span>
-                  </h2>
-                  <p className="text-[12.5px] text-[#6B7280] font-normal leading-tight">
-                    {isAdmin ? 'Platform Operations & Security Console' : 'Merchant Operations Portal'}
-                  </p>
-                </div>
+                <h2 className="text-xl font-bold text-[#14171A] tracking-tight leading-tight flex items-center gap-1">
+                  <span>CopyM</span>
+                  <span className="text-[#00C076]">Pay</span>
+                </h2>
+                {isAdmin && (
+                  <span className="ml-1 px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase bg-slate-900 text-white rounded-md">
+                    Admin
+                  </span>
+                )}
               </div>
 
               {!isRecoveryMode ? (
                 <>
                   {/* Title & Subtitle */}
-                  <div className="mb-6">
-                    <h1 className="text-[26px] sm:text-[28px] font-bold text-[#14171A] tracking-tight">
+                  <div className="text-center lg:text-left mb-6 sm:mb-7">
+                    <h1 className="text-2xl sm:text-[28px] font-bold text-[#14171A] tracking-tight leading-tight">
                       {isAdmin ? 'Platform SuperAdmin 2FA Gate' : 'Verify your identity'}
                     </h1>
-                    <p className="text-[13.5px] text-[#6B7280] mt-1.5 leading-relaxed">
+                    <p className="text-[13px] text-[#6B7280] mt-1.5 leading-relaxed">
                       {isAdmin
                         ? 'Enter your 6-digit hardware/TOTP authenticator security token to unlock administrative platform operations.'
                         : 'Open your authenticator app and enter the 6-digit code for your CopyM Pay account.'}
@@ -663,7 +663,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
                   <form onSubmit={handleMfaSubmit}>
                     {/* Verification Code Label */}
-                    <label className="block text-[13px] font-semibold text-[#14171A] mb-2.5">
+                    <label className="block text-xs font-semibold text-[#14171A] mb-2.5">
                       {isAdmin ? 'Platform Security Token (6 Digits)' : 'Verification code'}
                     </label>
 
@@ -688,7 +688,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                             onPaste={handleMfaPaste}
                             className={`w-12 h-14 sm:w-14 sm:h-16 text-center font-mono text-xl sm:text-2xl font-bold rounded-xl bg-white text-[#14171A] transition-all ${
                               isFocused
-                                ? 'border-[1.5px] border-[#00875A] shadow-xs outline-none ring-0'
+                                ? 'border-[1.5px] border-[#00C076] shadow-xs outline-none ring-0'
                                 : 'border border-[#E2E4E9] outline-none hover:border-gray-300'
                             }`}
                           />
@@ -697,8 +697,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     </div>
 
                     {/* Helper Subtext below boxes */}
-                    <div className="flex items-center justify-between text-[12.5px] text-[#6B7280] mt-2.5 mb-4">
-                      <span>Use the current code shown in your app.</span>
+                    <div className="flex items-center justify-between text-xs text-[#6B7280] mt-2.5 mb-4">
+                      <span>Use current code in your app.</span>
                       <button
                         type="button"
                         onClick={() => {
@@ -706,7 +706,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                           setMfaDigits(demoCode);
                           setFocusedMfaIndex(5);
                         }}
-                        className="text-[#00875A] hover:underline font-medium text-xs cursor-pointer"
+                        className="text-[#00C076] hover:underline font-semibold cursor-pointer"
                       >
                         Paste code ({isAdmin ? '123456' : '849201'})
                       </button>
@@ -719,7 +719,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         id="mfaRemember"
                         checked={rememberDevice}
                         onChange={(e) => setRememberDevice(e.target.checked)}
-                        className="w-4 h-4 rounded text-[#00875A] focus:ring-[#00875A] accent-[#00875A] border-gray-300 cursor-pointer"
+                        className="w-4 h-4 rounded text-[#00C076] focus:ring-[#00C076] accent-[#00C076] border-gray-300 cursor-pointer"
                       />
                       <label htmlFor="mfaRemember" className="text-xs text-[#6B7280] select-none cursor-pointer">
                         Trust this device for 30 days
@@ -730,7 +730,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full py-3.5 sm:py-4 bg-[#00875A] hover:bg-[#00734D] text-white rounded-xl text-sm font-semibold tracking-wide transition shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                      className="w-full py-3.5 sm:py-4 bg-[#00C076] hover:bg-[#00AA67] active:bg-[#00965B] text-white rounded-xl text-sm font-bold tracking-wide transition shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
                     >
                       {isSubmitting ? (
                         <>
@@ -744,7 +744,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
                     {/* Recovery Code Option */}
                     <div className="pt-6 text-center">
-                      <p className="text-[12.5px] text-[#6B7280]">
+                      <p className="text-xs text-[#6B7280]">
                         Can't access your authenticator app?
                       </p>
                       <button
@@ -753,7 +753,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                           setMfaError(null);
                           setIsRecoveryMode(true);
                         }}
-                        className="text-[13px] font-medium text-[#00875A] hover:underline transition mt-0.5 inline-block cursor-pointer"
+                        className="text-xs font-semibold text-[#00C076] hover:underline transition mt-0.5 inline-block cursor-pointer"
                       >
                         Use a recovery code
                       </button>
@@ -763,11 +763,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({
               ) : (
                 /* Emergency Recovery Code View */
                 <>
-                  <div className="mb-6">
-                    <h1 className="text-[26px] sm:text-[28px] font-bold text-[#14171A] tracking-tight">
+                  <div className="text-center lg:text-left mb-6 sm:mb-7">
+                    <h1 className="text-2xl sm:text-[28px] font-bold text-[#14171A] tracking-tight leading-tight">
                       Use a recovery code
                     </h1>
-                    <p className="text-[13.5px] text-[#6B7280] mt-1.5 leading-relaxed">
+                    <p className="text-[13px] text-[#6B7280] mt-1.5 leading-relaxed">
                       Enter one of your 8-digit emergency recovery codes generated when you enabled two-factor authentication.
                     </p>
                   </div>
@@ -780,7 +780,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
                   <form onSubmit={handleMfaSubmit} className="space-y-4">
                     <div>
-                      <label className="block text-[13px] font-semibold text-[#14171A] mb-1.5">
+                      <label className="block text-xs font-semibold text-[#14171A] mb-1.5">
                         Recovery backup code
                       </label>
                       <input
@@ -789,14 +789,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         onChange={(e) => setRecoveryCode(e.target.value)}
                         placeholder="CPYM-8492-X7"
                         required
-                        className="w-full px-4 py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm font-mono text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00875A] focus:ring-1 focus:ring-[#00875A] transition shadow-2xs"
+                        className="w-full px-3.5 py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm font-mono text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00C076] focus:ring-1 focus:ring-[#00C076] transition shadow-2xs"
                       />
                     </div>
 
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full py-3.5 sm:py-4 bg-[#00875A] hover:bg-[#00734D] text-white rounded-xl text-sm font-semibold tracking-wide transition shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                      className="w-full py-3.5 sm:py-4 bg-[#00C076] hover:bg-[#00AA67] active:bg-[#00965B] text-white rounded-xl text-sm font-bold tracking-wide transition shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
                     >
                       {isSubmitting ? (
                         <>
@@ -815,7 +815,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                           setMfaError(null);
                           setIsRecoveryMode(false);
                         }}
-                        className="text-[13px] font-medium text-[#00875A] hover:underline transition cursor-pointer"
+                        className="text-xs font-semibold text-[#00C076] hover:underline transition cursor-pointer"
                       >
                         Use authenticator app instead
                       </button>
@@ -824,7 +824,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 </>
               )}
 
-              {/* Bottom Divider & Back to Sign In Link (Exact Image Spec) */}
+              {/* Bottom Divider & Back to Sign In Link */}
               <div className="border-t border-[#E2E4E9] my-6" />
 
               <div className="text-center">
@@ -836,7 +836,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     setIsRecoveryMode(false);
                     setMode('login');
                   }}
-                  className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#00875A] hover:underline transition cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#00C076] hover:underline transition cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Back to sign in</span>
@@ -856,21 +856,21 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   setForgotSubmitted(false);
                   setMode('login');
                 }}
-                className="text-xs text-gray-500 hover:text-gray-900 flex items-center gap-1.5 mb-6"
+                className="text-xs text-gray-500 hover:text-gray-900 flex items-center gap-1.5 mb-6 cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Back to sign in</span>
               </button>
 
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#00875A] flex items-center justify-center mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#00C076] flex items-center justify-center mb-4">
                 <Lock className="w-6 h-6" />
               </div>
 
-              <div className="mb-6">
-                <h1 className="text-[26px] font-bold text-[#14171A] tracking-tight">
+              <div className="text-center lg:text-left mb-6">
+                <h1 className="text-2xl sm:text-[28px] font-bold text-[#14171A] tracking-tight leading-tight">
                   {isAdmin ? 'Privileged Password Reset' : 'Reset your password'}
                 </h1>
-                <p className="text-[13.5px] text-[#6B7280] mt-1">
+                <p className="text-[13px] text-[#6B7280] mt-1.5 leading-relaxed">
                   {isAdmin
                     ? 'Enter your platform administrator work email to initiate the Security Officer recovery protocol.'
                     : 'Enter your registered work email to receive password reset instructions.'}
@@ -892,7 +892,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       setForgotSubmitted(false);
                       setMode('login');
                     }}
-                    className="w-full py-3 bg-gray-900 hover:bg-gray-800 text-white rounded-xl text-sm font-semibold transition"
+                    className="w-full py-3 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-sm font-semibold transition cursor-pointer"
                   >
                     Return to Sign In
                   </button>
@@ -900,7 +900,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
               ) : (
                 <form onSubmit={handleForgotSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-[13px] font-semibold text-[#14171A] mb-1.5">
+                    <label className="block text-xs font-semibold text-[#14171A] mb-1.5">
                       Email Address
                     </label>
                     <input
@@ -909,14 +909,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       onChange={(e) => setForgotEmail(e.target.value)}
                       placeholder={isAdmin ? 'admin@copym.com' : 'merchant@gmail.com'}
                       required
-                      className="w-full px-4 py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00875A] focus:ring-1 focus:ring-[#00875A] transition shadow-2xs"
+                      className="w-full px-3.5 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00C076] focus:ring-1 focus:ring-[#00C076] transition shadow-2xs"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-3.5 bg-[#00875A] hover:bg-[#00734D] text-white rounded-xl text-sm font-semibold tracking-wide transition shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                    className="w-full py-3.5 bg-[#00C076] hover:bg-[#00AA67] active:bg-[#00965B] text-white rounded-xl text-sm font-bold tracking-wide transition shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
                   >
                     {isSubmitting ? (
                       <>
