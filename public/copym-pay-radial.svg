@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" width="320" height="320">
+  <!-- Outer Circular Card Disc -->
+  <circle cx="160" cy="160" r="156" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" />
+
+  <!-- 5 Concentric Apple Pay Style Barcode Tracks -->
+  <g id="tracks">
+    <path d="M 165.84 101.29 A 59 59 0 0 1 174.59 102.83" fill="none" stroke="#090B10" stroke-width="7.5" stroke-linecap="round" />
+    <path d="M 185.57 106.83 A 59 59 0 0 1 193.26 111.27" fill="none" stroke="#8E95A2" stroke-width="7.5" stroke-linecap="round" />
+    <path d="M 213.76 135.7 A 59 59 0 0 1 218.83 164.44" fill="none" stroke="#090B10" stroke-width="7.5" stroke-linecap="round" />
+    <path d="M 207.92 194.41 A 59 59 0 0 1 202.21 201.22" fill="none" stroke="#8E95A2" stroke-width="7.5" stroke-linecap="round" />
+    <path d="M 193.26 208.73 A 59 59 0 0 1 185.57 213.17" fill="none" stroke="#090B10" stroke-width="7.5" stroke-linecap="round" />
+    <path d="M 154.16 218.71 A 59 59 0 0 1 126.74 208.73" fill="none" stroke="#8E95A2" stroke-width="7.5" stroke-linecap="round" />
+    <path d="M 106.24 184.3 A 59 59 0 0 1 103.2 175.95" fill="none" stroke="#090B10" stroke-width="7.5" stroke-linecap="round" />
+    <path d="M 103.2 144.05 A 59 59 0 0 1 106.24 135.7" fill="none" stroke="#8E95A2" stroke-width="7.5" stroke-linecap="round" />
+    <path d="M 112.08 125.59 A 59 59 0 0 1 134.43 106.83" fill="none" stroke="#090B10" stroke-width="7.5" stroke-linecap="round" />
+    <path d="M 166.09 81.24 A 79 79 0 0 1 194.1 88.74" fill="none" stroke="#090B10" stroke-width="8" stroke-linecap="round" />
+    <path d="M 220 108.61 A 79 79 0 0 1 225.17 115.34" fill="none" stroke="#8E95A2" stroke-width="8" stroke-linecap="round" />
+    <path d="M 237.66 145.5 A 79 79 0 0 1 238.76 153.91" fill="none" stroke="#090B10" stroke-width="8" stroke-linecap="round" />
+    <path d="M 238.76 166.09 A 79 79 0 0 1 231.26 194.1" fill="none" stroke="#8E95A2" stroke-width="8" stroke-linecap="round" />
+    <path d="M 211.39 220 A 79 79 0 0 1 204.66 225.17" fill="none" stroke="#090B10" stroke-width="8" stroke-linecap="round" />
+    <path d="M 174.5 237.66 A 79 79 0 0 1 166.09 238.76" fill="none" stroke="#8E95A2" stroke-width="8" stroke-linecap="round" />
+    <path d="M 153.91 238.76 A 79 79 0 0 1 125.9 231.26" fill="none" stroke="#090B10" stroke-width="8" stroke-linecap="round" />
+    <path d="M 100 211.39 A 79 79 0 0 1 94.83 204.66" fill="none" stroke="#8E95A2" stroke-width="8" stroke-linecap="round" />
+    <path d="M 82.34 174.5 A 79 79 0 0 1 82.34 145.5" fill="none" stroke="#090B10" stroke-width="8" stroke-linecap="round" />
+    <path d="M 85.5 133.73 A 79 79 0 0 1 88.74 125.9" fill="none" stroke="#8E95A2" stroke-width="8" stroke-linecap="round" />
+    <path d="M 108.61 100 A 79 79 0 0 1 115.34 94.83" fill="none" stroke="#8E95A2" stroke-width="8" stroke-linecap="round" />
+    <path d="M 125.9 88.74 A 79 79 0 0 1 133.73 85.5" fill="none" stroke="#090B10" stroke-width="8" stroke-linecap="round" />
+    <path d="M 166.35 61.2 A 99 99 0 0 1 174.33 62.04" fill="none" stroke="#8E95A2" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 186.75 64.68 A 99 99 0 0 1 212.94 76.34" fill="none" stroke="#090B10" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 237.67 98.61 A 99 99 0 0 1 242.39 105.11" fill="none" stroke="#8E95A2" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 255.92 135.51 A 99 99 0 0 1 258.92 164.02" fill="none" stroke="#090B10" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 257.59 176.64 A 99 99 0 0 1 255.92 184.49" fill="none" stroke="#8E95A2" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 242.39 214.89 A 99 99 0 0 1 237.67 221.39" fill="none" stroke="#090B10" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 212.94 243.66 A 99 99 0 0 1 186.75 255.32" fill="none" stroke="#8E95A2" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 174.33 257.96 A 99 99 0 0 1 166.35 258.8" fill="none" stroke="#090B10" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 133.25 255.32 A 99 99 0 0 1 107.06 243.66" fill="none" stroke="#090B10" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 82.33 221.39 A 99 99 0 0 1 77.61 214.89" fill="none" stroke="#8E95A2" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 64.08 184.49 A 99 99 0 0 1 62.41 176.64" fill="none" stroke="#090B10" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 61.08 164.02 A 99 99 0 0 1 64.08 135.51" fill="none" stroke="#8E95A2" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 77.61 105.11 A 99 99 0 0 1 82.33 98.61" fill="none" stroke="#090B10" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 107.06 76.34 A 99 99 0 0 1 114.02 72.33" fill="none" stroke="#8E95A2" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 125.61 67.16 A 99 99 0 0 1 133.25 64.68" fill="none" stroke="#090B10" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 166.6 41.18 A 119 119 0 0 1 174.14 41.84" fill="none" stroke="#090B10" stroke-width="9" stroke-linecap="round" />
+    <path d="M 187.13 44.13 A 119 119 0 0 1 194.44 46.09" fill="none" stroke="#8E95A2" stroke-width="9" stroke-linecap="round" />
+    <path d="M 225.12 60.4 A 119 119 0 0 1 246.78 78.57" fill="none" stroke="#090B10" stroke-width="9" stroke-linecap="round" />
+    <path d="M 255.26 88.68 A 119 119 0 0 1 259.6 94.88" fill="none" stroke="#8E95A2" stroke-width="9" stroke-linecap="round" />
+    <path d="M 273.91 125.56 A 119 119 0 0 1 275.87 132.87" fill="none" stroke="#8E95A2" stroke-width="9" stroke-linecap="round" />
+    <path d="M 278.82 166.6 A 119 119 0 0 1 273.91 194.44" fill="none" stroke="#090B10" stroke-width="9" stroke-linecap="round" />
+    <path d="M 259.6 225.12 A 119 119 0 0 1 255.26 231.32" fill="none" stroke="#8E95A2" stroke-width="9" stroke-linecap="round" />
+    <path d="M 246.78 241.43 A 119 119 0 0 1 241.43 246.78" fill="none" stroke="#090B10" stroke-width="9" stroke-linecap="round" />
+    <path d="M 213.7 266.2 A 119 119 0 0 1 206.84 269.4" fill="none" stroke="#090B10" stroke-width="9" stroke-linecap="round" />
+    <path d="M 194.44 273.91 A 119 119 0 0 1 166.6 278.82" fill="none" stroke="#8E95A2" stroke-width="9" stroke-linecap="round" />
+    <path d="M 132.87 275.87 A 119 119 0 0 1 125.56 273.91" fill="none" stroke="#090B10" stroke-width="9" stroke-linecap="round" />
+    <path d="M 94.88 259.6 A 119 119 0 0 1 88.68 255.26" fill="none" stroke="#8E95A2" stroke-width="9" stroke-linecap="round" />
+    <path d="M 78.57 246.78 A 119 119 0 0 1 60.4 225.12" fill="none" stroke="#090B10" stroke-width="9" stroke-linecap="round" />
+    <path d="M 46.09 194.44 A 119 119 0 0 1 44.13 187.13" fill="none" stroke="#8E95A2" stroke-width="9" stroke-linecap="round" />
+    <path d="M 41.18 153.4 A 119 119 0 0 1 41.84 145.86" fill="none" stroke="#090B10" stroke-width="9" stroke-linecap="round" />
+    <path d="M 44.13 132.87 A 119 119 0 0 1 46.09 125.56" fill="none" stroke="#8E95A2" stroke-width="9" stroke-linecap="round" />
+    <path d="M 60.4 94.88 A 119 119 0 0 1 78.57 73.22" fill="none" stroke="#090B10" stroke-width="9" stroke-linecap="round" />
+    <path d="M 88.68 64.74 A 119 119 0 0 1 94.88 60.4" fill="none" stroke="#8E95A2" stroke-width="9" stroke-linecap="round" />
+    <path d="M 125.56 46.09 A 119 119 0 0 1 132.87 44.13" fill="none" stroke="#8E95A2" stroke-width="9" stroke-linecap="round" />
+    <path d="M 166.85 21.17 A 139 139 0 0 1 173.92 21.7" fill="none" stroke="#8E95A2" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 207.46 29.35 A 139 139 0 0 1 232.55 41.44" fill="none" stroke="#090B10" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 259.45 62.89 A 139 139 0 0 1 276.81 84.65" fill="none" stroke="#8E95A2" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 291.74 115.65 A 139 139 0 0 1 293.83 122.43" fill="none" stroke="#090B10" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 298.95 156.45 A 139 139 0 0 1 298.95 163.55" fill="none" stroke="#8E95A2" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 297.93 177.2 A 139 139 0 0 1 291.74 204.35" fill="none" stroke="#090B10" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 276.81 235.35 A 139 139 0 0 1 272.81 241.21" fill="none" stroke="#8E95A2" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 249.41 266.43 A 139 139 0 0 1 226.41 282.11" fill="none" stroke="#090B10" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 214.07 288.05 A 139 139 0 0 1 207.46 290.65" fill="none" stroke="#8E95A2" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 173.92 298.3 A 139 139 0 0 1 166.85 298.83" fill="none" stroke="#090B10" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 132.54 296.26 A 139 139 0 0 1 105.93 288.05" fill="none" stroke="#8E95A2" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 76.14 270.85 A 139 139 0 0 1 55.73 251.91" fill="none" stroke="#090B10" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 36.34 223.49 A 139 139 0 0 1 33.27 217.09" fill="none" stroke="#8E95A2" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 23.13 184.22 A 139 139 0 0 1 22.07 177.2" fill="none" stroke="#090B10" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 21.05 163.55 A 139 139 0 0 1 23.13 135.78" fill="none" stroke="#8E95A2" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 33.27 102.91 A 139 139 0 0 1 36.34 96.51" fill="none" stroke="#090B10" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 55.73 68.09 A 139 139 0 0 1 60.55 62.89" fill="none" stroke="#8E95A2" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 70.59 53.57 A 139 139 0 0 1 93.59 37.89" fill="none" stroke="#090B10" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 125.62 25.32 A 139 139 0 0 1 132.54 23.74" fill="none" stroke="#8E95A2" stroke-width="9.5" stroke-linecap="round" />
+  </g>
+
+  <!-- Central Solid Black Disc -->
+  <circle cx="160" cy="160" r="42" fill="#000000" />
+
+  <!-- Center Apple Pay Style Brand Lockup: [CopyM Symbol] + Pay -->
+  <g id="brandLockup" transform="translate(160, 160)">
+    <!-- CopyM Minimal Monogram / Vault Emblem -->
+    <g transform="translate(-25, -10)">
+      <rect x="0" y="0" width="19" height="19" rx="5.5" fill="#FFFFFF" />
+      <path d="M5.5 9.5 L9.5 5.5 L13.5 9.5 L9.5 13.5 Z" fill="#000000" />
+      <circle cx="9.5" cy="9.5" r="1.8" fill="#FFFFFF" />
+    </g>
+    <!-- Crisp White "Pay" Typography (Matches Pay SF Pro font) -->
+    <text x="-1" y="5" fill="#FFFFFF" font-size="17" font-weight="700" letter-spacing="-0.2" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif">Pay</text>
+  </g>
+</svg>

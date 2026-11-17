@@ -19,7 +19,8 @@ import {
   ShieldAlert,
   Users,
   AlertOctagon,
-  CheckSquare
+  CheckSquare,
+  Activity
 } from 'lucide-react';
 import { PortalMode, AdminTabId } from '../types';
 
@@ -138,6 +139,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       title: 'TREASURY OPS',
       items: [
+        { id: 'admin-whitelist', label: 'Address Whitelist Hub', icon: 'shield-check' },
         { id: 'admin-exceptions', label: 'Exceptions & Sweeps', icon: 'alert-octagon' },
         { id: 'admin-payouts', label: 'Maker-Checker Queue', icon: 'check-square' },
       ]
@@ -145,6 +147,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       title: 'SECURITY & AUDIT',
       items: [
+        { id: 'admin-logs', label: 'Merchant Issue Logs', icon: 'activity' },
         { id: 'admin-audit', label: 'Immutable Audit Trail', icon: 'audit' },
       ]
     }
@@ -194,10 +197,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         return <ShieldAlert className={iconClass} />;
       case 'admin-merchants':
         return <Users className={iconClass} />;
+      case 'admin-whitelist':
+        return <ShieldCheck className={iconClass} />;
       case 'admin-exceptions':
         return <AlertOctagon className={iconClass} />;
       case 'admin-payouts':
         return <CheckSquare className={iconClass} />;
+      case 'admin-logs':
+        return <Activity className={iconClass} />;
       case 'admin-audit':
         return <FileText className={iconClass} />;
       default:
@@ -237,10 +244,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         return <ShieldAlert className={iconClass} />;
       case 'admin-merchants':
         return <Users className={iconClass} />;
+      case 'admin-whitelist':
+        return <ShieldCheck className={iconClass} />;
       case 'admin-exceptions':
         return <AlertOctagon className={iconClass} />;
       case 'admin-payouts':
         return <CheckSquare className={iconClass} />;
+      case 'admin-logs':
+        return <Activity className={iconClass} />;
       case 'admin-audit':
         return <FileText className={iconClass} />;
       default:

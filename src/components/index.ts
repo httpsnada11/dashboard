@@ -21,4 +21,6 @@ export { TransactionModal } from './TransactionModal';
 export type { TransactionModalProps } from './TransactionModal';
 export { PastWithdrawalsCard } from './PastWithdrawalsCard';
 export type { PastWithdrawalsCardProps, PastWithdrawalItem } from './PastWithdrawalsCard';
+export { CopyMRadialScanner } from './CopyMRadialScanner';
+export type { CopyMRadialScannerProps } from './CopyMRadialScanner';
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Users,
   ShieldCheck,
@@ -107,7 +107,23 @@ const INITIAL_ADDRESSES: AllowlistedAddress[] = [
 ];
 
 export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDestination }) => {
-  const [addresses, setAddresses] = useState<AllowlistedAddress[]>(INITIAL_ADDRESSES);
+  const [addresses, setAddresses] = useState<AllowlistedAddress[]>(() => {
+    try {
+      const saved = localStorage.getItem('copym_shared_merchant_addresses');
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // ignore
+    }
+    return INITIAL_ADDRESSES;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('copym_shared_merchant_addresses', JSON.stringify(addresses));
+    } catch {
+      // ignore
+    }
+  }, [addresses]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Cooling Period'>('All');
   const [copiedId, setCopiedId] = useState<string | null>(null);

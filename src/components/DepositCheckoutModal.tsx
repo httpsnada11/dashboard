@@ -14,6 +14,7 @@ import {
   Terminal
 } from 'lucide-react';
 import { Transaction, DepositState } from '../types';
+import { CopyMRadialScanner } from './CopyMRadialScanner';
 
 export type { DepositState };
 
@@ -345,112 +346,15 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
               </p>
             </div>
 
-            {/* High-Definition High-Contrast SVG QR Code */}
-            <div className="bg-white p-3 rounded-2xl shadow-sm border border-gray-200/90 relative group">
-              <svg
-                viewBox="0 0 100 100"
-                className="w-40 h-40 sm:w-44 sm:h-44"
-                shapeRendering="crispEdges"
-              >
-                {/* Background */}
-                <rect width="100" height="100" fill="white" />
-
-                {/* Finder Pattern Top-Left */}
-                <rect x="6" y="6" width="22" height="22" rx="3" fill="#14171A" />
-                <rect x="10" y="10" width="14" height="14" rx="2" fill="white" />
-                <rect x="13" y="13" width="8" height="8" rx="1.5" fill="#00C076" />
-
-                {/* Finder Pattern Top-Right */}
-                <rect x="72" y="6" width="22" height="22" rx="3" fill="#14171A" />
-                <rect x="76" y="10" width="14" height="14" rx="2" fill="white" />
-                <rect x="79" y="13" width="8" height="8" rx="1.5" fill="#00C076" />
-
-                {/* Finder Pattern Bottom-Left */}
-                <rect x="6" y="72" width="22" height="22" rx="3" fill="#14171A" />
-                <rect x="10" y="76" width="14" height="14" rx="2" fill="white" />
-                <rect x="13" y="79" width="8" height="8" rx="1.5" fill="#00C076" />
-
-                {/* High Density QR Matrix Grid Dots */}
-                <rect x="34" y="8" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="44" y="8" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="54" y="8" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="64" y="8" width="5" height="5" rx="1" fill="#14171A" />
-
-                <rect x="34" y="18" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="49" y="18" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="59" y="18" width="5" height="5" rx="1" fill="#14171A" />
-
-                <rect x="8" y="34" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="18" y="34" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="34" y="34" width="6" height="6" rx="1" fill="#00C076" />
-                <rect x="46" y="34" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="58" y="34" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="72" y="34" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="86" y="34" width="5" height="5" rx="1" fill="#14171A" />
-
-                <rect x="8" y="44" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="20" y="44" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="34" y="44" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="46" y="44" width="8" height="8" rx="2" fill="#00C076" />
-                <rect x="62" y="44" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="74" y="44" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="86" y="44" width="5" height="5" rx="1" fill="#14171A" />
-
-                <rect x="8" y="56" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="18" y="56" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="34" y="56" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="52" y="56" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="68" y="56" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="80" y="56" width="5" height="5" rx="1" fill="#14171A" />
-
-                <rect x="34" y="72" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="46" y="72" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="58" y="72" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="72" y="72" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="86" y="72" width="5" height="5" rx="1" fill="#14171A" />
-
-                <rect x="34" y="84" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="44" y="84" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="58" y="84" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="72" y="84" width="5" height="5" rx="1" fill="#14171A" />
-                <rect x="84" y="84" width="5" height="5" rx="1" fill="#14171A" />
-
-                {/* Central Brand Shield with C / token indicator */}
-                <rect x="40" y="40" width="20" height="20" rx="6" fill="#14171A" />
-                <circle cx="50" cy="50" r="6" fill="#00C076" />
-                <path
-                  d="M48 47a3 3 0 1 0 4 0"
-                  stroke="white"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  fill="none"
-                />
-              </svg>
-            </div>
-
-            {integrationMode === 'HPP' ? (
-              <div className="mt-3 flex items-center gap-1.5 text-[10px] text-gray-500 font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#00C076]" />
-                <span>Scan with any mobile crypto wallet</span>
-              </div>
-            ) : (
-              <div className="mt-3 w-full">
-                <button
-                  type="button"
-                  onClick={() => handleCopy(rawUri, 'rawUri')}
-                  className="w-full py-1.5 px-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg text-[10px] font-mono text-gray-700 flex items-center justify-between transition cursor-pointer shadow-2xs"
-                >
-                  <span className="truncate max-w-[130px]">{rawUri}</span>
-                  <span className="text-[#00C076] font-bold shrink-0 flex items-center gap-1">
-                    {copiedField === 'rawUri' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                    <span>{copiedField === 'rawUri' ? 'Copied' : 'Copy URI'}</span>
-                  </span>
-                </button>
-                <span className="text-[9.5px] text-gray-400 block mt-1">
-                  Native Mobile / Web Embed Ready
-                </span>
-              </div>
-            )}
+            {/* High-Definition Scanner: Apple Pay Inspired Radial Code + Classic QR Toggle */}
+            <CopyMRadialScanner
+              address={rawUri}
+              amount={targetAmountType === 'choice' ? '1,500.00' : fixedAmount}
+              currency="USDT"
+              network={currentNetwork.chainName}
+              allowToggleView={true}
+              className="w-full my-auto"
+            />
           </div>
 
           {/* Right Column: Exact Metadata Specifications (7 cols) */}

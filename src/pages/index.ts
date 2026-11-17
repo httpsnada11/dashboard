@@ -24,3 +24,6 @@ export { AdminMerchantsPage } from './AdminMerchantsPage';
 export { AdminExceptionsPage } from './AdminExceptionsPage';
 export { AdminPayoutsPage } from './AdminPayoutsPage';
 export { AdminAuditPage } from './AdminAuditPage';
+export { AdminWhitelistPage } from './AdminWhitelistPage';
+export { AdminLogsPage } from './AdminLogsPage';
+

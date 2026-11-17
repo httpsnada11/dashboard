@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Upload, BookOpen } from 'lucide-react';
+import { Upload, BookOpen, Play } from 'lucide-react';
 
 // Reusable Layout & UI Components
 import {
@@ -29,8 +29,10 @@ import {
   HostedCheckoutPage,
   AdminOverviewPage,
   AdminMerchantsPage,
+  AdminWhitelistPage,
   AdminExceptionsPage,
   AdminPayoutsPage,
+  AdminLogsPage,
   AdminAuditPage
 } from './pages';
 
@@ -53,8 +55,10 @@ const PAGE_META: Record<string, { title: string; category: string }> = {
   // Platform Admin Portal Routes
   'admin-overview': { title: 'AML & KYT Attention Queue', category: 'Platform Operations' },
   'admin-merchants': { title: 'Merchant KYB Adjudication', category: 'Platform Compliance' },
+  'admin-whitelist': { title: 'Address Whitelist Hub', category: 'Platform Treasury' },
   'admin-exceptions': { title: 'Payment Exceptions & Cold Vault Sweeps', category: 'Treasury Operations' },
   'admin-payouts': { title: 'Maker-Checker Approvals Queue', category: 'Platform Treasury' },
+  'admin-logs': { title: 'Merchant Issue & Error Logs', category: 'Security & Governance' },
   'admin-audit': { title: 'Immutable Audit Trail', category: 'Security & Governance' },
 };
 
@@ -257,8 +261,10 @@ export function App() {
     try {
       const path = window.location.pathname.toLowerCase();
       if (path.includes('/merchants')) return 'admin-merchants';
+      if (path.includes('/whitelist')) return 'admin-whitelist';
       if (path.includes('/exceptions')) return 'admin-exceptions';
       if (path.includes('/payouts')) return 'admin-payouts';
+      if (path.includes('/logs')) return 'admin-logs';
       if (path.includes('/audit')) return 'admin-audit';
       if (path.includes('/overview')) return 'admin-overview';
     } catch {
@@ -352,8 +358,10 @@ export function App() {
         const routeMap: Record<AdminTabId, string> = {
           'admin-overview': '/admin/overview',
           'admin-merchants': '/admin/merchants',
+          'admin-whitelist': '/admin/whitelist',
           'admin-exceptions': '/admin/exceptions',
           'admin-payouts': '/admin/payouts',
+          'admin-logs': '/admin/logs',
           'admin-audit': '/admin/audit',
         };
         const target = routeMap[adminTab] || '/admin/overview';
@@ -388,8 +396,10 @@ export function App() {
       if (path.startsWith('/admin') || path.includes('/ops-7x9k')) {
         setPortalMode('admin');
         if (path.includes('/merchants')) setAdminTab('admin-merchants');
+        else if (path.includes('/whitelist')) setAdminTab('admin-whitelist');
         else if (path.includes('/exceptions')) setAdminTab('admin-exceptions');
         else if (path.includes('/payouts')) setAdminTab('admin-payouts');
+        else if (path.includes('/logs')) setAdminTab('admin-logs');
         else if (path.includes('/audit')) setAdminTab('admin-audit');
         else setAdminTab('admin-overview');
       } else {
@@ -554,6 +564,15 @@ export function App() {
           </div>
         );
       }
+      if (adminTab === 'admin-whitelist') {
+        return (
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200/80">
+              2 Addresses in 24h Cooling
+            </span>
+          </div>
+        );
+      }
       if (adminTab === 'admin-exceptions') {
         return (
           <div className="flex items-center gap-2">
@@ -632,6 +651,15 @@ export function App() {
     if (activeTab === 'developers') {
       return (
         <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1.5 sm:gap-2">
+          <a
+            href="/simulator.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-full text-[11px] sm:text-[11.5px] font-semibold shadow-2xs transition select-none"
+          >
+            <Play className="w-3.5 h-3.5 text-[#00C076] fill-[#00C076]" />
+            <span>Simulate Cashier (HPP / H2H)</span>
+          </a>
           <button
             onClick={() => setIsDevModalOpen(true)}
             className="flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 rounded-full text-[11px] sm:text-[11.5px] font-medium shadow-2xs transition select-none"
@@ -672,6 +700,28 @@ export function App() {
 
     return null;
   };
+
+  // Ticket FE-10: Public Cashier Simulator Route
+  const isSimulatorRoute =
+    typeof window !== 'undefined' &&
+    (window.location.pathname.startsWith('/simulator') ||
+      window.location.pathname.startsWith('/cashier-simulator'));
+
+  if (isSimulatorRoute) {
+    window.location.href = '/simulator.html';
+    return null;
+  }
+
+  // Ticket FE-11: Public Radial Scanner Studio Route
+  const isScannerRoute =
+    typeof window !== 'undefined' &&
+    (window.location.pathname.startsWith('/scanner') ||
+      window.location.pathname.startsWith('/radial-scanner'));
+
+  if (isScannerRoute) {
+    window.location.href = '/copym-radial-scanner.html';
+    return null;
+  }
 
   // Ticket FE-09: Public Payer Checkout Route (No Auth Required)
   const isCheckoutRoute =
@@ -761,12 +811,18 @@ export function App() {
               ) : adminTab === 'admin-merchants' ? (
                 /* Merchant KYB Adjudication & Limits */
                 <AdminMerchantsPage />
+              ) : adminTab === 'admin-whitelist' ? (
+                /* Merchant Payout Address Whitelist Hub */
+                <AdminWhitelistPage />
               ) : adminTab === 'admin-exceptions' ? (
                 /* Payment Exceptions & Automated Cold Sweeps */
                 <AdminExceptionsPage />
               ) : adminTab === 'admin-payouts' ? (
                 /* Platform Maker-Checker Approvals Queue & MPC Co-Signer Gate */
                 <AdminPayoutsPage />
+              ) : adminTab === 'admin-logs' ? (
+                /* Centralized Merchant Issue & Diagnostic Logs (CTO Instruction 4) */
+                <AdminLogsPage />
               ) : (
                 /* Platform Immutable Audit Trail */
                 <AdminAuditPage />

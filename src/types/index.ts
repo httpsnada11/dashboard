@@ -191,9 +191,68 @@ export type PortalMode = 'merchant' | 'admin';
 export type AdminTabId =
   | 'admin-overview'
   | 'admin-merchants'
+  | 'admin-whitelist'
   | 'admin-exceptions'
   | 'admin-payouts'
+  | 'admin-logs'
   | 'admin-audit';
+
+export type IssueCategory =
+  | 'Webhook Delivery'
+  | 'API Integration'
+  | 'Rate Limiting'
+  | 'Settlement Exception'
+  | 'KYC/AML Trigger';
+
+export type IssueSeverity = 'Critical' | 'Warning' | 'Info' | 'Resolved';
+
+export interface MerchantIssueLog {
+  id: string;
+  merchantId: string;
+  merchantName: string;
+  category: IssueCategory;
+  httpStatus?: number;
+  errorCode: string;
+  title: string;
+  description: string;
+  endpointUrl?: string;
+  affectedCustomerOrTx?: string;
+  timestamp: string;
+  severity: IssueSeverity;
+  retryCount?: number;
+  status: 'Open' | 'Investigating' | 'Resolved' | 'Retrying';
+  requestPayload?: string;
+  responsePayload?: string;
+  latencyMs?: number;
+}
+
+export type WhitelistApprovalStatus =
+  | 'Active'
+  | 'Cooling Period'
+  | 'Pending Review'
+  | 'Frozen'
+  | 'Revoked';
+
+export interface AdminWhitelistedAddress {
+  id: string;
+  merchantId: string;
+  merchantName: string;
+  beneficiaryName: string;
+  category: 'First-Party Deposit' | 'Vendor Settlement' | 'OTC Liquidity Pool' | 'Affiliate Commission';
+  network: string;
+  address: string;
+  fullAddress: string;
+  status: WhitelistApprovalStatus;
+  coolingRemainingHours?: number;
+  coolingEndsAt?: string;
+  addedBy: string;
+  addedIp: string;
+  createdAt: string;
+  totalPaidOut: string;
+  kytRiskScore: number;
+  kytRiskLevel: 'Clean' | 'Low' | 'Medium' | 'Critical';
+  sanctionScreenStatus: 'Passed' | 'Flagged' | 'Under Review';
+}
 
 export interface MerchantKYBRecord {
   id: string;

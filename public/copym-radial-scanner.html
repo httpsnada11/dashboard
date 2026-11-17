@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COPYm Pay — Apple Pay Inspired Radial Scanner Studio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    code, pre, .font-mono { font-family: 'JetBrains Mono', monospace; }
+    @keyframes radarSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .animate-radar {
+      transform-origin: 160px 160px;
+      animation: radarSpin 4s linear infinite;
+    }
+    .animate-radar-fast {
+      transform-origin: 160px 160px;
+      animation: radarSpin 2s linear infinite;
+    }
+    .animate-radar-slow {
+      transform-origin: 160px 160px;
+      animation: radarSpin 7s linear infinite;
+    }
+    .radial-shadow {
+      box-shadow: 0 20px 50px -10px rgba(0, 192, 118, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-[#00C076] selection:text-white">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50 px-6 py-3.5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#00C076] to-emerald-400 flex items-center justify-center font-black text-slate-950 text-sm shadow-md shadow-emerald-500/20">
+        CM
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="font-extrabold text-base tracking-tight text-white">COPYm Pay</span>
+          <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[#00C076] text-[10.5px] font-bold">Radial Scanner Studio</span>
+        </div>
+        <p class="text-[11px] text-slate-400">Apple Pay / App Clip Inspired Optical Crypto Scanner</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 text-xs">
+      <a href="/simulator.html" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold transition text-xs flex items-center gap-1.5">
+        <i data-lucide="play" class="w-3.5 h-3.5 text-[#00C076]"></i>
+        <span>Cashier Simulator</span>
+      </a>
+      <button onclick="downloadSvg()" class="px-3 py-1.5 rounded-xl bg-[#00C076] hover:bg-[#00AA67] text-white font-bold transition text-xs flex items-center gap-1.5 shadow-sm">
+        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+        <span>Export SVG</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Studio Main -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+    <!-- LEFT PANEL: Controls & Settings (5 Cols) -->
+    <div class="lg:col-span-5 space-y-6">
+
+      <!-- Inspiration Badge Card -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-[#00C076]"></i>
+            Design Archetype
+          </span>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-[#00C076] border border-emerald-500/30">
+            Concentric Radial Optics
+          </span>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Inspired by the Apple Pay & App Clip circular code architecture: 6 concentric segmented barcode tracks surrounding a central brand anchor with rounded pill terminals (<code class="text-emerald-400 text-[11px]">strokeLinecap="round"</code>).
+        </p>
+
+        <!-- Theme Switcher -->
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-2">Display Theme</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button onclick="setTheme('light')" id="btnThemeLight" class="py-2 px-3 rounded-xl border bg-white text-slate-900 border-white font-bold text-xs flex items-center justify-center gap-1.5 transition">
+              <i data-lucide="sun" class="w-3.5 h-3.5 text-amber-500"></i>
+              <span>Apple Light</span>
+            </button>
+            <button onclick="setTheme('dark')" id="btnThemeDark" class="py-2 px-3 rounded-xl border bg-slate-950 border-slate-800 text-slate-400 hover:text-white font-bold text-xs flex items-center justify-center gap-1.5 transition">
+              <i data-lucide="moon" class="w-3.5 h-3.5 text-sky-400"></i>
+              <span>Obsidian</span>
+            </button>
+            <button onclick="setTheme('cyber')" id="btnThemeCyber" class="py-2 px-3 rounded-xl border bg-slate-950 border-slate-800 text-slate-400 hover:text-white font-bold text-xs flex items-center justify-center gap-1.5 transition">
+              <i data-lucide="zap" class="w-3.5 h-3.5 text-emerald-400"></i>
+              <span>Cyber Mint</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Radar Animation Controls -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-xs font-bold text-slate-300">Radar Scanning Beam</label>
+            <span id="radarStatusBadge" class="text-[10px] font-bold text-emerald-400">Active (4s Sweep)</span>
+          </div>
+          <div class="grid grid-cols-4 gap-1.5">
+            <button onclick="setRadar('off')" id="btnRadarOff" class="py-1.5 rounded-lg border border-slate-800 bg-slate-950 text-slate-400 hover:text-white text-xs font-semibold">Off</button>
+            <button onclick="setRadar('slow')" id="btnRadarSlow" class="py-1.5 rounded-lg border border-slate-800 bg-slate-950 text-slate-400 hover:text-white text-xs font-semibold">Slow (7s)</button>
+            <button onclick="setRadar('normal')" id="btnRadarNormal" class="py-1.5 rounded-lg border border-emerald-500 bg-slate-800 text-white text-xs font-bold">Normal (4s)</button>
+            <button onclick="setRadar('fast')" id="btnRadarFast" class="py-1.5 rounded-lg border border-slate-800 bg-slate-950 text-slate-400 hover:text-white text-xs font-semibold">Fast (2s)</button>
+          </div>
+        </div>
+
+        <!-- Network & Target Currency Selector -->
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-2">Simulated Blockchain Network</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button onclick="setNetwork('TRON')" id="netTron" class="py-2 px-3 rounded-xl border bg-slate-800 border-emerald-500 text-white font-bold text-xs flex flex-col items-center gap-0.5">
+              <span>TRON</span>
+              <span class="text-[9.5px] text-slate-400">USDT (TRC-20)</span>
+            </button>
+            <button onclick="setNetwork('ETH')" id="netEth" class="py-2 px-3 rounded-xl border bg-slate-950 border-slate-800 text-slate-400 hover:text-white font-bold text-xs flex flex-col items-center gap-0.5">
+              <span>Ethereum</span>
+              <span class="text-[9.5px] text-slate-400">USDC (ERC-20)</span>
+            </button>
+            <button onclick="setNetwork('BSC')" id="netBsc" class="py-2 px-3 rounded-xl border bg-slate-950 border-slate-800 text-slate-400 hover:text-white font-bold text-xs flex flex-col items-center gap-0.5">
+              <span>BNB Chain</span>
+              <span class="text-[9.5px] text-slate-400">USDT (BEP-20)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Deposit Amount Input -->
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1.5">Deposit Amount</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+            <input type="number" id="inputAmount" value="250.00" oninput="updateAmount(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 pl-7 pr-16 text-white font-mono font-bold text-sm focus:border-emerald-500 focus:outline-none">
+            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-bold text-slate-400" id="currencyBadge">USDT</span>
+          </div>
+        </div>
+
+        <!-- Trigger Interactive Scan Test -->
+        <div class="pt-2">
+          <button onclick="simulateCameraScan()" class="w-full py-3 bg-gradient-to-r from-[#00C076] to-emerald-500 hover:from-emerald-600 hover:to-emerald-500 text-slate-950 font-extrabold rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition cursor-pointer">
+            <i data-lucide="scan" class="w-4 h-4"></i>
+            <span>Simulate Mobile Camera Scan</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Feature Specs Callout -->
+      <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 text-xs space-y-2 text-slate-400">
+        <div class="font-bold text-white flex items-center gap-1.5">
+          <i data-lucide="shield-check" class="w-4 h-4 text-[#00C076]"></i>
+          <span>Industrial Security Highlights</span>
+        </div>
+        <ul class="space-y-1 text-[11px] list-disc list-inside">
+          <li>Concentric multi-track redundancy with 6 unique polar radii.</li>
+          <li>First 6 and Last 6 address character highlights prevent clipboard-hijacking malware.</li>
+          <li>Instant Web3 auto-detect hook compatible with MetaMask & TronLink mobile.</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- RIGHT PANEL: Live Interactive Scanner Stage (7 Cols) -->
+    <div class="lg:col-span-7 flex flex-col items-center justify-center">
+
+      <!-- Scanner Display Card -->
+      <div id="scannerCard" class="w-full max-w-[480px] bg-white text-slate-900 rounded-[36px] p-8 shadow-2xl border border-slate-200/90 flex flex-col items-center transition-all duration-300 relative overflow-hidden radial-shadow">
+
+        <!-- Top Header Info -->
+        <div class="w-full flex items-center justify-between pb-4 border-b border-slate-100">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg bg-[#00C076] flex items-center justify-center font-bold text-white text-xs">
+              CM
+            </div>
+            <div>
+              <div class="text-xs font-bold text-slate-900 tracking-tight">COPYm Pay Code</div>
+              <div class="text-[10.5px] text-slate-400 font-medium">Instant Optical Settlement</div>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-xs font-black text-slate-900" id="displayAmount">$250.00 USDT</div>
+            <div class="text-[10px] font-bold text-[#00C076]" id="displayNetwork">TRON · TRC-20</div>
+          </div>
+        </div>
+
+        <!-- THE RADIAL CODE SVG -->
+        <div class="my-6 relative flex items-center justify-center cursor-pointer group" onclick="simulateCameraScan()" title="Click to test camera scan">
+          
+          <!-- Outer Ambient Glow Circle -->
+          <div id="ambientGlow" class="absolute inset-0 rounded-full bg-emerald-400/20 blur-2xl transition duration-500 group-hover:scale-105"></div>
+
+          <!-- Master SVG Radial Scanner (1:1 Apple Pay App Clip Architecture) -->
+          <svg id="radialSvg" viewBox="0 0 320 320" class="w-[280px] h-[280px] sm:w-[310px] sm:h-[310px] relative z-10 select-none">
+            <defs>
+              <linearGradient id="studioRadarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#00C076" stop-opacity="0.45" />
+                <stop offset="50%" stop-color="#00C076" stop-opacity="0.1" />
+                <stop offset="100%" stop-color="#00C076" stop-opacity="0" />
+              </linearGradient>
+
+              <filter id="studioGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#00C076" flood-opacity="0.7" />
+              </filter>
+            </defs>
+
+            <!-- White Base Circle Disc -->
+            <circle id="baseDisc" cx="160" cy="160" r="156" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" />
+
+            <!-- 5 Concentric Apple Pay Style Barcode Tracks -->
+            <g id="tracks">
+
+    <path d="M 165.84 101.29 A 59 59 0 0 1 174.59 102.83" fill="none" class="segment-dark" stroke="#090B10" stroke-width="7.5" stroke-linecap="round" />
+    <path d="M 185.57 106.83 A 59 59 0 0 1 193.26 111.27" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="7.5" stroke-linecap="round" />
+    <path d="M 213.76 135.7 A 59 59 0 0 1 218.83 164.44" fill="none" class="segment-dark" stroke="#090B10" stroke-width="7.5" stroke-linecap="round" />
+    <path d="M 207.92 194.41 A 59 59 0 0 1 202.21 201.22" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="7.5" stroke-linecap="round" />
+    <path d="M 193.26 208.73 A 59 59 0 0 1 185.57 213.17" fill="none" class="segment-dark" stroke="#090B10" stroke-width="7.5" stroke-linecap="round" />
+    <path d="M 154.16 218.71 A 59 59 0 0 1 126.74 208.73" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="7.5" stroke-linecap="round" />
+    <path d="M 106.24 184.3 A 59 59 0 0 1 103.2 175.95" fill="none" class="segment-dark" stroke="#090B10" stroke-width="7.5" stroke-linecap="round" />
+    <path d="M 103.2 144.05 A 59 59 0 0 1 106.24 135.7" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="7.5" stroke-linecap="round" />
+    <path d="M 112.08 125.59 A 59 59 0 0 1 134.43 106.83" fill="none" class="segment-dark" stroke="#090B10" stroke-width="7.5" stroke-linecap="round" />
+    <path d="M 166.09 81.24 A 79 79 0 0 1 194.1 88.74" fill="none" class="segment-dark" stroke="#090B10" stroke-width="8" stroke-linecap="round" />
+    <path d="M 220 108.61 A 79 79 0 0 1 225.17 115.34" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="8" stroke-linecap="round" />
+    <path d="M 237.66 145.5 A 79 79 0 0 1 238.76 153.91" fill="none" class="segment-dark" stroke="#090B10" stroke-width="8" stroke-linecap="round" />
+    <path d="M 238.76 166.09 A 79 79 0 0 1 231.26 194.1" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="8" stroke-linecap="round" />
+    <path d="M 211.39 220 A 79 79 0 0 1 204.66 225.17" fill="none" class="segment-dark" stroke="#090B10" stroke-width="8" stroke-linecap="round" />
+    <path d="M 174.5 237.66 A 79 79 0 0 1 166.09 238.76" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="8" stroke-linecap="round" />
+    <path d="M 153.91 238.76 A 79 79 0 0 1 125.9 231.26" fill="none" class="segment-dark" stroke="#090B10" stroke-width="8" stroke-linecap="round" />
+    <path d="M 100 211.39 A 79 79 0 0 1 94.83 204.66" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="8" stroke-linecap="round" />
+    <path d="M 82.34 174.5 A 79 79 0 0 1 82.34 145.5" fill="none" class="segment-dark" stroke="#090B10" stroke-width="8" stroke-linecap="round" />
+    <path d="M 85.5 133.73 A 79 79 0 0 1 88.74 125.9" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="8" stroke-linecap="round" />
+    <path d="M 108.61 100 A 79 79 0 0 1 115.34 94.83" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="8" stroke-linecap="round" />
+    <path d="M 125.9 88.74 A 79 79 0 0 1 133.73 85.5" fill="none" class="segment-dark" stroke="#090B10" stroke-width="8" stroke-linecap="round" />
+    <path d="M 166.35 61.2 A 99 99 0 0 1 174.33 62.04" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 186.75 64.68 A 99 99 0 0 1 212.94 76.34" fill="none" class="segment-dark" stroke="#090B10" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 237.67 98.61 A 99 99 0 0 1 242.39 105.11" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 255.92 135.51 A 99 99 0 0 1 258.92 164.02" fill="none" class="segment-dark" stroke="#090B10" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 257.59 176.64 A 99 99 0 0 1 255.92 184.49" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 242.39 214.89 A 99 99 0 0 1 237.67 221.39" fill="none" class="segment-dark" stroke="#090B10" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 212.94 243.66 A 99 99 0 0 1 186.75 255.32" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 174.33 257.96 A 99 99 0 0 1 166.35 258.8" fill="none" class="segment-dark" stroke="#090B10" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 133.25 255.32 A 99 99 0 0 1 107.06 243.66" fill="none" class="segment-dark" stroke="#090B10" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 82.33 221.39 A 99 99 0 0 1 77.61 214.89" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 64.08 184.49 A 99 99 0 0 1 62.41 176.64" fill="none" class="segment-dark" stroke="#090B10" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 61.08 164.02 A 99 99 0 0 1 64.08 135.51" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 77.61 105.11 A 99 99 0 0 1 82.33 98.61" fill="none" class="segment-dark" stroke="#090B10" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 107.06 76.34 A 99 99 0 0 1 114.02 72.33" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 125.61 67.16 A 99 99 0 0 1 133.25 64.68" fill="none" class="segment-dark" stroke="#090B10" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 166.6 41.18 A 119 119 0 0 1 174.14 41.84" fill="none" class="segment-dark" stroke="#090B10" stroke-width="9" stroke-linecap="round" />
+    <path d="M 187.13 44.13 A 119 119 0 0 1 194.44 46.09" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="9" stroke-linecap="round" />
+    <path d="M 225.12 60.4 A 119 119 0 0 1 246.78 78.57" fill="none" class="segment-dark" stroke="#090B10" stroke-width="9" stroke-linecap="round" />
+    <path d="M 255.26 88.68 A 119 119 0 0 1 259.6 94.88" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="9" stroke-linecap="round" />
+    <path d="M 273.91 125.56 A 119 119 0 0 1 275.87 132.87" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="9" stroke-linecap="round" />
+    <path d="M 278.82 166.6 A 119 119 0 0 1 273.91 194.44" fill="none" class="segment-dark" stroke="#090B10" stroke-width="9" stroke-linecap="round" />
+    <path d="M 259.6 225.12 A 119 119 0 0 1 255.26 231.32" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="9" stroke-linecap="round" />
+    <path d="M 246.78 241.43 A 119 119 0 0 1 241.43 246.78" fill="none" class="segment-dark" stroke="#090B10" stroke-width="9" stroke-linecap="round" />
+    <path d="M 213.7 266.2 A 119 119 0 0 1 206.84 269.4" fill="none" class="segment-dark" stroke="#090B10" stroke-width="9" stroke-linecap="round" />
+    <path d="M 194.44 273.91 A 119 119 0 0 1 166.6 278.82" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="9" stroke-linecap="round" />
+    <path d="M 132.87 275.87 A 119 119 0 0 1 125.56 273.91" fill="none" class="segment-dark" stroke="#090B10" stroke-width="9" stroke-linecap="round" />
+    <path d="M 94.88 259.6 A 119 119 0 0 1 88.68 255.26" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="9" stroke-linecap="round" />
+    <path d="M 78.57 246.78 A 119 119 0 0 1 60.4 225.12" fill="none" class="segment-dark" stroke="#090B10" stroke-width="9" stroke-linecap="round" />
+    <path d="M 46.09 194.44 A 119 119 0 0 1 44.13 187.13" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="9" stroke-linecap="round" />
+    <path d="M 41.18 153.4 A 119 119 0 0 1 41.84 145.86" fill="none" class="segment-dark" stroke="#090B10" stroke-width="9" stroke-linecap="round" />
+    <path d="M 44.13 132.87 A 119 119 0 0 1 46.09 125.56" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="9" stroke-linecap="round" />
+    <path d="M 60.4 94.88 A 119 119 0 0 1 78.57 73.22" fill="none" class="segment-dark" stroke="#090B10" stroke-width="9" stroke-linecap="round" />
+    <path d="M 88.68 64.74 A 119 119 0 0 1 94.88 60.4" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="9" stroke-linecap="round" />
+    <path d="M 125.56 46.09 A 119 119 0 0 1 132.87 44.13" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="9" stroke-linecap="round" />
+    <path d="M 166.85 21.17 A 139 139 0 0 1 173.92 21.7" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 207.46 29.35 A 139 139 0 0 1 232.55 41.44" fill="none" class="segment-dark" stroke="#090B10" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 259.45 62.89 A 139 139 0 0 1 276.81 84.65" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 291.74 115.65 A 139 139 0 0 1 293.83 122.43" fill="none" class="segment-dark" stroke="#090B10" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 298.95 156.45 A 139 139 0 0 1 298.95 163.55" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 297.93 177.2 A 139 139 0 0 1 291.74 204.35" fill="none" class="segment-dark" stroke="#090B10" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 276.81 235.35 A 139 139 0 0 1 272.81 241.21" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 249.41 266.43 A 139 139 0 0 1 226.41 282.11" fill="none" class="segment-dark" stroke="#090B10" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 214.07 288.05 A 139 139 0 0 1 207.46 290.65" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 173.92 298.3 A 139 139 0 0 1 166.85 298.83" fill="none" class="segment-dark" stroke="#090B10" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 132.54 296.26 A 139 139 0 0 1 105.93 288.05" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 76.14 270.85 A 139 139 0 0 1 55.73 251.91" fill="none" class="segment-dark" stroke="#090B10" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 36.34 223.49 A 139 139 0 0 1 33.27 217.09" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 23.13 184.22 A 139 139 0 0 1 22.07 177.2" fill="none" class="segment-dark" stroke="#090B10" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 21.05 163.55 A 139 139 0 0 1 23.13 135.78" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 33.27 102.91 A 139 139 0 0 1 36.34 96.51" fill="none" class="segment-dark" stroke="#090B10" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 55.73 68.09 A 139 139 0 0 1 60.55 62.89" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 70.59 53.57 A 139 139 0 0 1 93.59 37.89" fill="none" class="segment-dark" stroke="#090B10" stroke-width="9.5" stroke-linecap="round" />
+    <path d="M 125.62 25.32 A 139 139 0 0 1 132.54 23.74" fill="none" class="segment-gray" stroke="#8E95A2" stroke-width="9.5" stroke-linecap="round" />
+              </g>
+
+            <!-- Optional Animated Radar Sweep (Can be toggled in Studio) -->
+            <g id="radarGroup" style="display: none;" class="pointer-events-none">
+              <path d="M160 160 L160 12 A148 148 0 0 1 264 56 Z" fill="url(#studioRadarGrad)" />
+              <line x1="160" y1="160" x2="264" y2="56" stroke="#00C076" stroke-width="2.5" stroke-linecap="round" filter="url(#studioGlow)" />
+              <circle cx="264" cy="56" r="4.5" fill="#FFFFFF" stroke="#00C076" stroke-width="2" />
+            </g>
+
+            <!-- Central Solid Black Disc (Matches Apple Pay center badge) -->
+            <circle cx="160" cy="160" r="42" fill="#000000" />
+
+            <!-- Center Brand Lockup: [CopyM Emblem] + Pay -->
+            <g id="brandLockup" transform="translate(160, 160)">
+              <g transform="translate(-25, -10)">
+                <rect x="0" y="0" width="19" height="19" rx="5.5" fill="#FFFFFF" />
+                <path d="M5.5 9.5 L9.5 5.5 L13.5 9.5 L9.5 13.5 Z" fill="#000000" />
+                <circle cx="9.5" cy="9.5" r="1.8" fill="#FFFFFF" />
+              </g>
+              <text x="-1" y="5" fill="#FFFFFF" font-size="17" font-weight="700" letter-spacing="-0.2" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif">Pay</text>
+            </g>
+
+            <!-- Success Checkmark Overlay (Hidden by Default) -->
+            <g id="scanSuccessIcon" class="hidden" transform="translate(160, 160)">
+              <circle cx="0" cy="0" r="32" fill="#00C076" />
+              <path d="M-10 0 L-3 8 L12 -8" fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+            </g>
+          </svg>
+
+        </div>
+
+        <!-- Address Bar with First 6 and Last 6 Characters Highlighted -->
+        <div class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-2.5 flex items-center justify-between text-xs font-mono">
+          <div class="truncate px-1.5 text-slate-700">
+            <span class="font-bold text-[#00C076]" id="addrFirst">TR7NHq</span>...<span class="text-slate-400">jeKQxGTCi8q8ZY4pL8ot</span>...<span class="font-bold text-[#00C076]" id="addrLast">gjLj6t</span>
+          </div>
+          <button onclick="copyAddr()" id="btnCopy" class="p-2 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl text-[#00C076] font-sans font-bold text-[11px] flex items-center gap-1 transition shadow-2xs">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            <span id="copyText">Copy</span>
+          </button>
+        </div>
+
+        <!-- Camera Detection Hint -->
+        <div class="mt-3 text-center">
+          <p class="text-[11px] font-semibold text-slate-400 flex items-center justify-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-[#00C076] animate-pulse"></span>
+            <span>Scan with iOS Camera, Binance, TronLink, TrustWallet</span>
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    const addresses = {
+      TRON: { first: 'TR7NHq', last: 'gjLj6t', full: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', currency: 'USDT', chain: 'TRON · TRC-20' },
+      ETH: { first: '0xdAC1', last: '6037fB', full: '0xdAC17F958D2ee523a2206206994597C13D831ec7', currency: 'USDC', chain: 'Ethereum · ERC-20' },
+      BSC: { first: '0x55d3', last: '333036', full: '0x55d398326f99059fF775485246999027B3197955', currency: 'USDT', chain: 'BNB Chain · BEP-20' }
+    };
+
+    let currentNetwork = 'TRON';
+    let currentAmount = '250.00';
+
+    function setNetwork(net) {
+      currentNetwork = net;
+      const data = addresses[net];
+      ['Tron', 'Eth', 'Bsc'].forEach(n => {
+        const btn = document.getElementById('net' + n);
+        if (n.toUpperCase() === net) {
+          btn.className = "py-2 px-3 rounded-xl border bg-slate-800 border-emerald-500 text-white font-bold text-xs flex flex-col items-center gap-0.5";
+        } else {
+          btn.className = "py-2 px-3 rounded-xl border bg-slate-950 border-slate-800 text-slate-400 hover:text-white font-bold text-xs flex flex-col items-center gap-0.5";
+        }
+      });
+
+      document.getElementById('addrFirst').innerText = data.first;
+      document.getElementById('addrLast').innerText = data.last;
+      document.getElementById('currencyBadge').innerText = data.currency;
+      document.getElementById('displayNetwork').innerText = data.chain;
+      updateAmount(currentAmount);
+    }
+
+    function updateAmount(val) {
+      currentAmount = val || '0.00';
+      const curr = addresses[currentNetwork].currency;
+      document.getElementById('displayAmount').innerText = '$' + currentAmount + ' ' + curr;
+    }
+
+    function setTheme(theme) {
+      const card = document.getElementById('scannerCard');
+      const baseDisc = document.getElementById('baseDisc');
+      const darkSegments = document.querySelectorAll('.segment-dark');
+      const graySegments = document.querySelectorAll('.segment-gray');
+
+      if (theme === 'light') {
+        card.className = "w-full max-w-[480px] bg-white text-slate-900 rounded-[36px] p-8 shadow-2xl border border-slate-200/90 flex flex-col items-center transition-all duration-300 relative overflow-hidden radial-shadow";
+        baseDisc.setAttribute('fill', '#FFFFFF');
+        darkSegments.forEach(el => el.setAttribute('stroke', '#090B10'));
+        graySegments.forEach(el => el.setAttribute('stroke', '#8E95A2'));
+      } else if (theme === 'dark') {
+        card.className = "w-full max-w-[480px] bg-slate-900 text-white rounded-[36px] p-8 shadow-2xl border border-slate-800 flex flex-col items-center transition-all duration-300 relative overflow-hidden";
+        baseDisc.setAttribute('fill', '#0B0F19');
+        darkSegments.forEach(el => el.setAttribute('stroke', '#F1F5F9'));
+        graySegments.forEach(el => el.setAttribute('stroke', '#475569'));
+      } else if (theme === 'cyber') {
+        card.className = "w-full max-w-[480px] bg-slate-950 text-white rounded-[36px] p-8 shadow-2xl border border-emerald-500/30 flex flex-col items-center transition-all duration-300 relative overflow-hidden ring-1 ring-emerald-500/20";
+        baseDisc.setAttribute('fill', '#050c08');
+        darkSegments.forEach(el => el.setAttribute('stroke', '#00C076'));
+        graySegments.forEach(el => el.setAttribute('stroke', '#065F46'));
+      }
+    }
+
+    function setRadar(speed) {
+      const g = document.getElementById('radarGroup');
+      const badge = document.getElementById('radarStatusBadge');
+
+      g.className = "pointer-events-none";
+      if (speed === 'off') {
+        g.style.display = 'none';
+        badge.innerText = 'Off';
+        badge.className = 'text-[10px] font-bold text-slate-500';
+      } else {
+        g.style.display = 'block';
+        if (speed === 'slow') {
+          g.className = "animate-radar-slow pointer-events-none";
+          badge.innerText = 'Slow (7s Sweep)';
+        } else if (speed === 'normal') {
+          g.className = "animate-radar pointer-events-none";
+          badge.innerText = 'Normal (4s Sweep)';
+        } else if (speed === 'fast') {
+          g.className = "animate-radar-fast pointer-events-none";
+          badge.innerText = 'Fast (2s Sweep)';
+        }
+        badge.className = 'text-[10px] font-bold text-emerald-400';
+      }
+    }
+
+    function simulateCameraScan() {
+      const icon = document.getElementById('scanSuccessIcon');
+      const glow = document.getElementById('ambientGlow');
+
+      glow.className = "absolute inset-0 rounded-full bg-emerald-400/50 blur-3xl scale-110 transition duration-300";
+      icon.classList.remove('hidden');
+
+      setTimeout(() => {
+        icon.classList.add('hidden');
+        glow.className = "absolute inset-0 rounded-full bg-emerald-400/20 blur-2xl transition duration-500";
+      }, 2400);
+    }
+
+    function copyAddr() {
+      const full = addresses[currentNetwork].full;
+      navigator.clipboard.writeText(full);
+      const text = document.getElementById('copyText');
+      text.innerText = 'Copied!';
+      setTimeout(() => text.innerText = 'Copy', 1800);
+    }
+
+    function downloadSvg() {
+      const svg = document.getElementById('radialSvg').outerHTML;
+      const blob = new Blob([svg], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `copym-radial-code-${currentNetwork}.svg`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>
