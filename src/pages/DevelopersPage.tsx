@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Play, Check, Copy, CheckCircle2, ChevronDown, X, RefreshCw } from 'lucide-react';
-import { ApiKey, WebhookDelivery, Environment } from '../types';
+import React, { useState, useEffect } from 'react';
+import { Play, Check, Copy, CheckCircle2, ChevronDown, X, RefreshCw, Lock } from 'lucide-react';
+import { ApiKey, WebhookDelivery, Environment, KybApplicationData } from '../types';
+import { getKybApplication, subscribeKybStatus } from '../utils/kybStorage';
 
 const INITIAL_KEYS: ApiKey[] = [
   {
@@ -158,13 +159,21 @@ export interface DevelopersPageProps {
   onOpenDocs?: () => void;
   openCreateKey?: boolean;
   setOpenCreateKey?: (open: boolean) => void;
+  onOpenLiveGate?: (actionName?: string) => void;
 }
 
-export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, setOpenCreateKey }) => {
+export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, setOpenCreateKey, onOpenLiveGate }) => {
   const [keys, setKeys] = useState<ApiKey[]>(INITIAL_KEYS);
   const [webhooks, setWebhooks] = useState<WebhookDelivery[]>(INITIAL_WEBHOOKS);
   const [selectedScenarioKey, setSelectedScenarioKey] = useState('underpaid');
   const [depositSession, setDepositSession] = useState('dep_demo_1§9R8J392');
+
+  // KYB Compliance Subscription for Live Keys Gate
+  const [kybApp, setKybApp] = useState<KybApplicationData>(getKybApplication());
+  useEffect(() => {
+    const unsub = subscribeKybStatus(setKybApp);
+    return unsub;
+  }, []);
 
   // Simulation State
   const [simulatingStep, setSimulatingStep] = useState(0);
@@ -221,6 +230,17 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
   const handleCreateKeySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newKeyName.trim()) return;
+
+    // Progressive Unlock Gate Check
+    if (newKeyEnv === 'LIVE - DEMO' && kybApp.status !== 'APPROVED') {
+      setShowCreateKeyModal(false);
+      if (onOpenLiveGate) {
+        onOpenLiveGate('Production API Keys (LIVE - DEMO)');
+      } else {
+        showToast('Corporate KYB verification required to generate Live Production API keys.');
+      }
+      return;
+    }
 
     const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
     const prefix = newKeyEnv === 'LIVE - DEMO' ? 'demo_live_' : 'demo_test_';
@@ -660,9 +680,17 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
                   onChange={(e) => setNewKeyEnv(e.target.value as Environment)}
                   className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#00C076]"
                 >
-                  <option value="LIVE - DEMO">LIVE - DEMO</option>
-                  <option value="SANDBOX">SANDBOX</option>
+                  <option value="SANDBOX">SANDBOX (Instant Day-0 Testnet)</option>
+                  <option value="LIVE - DEMO">
+                    {kybApp.status === 'APPROVED' ? 'LIVE - DEMO (Mainnet Production)' : 'LIVE - DEMO 🔒 (Requires Corporate KYB)'}
+                  </option>
                 </select>
+                {newKeyEnv === 'LIVE - DEMO' && kybApp.status !== 'APPROVED' && (
+                  <div className="mt-2 p-2 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-800 flex items-start gap-1.5">
+                    <Lock className="w-3.5 h-3.5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <span>Live keys are protected. Submitting will open the Corporate KYB verification gate.</span>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="text-[11.5px] font-semibold text-gray-800 block mb-1">Scopes</label>

@@ -11,7 +11,10 @@ import {
   PayoutModal,
   SwapModal,
   SecurityModal,
-  TransactionModal
+  TransactionModal,
+  KybBanner,
+  KybOnboardingWizard,
+  LiveModeGate
 } from './components';
 
 // Dedicated Page Views
@@ -36,7 +39,8 @@ import {
   AdminAuditPage
 } from './pages';
 
-import { Transaction, PayoutRecord, PortalMode, AdminTabId } from './types';
+import { Transaction, PayoutRecord, PortalMode, AdminTabId, MerchantKybLifecycleStatus } from './types';
+import { getKybApplication, subscribeKybStatus } from './utils/kybStorage';
 
 // Uniform Page Metadata matching the exact screenshot structure
 const PAGE_META: Record<string, { title: string; category: string }> = {
@@ -350,6 +354,37 @@ export function App() {
   const [isPayoutModalOpen, setIsPayoutModalOpen] = useState(false);
   const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+
+  // Progressive Unlock KYB State
+  const [isKybWizardOpen, setIsKybWizardOpen] = useState(false);
+  const [kybWizardStep, setKybWizardStep] = useState(1);
+  const [isLiveGateOpen, setIsLiveGateOpen] = useState(false);
+  const [liveGateAction, setLiveGateAction] = useState('Live Mode & Production Keys');
+  const [isLiveEnvironment, setIsLiveEnvironment] = useState(false);
+  const [kybStatus, setKybStatusState] = useState<MerchantKybLifecycleStatus>(() => getKybApplication().status);
+
+  useEffect(() => {
+    const unsub = subscribeKybStatus((app) => {
+      setKybStatusState(app.status);
+      if (app.status !== 'APPROVED') {
+        setIsLiveEnvironment(false);
+      }
+    });
+    return unsub;
+  }, []);
+
+  const handleToggleEnvironment = (toLive: boolean) => {
+    if (toLive) {
+      if (kybStatus !== 'APPROVED') {
+        setLiveGateAction('Live Production Environment');
+        setIsLiveGateOpen(true);
+        return;
+      }
+      setIsLiveEnvironment(true);
+    } else {
+      setIsLiveEnvironment(false);
+    }
+  };
 
   // Sync URL history state smoothly with Portal Mode & Tabs
   useEffect(() => {
@@ -771,7 +806,20 @@ export function App() {
         onSignOut={handleSignOut}
         currentUser={currentUser}
         portalMode={portalMode}
+        isLiveEnvironment={isLiveEnvironment}
+        onToggleEnvironment={handleToggleEnvironment}
+        kybStatus={kybStatus}
       />
+
+      {/* Persistent Day-0 Progressive Unlock KYB Compliance Banner */}
+      {portalMode === 'merchant' && (
+        <KybBanner
+          onOpenWizard={(step) => {
+            setKybWizardStep(step || 1);
+            setIsKybWizardOpen(true);
+          }}
+        />
+      )}
 
       {/* Main Workspace: Sidebar on left + Large Rounded Canvas on right */}
       <div className="flex-1 flex overflow-hidden relative">
@@ -885,6 +933,10 @@ export function App() {
                   onOpenDocs={() => setIsDevModalOpen(true)}
                   openCreateKey={isCreateKeyOpen}
                   setOpenCreateKey={setIsCreateKeyOpen}
+                  onOpenLiveGate={(actionName) => {
+                    setLiveGateAction(actionName || 'Production API Keys');
+                    setIsLiveGateOpen(true);
+                  }}
                 />
               ) : activeTab === 'team-security' ? (
                 <TeamSecurityPage
@@ -894,7 +946,12 @@ export function App() {
                   setOpenReviewRoles={setIsRolesOpen}
                 />
               ) : activeTab === 'settings' ? (
-                <SettingsPage />
+                <SettingsPage
+                  onOpenKybWizard={(step) => {
+                    setKybWizardStep(step || 1);
+                    setIsKybWizardOpen(true);
+                  }}
+                />
               ) : (
                 <SectionView
                   activeTab={activeTab}
@@ -960,6 +1017,25 @@ export function App() {
           setDepositModalInitial(tx);
           setIsDepositModalOpen(true);
         }}
+      />
+
+      {/* 5-Step Progressive Unlock KYB Onboarding Wizard */}
+      <KybOnboardingWizard
+        isOpen={isKybWizardOpen}
+        onClose={() => setIsKybWizardOpen(false)}
+        initialStep={kybWizardStep}
+      />
+
+      {/* Live Mode Gatekeeper Modal */}
+      <LiveModeGate
+        isOpen={isLiveGateOpen}
+        onClose={() => setIsLiveGateOpen(false)}
+        onOpenKyb={(step) => {
+          setIsLiveGateOpen(false);
+          setKybWizardStep(step || 1);
+          setIsKybWizardOpen(true);
+        }}
+        targetActionName={liveGateAction}
       />
     </div>
   );

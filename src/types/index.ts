@@ -272,6 +272,69 @@ export interface MerchantKYBRecord {
   rejectionReason?: string;
 }
 
+// ==========================================
+// Progressive Unlock Merchant KYB Lifecycle
+// ==========================================
+
+export type MerchantKybLifecycleStatus =
+  | 'DRAFT'
+  | 'UNDER_REVIEW'
+  | 'ACTION_REQUIRED'
+  | 'APPROVED';
+
+export interface KybCompanyEntity {
+  legalName: string;
+  registrationNumber: string;
+  jurisdiction: string;
+  operatingAddress: string;
+  websiteUrl: string;
+}
+
+export interface KybBusinessProfile {
+  industry: string;
+  monthlyVolume: string;
+  targetJurisdictions: string[];
+  averageTxSize: string;
+}
+
+export interface KybDirectorUbo {
+  id: string;
+  fullName: string;
+  dateOfBirth: string;
+  nationality: string;
+  residentialCountry: string;
+  ownershipPercentage: number;
+  isDirector: boolean;
+  isUbo: boolean;
+}
+
+export interface KybDocumentItem {
+  id: string;
+  type: 'COI' | 'ARTICLES' | 'PROOF_OF_ADDRESS' | 'PASSPORT' | 'LICENSE';
+  title: string;
+  description: string;
+  required: boolean;
+  fileName?: string;
+  fileSize?: string;
+  uploadDate?: string;
+  status: 'PENDING' | 'UPLOADED' | 'VERIFIED' | 'REJECTED';
+  rejectionReason?: string;
+}
+
+export interface KybApplicationData {
+  status: MerchantKybLifecycleStatus;
+  currentStep: number;
+  submittedAt?: string;
+  reviewedAt?: string;
+  complianceFeedback?: string;
+  company: KybCompanyEntity;
+  profile: KybBusinessProfile;
+  directors: KybDirectorUbo[];
+  documents: KybDocumentItem[];
+  sanctionsConfirmed: boolean;
+  authorizedRepresentativeConfirmed: boolean;
+}
+
 export interface AMLRiskAlert {
   id: string;
   txHash: string;

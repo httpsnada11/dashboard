@@ -31,6 +31,9 @@ export interface NavbarProps {
   onSignOut?: () => void;
   currentUser?: { name: string; email: string };
   portalMode?: PortalMode;
+  isLiveEnvironment?: boolean;
+  onToggleEnvironment?: (toLive: boolean) => void;
+  kybStatus?: 'DRAFT' | 'UNDER_REVIEW' | 'ACTION_REQUIRED' | 'APPROVED';
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -46,7 +49,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   setMobileSidebarOpen,
   onSignOut,
   currentUser,
-  portalMode = 'merchant'
+  portalMode = 'merchant',
+  isLiveEnvironment = false,
+  onToggleEnvironment,
+  kybStatus = 'DRAFT'
 }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotificationMenu, setShowNotificationMenu] = useState(false);
@@ -77,6 +83,45 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span className="font-bold text-[#00C076] ml-1">Pay</span>
           </div>
         </div>
+
+        {/* Environment Mode Switcher (Sandbox vs Live) */}
+        {portalMode === 'merchant' && (
+          <div className="hidden md:flex items-center bg-gray-100/90 p-0.5 rounded-full border border-gray-200/70 select-none text-[11px] font-semibold ml-1 sm:ml-2">
+            <button
+              onClick={() => onToggleEnvironment?.(false)}
+              className={`px-2.5 py-1 rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
+                !isLiveEnvironment
+                  ? 'bg-amber-100 text-amber-900 border border-amber-300/80 shadow-2xs font-bold'
+                  : 'text-gray-500 hover:text-gray-900'
+              }`}
+              title="Sandbox Testnet Mode"
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${!isLiveEnvironment ? 'bg-amber-500 animate-pulse' : 'bg-gray-400'}`} />
+              <span>Sandbox</span>
+            </button>
+            <button
+              onClick={() => onToggleEnvironment?.(true)}
+              className={`px-2.5 py-1 rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
+                isLiveEnvironment
+                  ? 'bg-[#00C076] text-white shadow-2xs font-bold'
+                  : 'text-gray-500 hover:text-gray-900'
+              }`}
+              title={kybStatus === 'APPROVED' ? 'Live Production Mode' : 'Live Mode (Requires Corporate KYB Verification)'}
+            >
+              {kybStatus !== 'APPROVED' ? (
+                <Lock className="w-3 h-3 text-amber-600" />
+              ) : (
+                <span className="w-1.5 h-1.5 rounded-full bg-white" />
+              )}
+              <span>Live</span>
+              {kybStatus !== 'APPROVED' && (
+                <span className="text-[9px] px-1 py-0.2 bg-amber-200 text-amber-900 rounded font-bold">
+                  LOCK
+                </span>
+              )}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Right Controls & Search Bar */}

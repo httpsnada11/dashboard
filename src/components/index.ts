@@ -23,4 +23,10 @@ export { PastWithdrawalsCard } from './PastWithdrawalsCard';
 export type { PastWithdrawalsCardProps, PastWithdrawalItem } from './PastWithdrawalsCard';
 export { CopyMRadialScanner } from './CopyMRadialScanner';
 export type { CopyMRadialScannerProps } from './CopyMRadialScanner';
+export { KybBanner } from './KybBanner';
+export type { KybBannerProps } from './KybBanner';
+export { KybOnboardingWizard } from './KybOnboardingWizard';
+export type { KybOnboardingWizardProps } from './KybOnboardingWizard';
+export { LiveModeGate } from './LiveModeGate';
+export type { LiveModeGateProps } from './LiveModeGate';
 

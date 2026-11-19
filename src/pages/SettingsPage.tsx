@@ -1,16 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Shield,
   Search,
   CheckCircle2,
   ArrowRight,
-  Save
+  Save,
+  Building2,
+  FileCheck2,
+  AlertTriangle,
+  Clock,
+  ExternalLink,
+  Users,
+  Globe
 } from 'lucide-react';
+import { KybApplicationData } from '../types';
+import {
+  getKybApplication,
+  subscribeKybStatus,
+  getKybStatusLabel,
+  getKybStatusColor
+} from '../utils/kybStorage';
 
-export const SettingsPage: React.FC = () => {
+export interface SettingsPageProps {
+  onOpenKybWizard?: (step?: number) => void;
+  initialTab?: string;
+}
+
+export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, initialTab = 'financial-controls' }) => {
   // Active Tab
-  const [activeSubTab, setActiveSubTab] = useState('financial-controls');
+  const [activeSubTab, setActiveSubTab] = useState(initialTab);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Live KYB Subscription
+  const [kybApp, setKybApp] = useState<KybApplicationData>(getKybApplication());
+  useEffect(() => {
+    const unsub = subscribeKybStatus(setKybApp);
+    return unsub;
+  }, []);
 
   // Financial Controls State
   const [makerCheckerEnabled, setMakerCheckerEnabled] = useState(true);
@@ -47,6 +73,7 @@ export const SettingsPage: React.FC = () => {
   };
 
   const tabs = [
+    { id: 'compliance-kyb', label: 'Corporate Verification (KYB)' },
     { id: 'general', label: 'General' },
     { id: 'team-access', label: 'Team & Access' },
     { id: 'security-2fa', label: 'Security & 2FA' },
@@ -98,6 +125,296 @@ export const SettingsPage: React.FC = () => {
           />
         </div>
       </div>
+
+      {/* TAB CONTENT: Corporate Verification (KYB) */}
+      {activeSubTab === 'compliance-kyb' && (
+        <div className="space-y-4">
+          {/* Top Status Banner according to Lifecycle State */}
+          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gray-100">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0 mt-0.5">
+                  <Building2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-bold text-[#14171A]">
+                      Corporate Verification (KYB)
+                    </h3>
+                    <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${getKybStatusColor(kybApp.status)}`}>
+                      {getKybStatusLabel(kybApp.status)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Stage-gated verification under international AML, FATF Recommendation 16, and corporate registry standards.
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons based on Status */}
+              <div className="flex items-center gap-2">
+                {kybApp.status === 'DRAFT' && (
+                  <button
+                    onClick={() => onOpenKybWizard?.(kybApp.currentStep || 1)}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-xs font-semibold shadow-xs transition cursor-pointer"
+                  >
+                    <span>Resume Verification (Step {kybApp.currentStep || 1})</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                {kybApp.status === 'UNDER_REVIEW' && (
+                  <button
+                    onClick={() => onOpenKybWizard?.(1)}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-full text-xs font-semibold shadow-xs transition cursor-pointer"
+                  >
+                    <span>Review Filed Application</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                {kybApp.status === 'ACTION_REQUIRED' && (
+                  <button
+                    onClick={() => onOpenKybWizard?.(4)}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-full text-xs font-semibold shadow-xs transition cursor-pointer"
+                  >
+                    <span>Fix Rejected Documents (Step 4)</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                {kybApp.status === 'APPROVED' && (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-full text-xs font-bold">
+                    <CheckCircle2 className="w-4 h-4 text-[#00C076]" />
+                    <span>Live Processing Enabled</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Diagnostic Alert depending on State */}
+            {kybApp.status === 'DRAFT' && (
+              <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200/80 text-xs text-blue-900 flex items-start gap-2.5">
+                <AlertTriangle className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                <div className="leading-relaxed">
+                  <strong>Verification Incomplete (Step {kybApp.currentStep || 1} of 5):</strong> You have instant Sandbox access to generate test keys and run cashier simulations. To unlock mainnet crypto processing and live deposit sweeps, complete the 5-step corporate verification wizard.
+                </div>
+              </div>
+            )}
+
+            {kybApp.status === 'UNDER_REVIEW' && (
+              <div className="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200/90 text-xs text-amber-900 flex items-start gap-2.5">
+                <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5 animate-spin-slow" />
+                <div className="leading-relaxed">
+                  <strong>In Compliance Queue:</strong> Your corporate application was submitted on Nov 18. Our compliance team is verifying your registry filings and beneficial ownership structure. Typical turnaround: <strong>24–48 business hours</strong>. Sandbox remains fully functional.
+                </div>
+              </div>
+            )}
+
+            {kybApp.status === 'ACTION_REQUIRED' && (
+              <div className="p-3.5 rounded-xl bg-rose-50/90 border border-rose-200/90 text-xs text-rose-900 flex items-start gap-2.5">
+                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                <div className="leading-relaxed">
+                  <strong>Compliance Feedback:</strong> {kybApp.complianceFeedback || 'The proof of address uploaded was older than 90 days. Please upload a recent bank statement or utility bill.'}
+                  <button
+                    onClick={() => onOpenKybWizard?.(4)}
+                    className="ml-2 font-bold underline hover:text-rose-950 inline-block cursor-pointer"
+                  >
+                    Upload replacement document now →
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {kybApp.status === 'APPROVED' && (
+              <div className="p-3.5 rounded-xl bg-emerald-50/90 border border-emerald-200/90 text-xs text-emerald-900 flex items-start gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-[#00C076] shrink-0 mt-0.5" />
+                <div className="leading-relaxed">
+                  <strong>Corporate Verified:</strong> Your legal entity has been fully verified and approved. Top navigation Live toggle is enabled, Production API keys are active, and TRON / Ethereum / BSC sweep pipelines are operating normally.
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 3 Detail Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            {/* Card 1: Entity Details */}
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-sm space-y-3">
+              <div className="flex items-center gap-2 font-bold text-gray-900 text-[13px] pb-2 border-b border-gray-100">
+                <Building2 className="w-4 h-4 text-blue-600" />
+                <span>1. Company Entity</span>
+              </div>
+              <div className="space-y-2">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Legal Company Name</span>
+                  <span className="font-semibold text-gray-800">{kybApp.company.legalName}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Registration / Tax Number</span>
+                  <span className="font-mono text-gray-800">{kybApp.company.registrationNumber}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Jurisdiction</span>
+                  <span className="text-gray-800">{kybApp.company.jurisdiction}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Operating Address</span>
+                  <span className="text-gray-700 leading-tight block">{kybApp.company.operatingAddress}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Corporate URL</span>
+                  <a href={kybApp.company.websiteUrl} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline flex items-center gap-1 font-medium">
+                    <span>{kybApp.company.websiteUrl}</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2: Business Profile & Risk */}
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-sm space-y-3">
+              <div className="flex items-center gap-2 font-bold text-gray-900 text-[13px] pb-2 border-b border-gray-100">
+                <Globe className="w-4 h-4 text-purple-600" />
+                <span>2. Business Profile & Risk</span>
+              </div>
+              <div className="space-y-2">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Industry Category</span>
+                  <span className="font-semibold text-gray-800">{kybApp.profile.industry}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Expected Monthly Volume</span>
+                  <span className="font-semibold text-emerald-700">{kybApp.profile.monthlyVolume}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Target User Jurisdictions</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {kybApp.profile.targetJurisdictions.map((j) => (
+                      <span key={j} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-md text-[10px] font-medium">
+                        {j}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Average Transaction Size</span>
+                  <span className="text-gray-800 font-medium">{kybApp.profile.averageTxSize}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Directors & Beneficial Owners */}
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-sm space-y-3">
+              <div className="flex items-center gap-2 font-bold text-gray-900 text-[13px] pb-2 border-b border-gray-100">
+                <Users className="w-4 h-4 text-emerald-600" />
+                <span>3. Directors & UBOs (≥25%)</span>
+              </div>
+              <div className="space-y-3">
+                {kybApp.directors.map((dir) => (
+                  <div key={dir.id} className="p-2.5 rounded-xl bg-gray-50 border border-gray-100 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-gray-900">{dir.fullName}</span>
+                      <span className="font-bold text-[10.5px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                        {dir.ownershipPercentage}% Shares
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-gray-500">
+                      DOB: {dir.dateOfBirth} · {dir.nationality}
+                    </div>
+                    <div className="flex items-center gap-2 pt-0.5">
+                      <span className="text-[9.5px] px-1.5 py-0.2 rounded bg-white border border-gray-200 text-gray-700 font-semibold">
+                        {dir.isDirector ? 'Managing Director' : 'Beneficial Owner'}
+                      </span>
+                      <span className="text-[9.5px] text-emerald-600 font-bold flex items-center gap-0.5">
+                        <CheckCircle2 className="w-3 h-3" />
+                        PEP Clear
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Document Vault Inventory Table */}
+          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <FileCheck2 className="w-4 h-4 text-blue-600" />
+                <h4 className="font-bold text-gray-900 text-[14px]">Document Vault Inventory (Step 4)</h4>
+              </div>
+              <button
+                onClick={() => onOpenKybWizard?.(4)}
+                className="text-xs text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1 cursor-pointer"
+              >
+                <span>Open Document Vault</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="text-gray-400 text-[10px] uppercase font-bold tracking-wider border-b border-gray-100 pb-2">
+                    <th className="py-2">Document Type</th>
+                    <th className="py-2">File Name</th>
+                    <th className="py-2">Size</th>
+                    <th className="py-2">Uploaded</th>
+                    <th className="py-2">Status</th>
+                    <th className="py-2 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {kybApp.documents.map((doc) => (
+                    <tr key={doc.id} className="hover:bg-gray-50/70 transition-colors">
+                      <td className="py-3 font-semibold text-gray-800">
+                        <div>{doc.title}</div>
+                        {doc.rejectionReason && (
+                          <div className="text-[10px] text-rose-600 font-medium mt-0.5">
+                            {doc.rejectionReason}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3 font-mono text-[11px] text-gray-700">
+                        {doc.fileName || 'Not uploaded yet'}
+                      </td>
+                      <td className="py-3 text-gray-500">{doc.fileSize || '—'}</td>
+                      <td className="py-3 text-gray-500">{doc.uploadDate || '—'}</td>
+                      <td className="py-3">
+                        {doc.status === 'VERIFIED' && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            Verified
+                          </span>
+                        )}
+                        {doc.status === 'UPLOADED' && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                            In Review
+                          </span>
+                        )}
+                        {doc.status === 'REJECTED' && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                            Rejected
+                          </span>
+                        )}
+                        {doc.status === 'PENDING' && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-600 border border-gray-200">
+                            Pending
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 text-right">
+                        <button
+                          onClick={() => onOpenKybWizard?.(4)}
+                          className="px-2.5 py-1 text-[11px] font-semibold text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition cursor-pointer"
+                        >
+                          {doc.status === 'REJECTED' ? 'Re-upload' : 'Replace'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* TAB CONTENT: Financial Controls (Primary Screenshot View) */}
       {activeSubTab === 'financial-controls' && (
