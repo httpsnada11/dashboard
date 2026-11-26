@@ -366,3 +366,29 @@ Pass 2: consistency (next sprint)
 ☐ Fix the remaining S2 items in the merchant and admin tables
 Pass 3: polish
 ☐ Fix all S3 items, including copy fixes, browser titles and favicon, mobile density and demo-control cleanup
+
+---
+
+Implementation status (26 Nov 2026)
+
+Branch: `audit-fixes`. `npm run build` passes. No commit or merge has been made.
+
+Completed
+- `P2`–`P7`: credentials cleared, remember-device off, demo MFA removed, money/compliance confirmations, reason + checker + 2FA, brand cleanup.
+- `P8` / `P9` code: neutral wording applied, Register consent unticked/required, Terms and Privacy links open in-app legal copy.
+- `M1`–`M36` repo-side items: routing, modals, balances, statements, settings, KYB gate, convert, payouts, deposits, exceptions, developers, mobile density.
+- `A1`–`A15` repo-side items: admin header, sticky actions, derived counts, portal dialogs, policy/risk/data consistency, neutral staff names.
+- Cross-cutting: green/grey tokens, 12px minimum, shared ID helpers, shared mock store, shared toggle style, shared table styles, sticky action columns, modal portal/focus trap, public-route fix.
+
+Partial
+- `P1`: merchant/admin sessions are split in the frontend and API calls use role-scoped keys; server-side role verification, SSO/IP allowlist remain external.
+- `P4`: infra wording genericised; Vercel password protection remains an external platform setting.
+- `P8` / `P9`: code done; approved legal copy and standalone `/terms` / `/privacy` pages still need sign-off.
+- `M25`: shared table styling, sticky action columns and mobile cards added to key tables; every remaining wide admin table can still be converted to row cards.
+- MFA, account recovery and operational backend flows are still simulated locally.
+
+Left
+- External infra: Vercel password protection, server-side role check, SSO/IP allowlist.
+- Legal: approved Terms/Privacy text and standalone routes.
+- Backend: real MFA/recovery and full operational flows.
+- Optional polish: mobile row cards for all remaining admin tables.

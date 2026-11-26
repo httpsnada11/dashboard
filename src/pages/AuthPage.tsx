@@ -4,6 +4,7 @@ import copyMLogo from '../image/logo.png';
 import authHeroImg from '../assets/auth-hero.png';
 import { PortalMode } from '../types';
 import { api } from '../services/api';
+import { MERCHANT, PLATFORM } from '../utils/sharedMockStore';
 
 export type AuthMode = 'login' | 'register' | 'mfa' | 'forgot';
 
@@ -25,15 +26,15 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
-  const [activeMerchantName, setActiveMerchantName] = useState(
-    isAdmin ? 'Sarah Chen (Platform SuperAdmin)' : 'Nora Vale'
+  const [activeMerchantName, setActiveMerchantName] = useState<string>(
+    isAdmin ? PLATFORM.superAdmin : MERCHANT.signedInUser
   );
-  const [rememberDevice, setRememberDevice] = useState(true);
+  const [rememberDevice, setRememberDevice] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Form states - Register
-  const [regBusinessName, setRegBusinessName] = useState('Apex Forex Global');
+  const [regBusinessName, setRegBusinessName] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
@@ -58,7 +59,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
     if (score <= 1) return { score: 1, text: 'Weak', color: 'bg-red-400' };
     if (score <= 2) return { score: 2, text: 'Fair', color: 'bg-amber-400' };
     if (score <= 3) return { score: 3, text: 'Good', color: 'bg-blue-400' };
-    return { score: 4, text: 'Strong', color: 'bg-[#00C076]' };
+    return { score: 4, text: 'Strong', color: 'bg-[#007F4E]' };
   };
 
   // Form states - MFA
@@ -111,16 +112,21 @@ export const AuthPage: React.FC<AuthPageProps> = ({
         profile?.merchant?.displayName ||
         profile?.merchant?.name ||
         profile?.user?.name ||
-        (isAdmin ? 'Sarah Chen (Platform SuperAdmin)' : 'Apex Forex');
+        (isAdmin ? PLATFORM.superAdmin : MERCHANT.name);
       const merchantEmail = profile?.user?.email || profile?.email || emailTrimmed;
 
       setActiveMerchantName(merchantName);
       if (isAdmin) {
+        localStorage.removeItem('copym_merchant_session');
         localStorage.setItem('copym_admin_session', 'true');
+        localStorage.setItem('copym_session_role', 'admin');
+        localStorage.setItem('copym_admin_session_started_at', Date.now().toString());
         localStorage.setItem('copym_admin_name', merchantName);
         localStorage.setItem('copym_admin_email', merchantEmail);
       } else {
+        localStorage.removeItem('copym_admin_session');
         localStorage.setItem('copym_merchant_session', 'true');
+        localStorage.setItem('copym_session_role', 'merchant');
         localStorage.setItem('copym_merchant_name', merchantName);
         localStorage.setItem('copym_merchant_email', merchantEmail);
       }
@@ -224,8 +230,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
     setTimeout(() => {
       setIsSubmitting(false);
       onSuccessLogin({
-        name: activeMerchantName || (isAdmin ? 'Sarah Chen (Platform SuperAdmin)' : 'Nora Vale'),
-        email: loginEmail || (isAdmin ? 'admin@copym.com' : 'nora@apexforex.example.com')
+        name: activeMerchantName || (isAdmin ? PLATFORM.superAdmin : MERCHANT.signedInUser),
+        email: loginEmail || (isAdmin ? `operator.am@${PLATFORM.domain}` : 'nora@apexforex.example.com')
       });
     }, 600);
   };
@@ -323,10 +329,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 />
                 <h2 className="text-xl font-bold text-[#14171A] tracking-tight leading-tight flex items-center gap-1">
                   <span>CopyM</span>
-                  <span className="text-[#00C076]">Pay</span>
+                  <span className="text-[#007F4E]">Pay</span>
                 </h2>
                 {isAdmin && (
-                  <span className="ml-1 px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase bg-slate-900 text-white rounded-md">
+                  <span className="ml-1 px-2 py-0.5 text-xs font-bold tracking-wider uppercase bg-slate-900 text-white rounded-md">
                     Admin
                   </span>
                 )}
@@ -339,7 +345,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 </h1>
                 <p className="text-[13px] text-[#6B7280] mt-1.5 leading-relaxed">
                   {isAdmin
-                    ? 'Enter authorized platform credentials with mandatory hardware/TOTP 2FA.'
+                    ? 'Sign in with your platform operator credentials.'
                     : 'Log in with your registered merchant credentials.'}
                 </p>
               </div>
@@ -365,9 +371,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     autoComplete="email"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder={isAdmin ? 'admin@copym.com' : 'name@example.com'}
+                    placeholder={isAdmin ? `operator.am@${PLATFORM.domain}` : 'name@example.com'}
                     required
-                    className="w-full px-3.5 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00C076] focus:ring-1 focus:ring-[#00C076] transition shadow-2xs"
+                    className="w-full px-3.5 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#6B7280] focus:outline-none focus:border-[#007F4E] focus:ring-1 focus:ring-[#007F4E] transition shadow-2xs"
                   />
                 </div>
 
@@ -380,7 +386,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     <button
                       type="button"
                       onClick={() => setMode('forgot')}
-                      className="text-xs font-semibold text-[#00C076] hover:underline transition cursor-pointer"
+                      className="text-xs font-semibold text-[#007F4E] hover:underline transition cursor-pointer"
                     >
                       Forgot password?
                     </button>
@@ -395,44 +401,24 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       onChange={(e) => setLoginPassword(e.target.value)}
                       placeholder="••••••••••••"
                       required
-                      className="w-full pl-3.5 pr-11 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00C076] focus:ring-1 focus:ring-[#00C076] transition shadow-2xs"
+                      className="w-full pl-3.5 pr-11 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#6B7280] focus:outline-none focus:border-[#007F4E] focus:ring-1 focus:ring-[#007F4E] transition shadow-2xs"
                     />
                     <button
                       type="button"
                       onClick={() => setShowLoginPassword(!showLoginPassword)}
                       aria-label={showLoginPassword ? 'Hide password' : 'Show password'}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5 cursor-pointer"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-gray-600 p-0.5 cursor-pointer"
                     >
                       {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
 
-                {/* Demo autofill hint pill */}
-                <div className="flex items-center justify-end">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (isAdmin) {
-                        setLoginEmail('admin@copym.com');
-                        setLoginPassword('password123');
-                      } else {
-                        setLoginEmail('nora@apexforex.example.com');
-                        setLoginPassword('password123');
-                      }
-                    }}
-                    className="text-[11px] text-gray-400 hover:text-[#00C076] font-medium transition cursor-pointer"
-                  >
-                    Quick fill demo credentials
-                  </button>
-                </div>
-
-                {/* Submit Button (Exact full width matching inputs, signature #00C076) */}
                 <div className="pt-2">
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-3 sm:py-3.5 bg-[#00C076] hover:bg-[#00AA67] active:bg-[#00965B] text-white rounded-xl text-sm font-bold tracking-wide transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
+                    className="w-full py-3 sm:py-3.5 bg-[#007F4E] hover:bg-[#00663F] active:bg-[#00563A] text-white rounded-xl text-sm font-bold tracking-wide transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
                   >
                     {isSubmitting ? (
                       <>
@@ -442,7 +428,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     ) : (
                       <>
                         {isAdmin && <ShieldCheck className="w-4 h-4 text-white" />}
-                        <span>{isAdmin ? 'Authenticate & Proceed to 2FA' : 'Sign In to Portal'}</span>
+                        <span>{isAdmin ? 'Sign In to Admin Portal' : 'Sign In to Portal'}</span>
                       </>
                     )}
                   </button>
@@ -453,10 +439,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   <div className="pt-6 border-t border-gray-100 text-center text-xs text-[#6B7280] space-y-1">
                     <div className="flex items-center justify-center gap-1.5 font-semibold text-slate-800">
                       <ShieldAlert className="w-3.5 h-3.5 text-blue-600" />
-                      <span>Authorized Platform Personnel Only</span>
+                      <span>Platform Operator Access</span>
                     </div>
-                    <p className="text-[11px] text-gray-400">
-                      High-privilege console. All operator actions & sessions are cryptographically logged to the audit trail.
+                    <p className="text-xs text-[#6B7280]">
+                      Use your provisioned operator account. Follow your organization's access policy for this console.
                     </p>
                   </div>
                 ) : (
@@ -468,7 +454,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         setErrorMessage(null);
                         setMode('register');
                       }}
-                      className="font-semibold text-[#00C076] hover:underline transition ml-1 cursor-pointer"
+                      className="font-semibold text-[#007F4E] hover:underline transition ml-1 cursor-pointer"
                     >
                       Register Merchant
                     </button>
@@ -491,13 +477,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   <div>
                     <h1 className="text-xl font-bold text-gray-900">Platform Admin Registration Disabled</h1>
                     <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto leading-relaxed">
-                      Platform SuperAdmin accounts cannot be self-registered. Operator credentials must be provisioned internally by DevSecOps via multi-party key ceremony.
+                      Platform administrator accounts cannot be self-registered. Ask your administrator to provision an operator account.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setMode('login')}
-                    className="px-5 py-2.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
+                    className="px-5 py-2.5 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
                   >
                     ← Return to Admin Sign In
                   </button>
@@ -513,7 +499,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     />
                     <h2 className="text-xl font-bold text-[#14171A] tracking-tight leading-tight flex items-center gap-1">
                       <span>CopyM</span>
-                      <span className="text-[#00C076]">Pay</span>
+                      <span className="text-[#007F4E]">Pay</span>
                     </h2>
                   </div>
 
@@ -545,9 +531,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         type="text"
                         value={regBusinessName}
                         onChange={(e) => setRegBusinessName(e.target.value)}
-                        placeholder="Apex Forex Global"
+                        placeholder={MERCHANT.name}
                         required
-                        className="w-full px-3.5 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00C076] focus:ring-1 focus:ring-[#00C076] transition shadow-2xs"
+                        className="w-full px-3.5 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#6B7280] focus:outline-none focus:border-[#007F4E] focus:ring-1 focus:ring-[#007F4E] transition shadow-2xs"
                       />
                     </div>
 
@@ -562,7 +548,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         onChange={(e) => setRegEmail(e.target.value)}
                         placeholder="name@company.com"
                         required
-                        className="w-full px-3.5 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00C076] focus:ring-1 focus:ring-[#00C076] transition shadow-2xs"
+                        className="w-full px-3.5 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#6B7280] focus:outline-none focus:border-[#007F4E] focus:ring-1 focus:ring-[#007F4E] transition shadow-2xs"
                       />
                     </div>
 
@@ -573,8 +559,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                           Password
                         </label>
                         {regPassword && (
-                          <span className="text-[11px] font-semibold text-gray-500">
-                            Strength: <span className={getPasswordStrength(regPassword).score >= 3 ? 'text-[#00C076]' : 'text-amber-600'}>{getPasswordStrength(regPassword).text}</span>
+                          <span className="text-xs font-semibold text-gray-500">
+                            Strength: <span className={getPasswordStrength(regPassword).score >= 3 ? 'text-[#007F4E]' : 'text-amber-600'}>{getPasswordStrength(regPassword).text}</span>
                           </span>
                         )}
                       </div>
@@ -585,13 +571,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                           onChange={(e) => setRegPassword(e.target.value)}
                           placeholder="••••••••"
                           required
-                          className="w-full pl-3.5 pr-11 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00C076] focus:ring-1 focus:ring-[#00C076] transition shadow-2xs"
+                          className="w-full pl-3.5 pr-11 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#6B7280] focus:outline-none focus:border-[#007F4E] focus:ring-1 focus:ring-[#007F4E] transition shadow-2xs"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
                           aria-label={showPassword ? 'Hide password' : 'Show password'}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5"
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-gray-600 p-0.5"
                         >
                           {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
@@ -612,16 +598,16 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         </div>
                       )}
                       {/* Live 3-point Requirements Checklist */}
-                      <div className="mt-2 space-y-1 text-[11px] bg-gray-50 p-2.5 rounded-xl border border-gray-100">
-                        <div className={`flex items-center gap-1.5 ${regPassword.length >= 8 ? 'text-[#00C076] font-semibold' : 'text-gray-400'}`}>
+                      <div className="mt-2 space-y-1 text-xs bg-gray-50 p-2.5 rounded-xl border border-gray-100">
+                        <div className={`flex items-center gap-1.5 ${regPassword.length >= 8 ? 'text-[#007F4E] font-semibold' : 'text-[#6B7280]'}`}>
                           <span>{regPassword.length >= 8 ? '✓' : '○'}</span>
                           <span>Minimum 8 characters</span>
                         </div>
-                        <div className={`flex items-center gap-1.5 ${/[0-9]/.test(regPassword) ? 'text-[#00C076] font-semibold' : 'text-gray-400'}`}>
+                        <div className={`flex items-center gap-1.5 ${/[0-9]/.test(regPassword) ? 'text-[#007F4E] font-semibold' : 'text-[#6B7280]'}`}>
                           <span>{/[0-9]/.test(regPassword) ? '✓' : '○'}</span>
                           <span>At least 1 number</span>
                         </div>
-                        <div className={`flex items-center gap-1.5 ${/[^A-Za-z0-9]/.test(regPassword) ? 'text-[#00C076] font-semibold' : 'text-gray-400'}`}>
+                        <div className={`flex items-center gap-1.5 ${/[^A-Za-z0-9]/.test(regPassword) ? 'text-[#007F4E] font-semibold' : 'text-[#6B7280]'}`}>
                           <span>{/[^A-Za-z0-9]/.test(regPassword) ? '✓' : '○'}</span>
                           <span>At least 1 special character</span>
                         </div>
@@ -635,7 +621,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                           Confirm Password
                         </label>
                         {regConfirmPassword && (
-                          <span className={`text-[11px] font-semibold ${regPassword === regConfirmPassword ? 'text-[#00C076]' : 'text-red-500'}`}>
+                          <span className={`text-xs font-semibold ${regPassword === regConfirmPassword ? 'text-[#007F4E]' : 'text-red-500'}`}>
                             {regPassword === regConfirmPassword ? '✓ Passwords match' : '✕ Passwords do not match'}
                           </span>
                         )}
@@ -647,17 +633,17 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                           onChange={(e) => setRegConfirmPassword(e.target.value)}
                           placeholder="••••••••"
                           required
-                          className={`w-full pl-3.5 pr-11 py-2.5 sm:py-3 bg-white border rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:ring-1 transition shadow-2xs ${
+                          className={`w-full pl-3.5 pr-11 py-2.5 sm:py-3 bg-white border rounded-xl text-sm text-[#14171A] placeholder-[#6B7280] focus:outline-none focus:ring-1 transition shadow-2xs ${
                             regConfirmPassword && regPassword !== regConfirmPassword
                               ? 'border-red-300 focus:border-red-500 focus:ring-red-400'
-                              : 'border-[#E2E4E9] focus:border-[#00C076] focus:ring-[#00C076]'
+                              : 'border-[#E2E4E9] focus:border-[#007F4E] focus:ring-[#007F4E]'
                           }`}
                         />
                         <button
                           type="button"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                           aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5 cursor-pointer"
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-gray-600 p-0.5 cursor-pointer"
                         >
                           {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
@@ -670,27 +656,28 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         type="checkbox"
                         id="terms"
                         required
+                        autoComplete="off"
                         checked={agreeTerms}
                         onChange={(e) => setAgreeTerms(e.target.checked)}
-                        className="mt-0.5 w-4 h-4 rounded text-[#00C076] focus:ring-[#00C076] border-gray-300 accent-[#00C076] cursor-pointer"
+                        className="mt-0.5 w-4 h-4 rounded text-[#007F4E] focus:ring-[#007F4E] border-gray-300 accent-[#007F4E] cursor-pointer"
                       />
                       <label htmlFor="terms" className="text-xs text-[#6B7280] leading-snug cursor-pointer select-none">
                         I agree to the{' '}
-                        <button
-                          type="button"
-                          onClick={(e) => { e.preventDefault(); setActiveLegalModal('terms'); }}
-                          className="text-[#00C076] hover:underline font-semibold cursor-pointer"
+                        <a
+                          href="/terms"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveLegalModal('terms'); }}
+                          className="text-[#007F4E] hover:underline font-semibold cursor-pointer rounded-sm focus:outline-none focus:ring-1 focus:ring-[#007F4E]"
                         >
                           Terms of Service
-                        </button>{' '}
+                        </a>{' '}
                         and{' '}
-                        <button
-                          type="button"
-                          onClick={(e) => { e.preventDefault(); setActiveLegalModal('privacy'); }}
-                          className="text-[#00C076] hover:underline font-semibold cursor-pointer"
+                        <a
+                          href="/privacy"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveLegalModal('privacy'); }}
+                          className="text-[#007F4E] hover:underline font-semibold cursor-pointer rounded-sm focus:outline-none focus:ring-1 focus:ring-[#007F4E]"
                         >
                           Privacy Policy
-                        </button>
+                        </a>
                       </label>
                     </div>
 
@@ -698,8 +685,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     <div className="pt-2">
                       <button
                         type="submit"
-                        disabled={isSubmitting}
-                        className="w-full py-3.5 bg-[#00C076] hover:bg-[#00AA67] active:bg-[#00965B] text-white rounded-xl text-sm font-bold tracking-wide transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
+                        disabled={isSubmitting || !agreeTerms}
+                        className="w-full py-3.5 bg-[#007F4E] hover:bg-[#00663F] active:bg-[#00563A] text-white rounded-xl text-sm font-bold tracking-wide transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
                       >
                         {isSubmitting ? (
                           <>
@@ -721,7 +708,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                           setErrorMessage(null);
                           setMode('login');
                         }}
-                        className="font-semibold text-[#00C076] hover:underline transition ml-1 cursor-pointer"
+                        className="font-semibold text-[#007F4E] hover:underline transition ml-1 cursor-pointer"
                       >
                         Sign In
                       </button>
@@ -746,10 +733,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 />
                 <h2 className="text-xl font-bold text-[#14171A] tracking-tight leading-tight flex items-center gap-1">
                   <span>CopyM</span>
-                  <span className="text-[#00C076]">Pay</span>
+                  <span className="text-[#007F4E]">Pay</span>
                 </h2>
                 {isAdmin && (
-                  <span className="ml-1 px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase bg-slate-900 text-white rounded-md">
+                  <span className="ml-1 px-2 py-0.5 text-xs font-bold tracking-wider uppercase bg-slate-900 text-white rounded-md">
                     Admin
                   </span>
                 )}
@@ -760,11 +747,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   {/* Title & Subtitle */}
                   <div className="text-center lg:text-left mb-6 sm:mb-7">
                     <h1 className="text-2xl sm:text-[28px] font-bold text-[#14171A] tracking-tight leading-tight">
-                      {isAdmin ? 'Platform SuperAdmin 2FA Gate' : 'Verify your identity'}
+                      {isAdmin ? 'Platform admin verification' : 'Verify your identity'}
                     </h1>
                     <p className="text-[13px] text-[#6B7280] mt-1.5 leading-relaxed">
                       {isAdmin
-                        ? 'Enter your 6-digit hardware/TOTP authenticator security token to unlock administrative platform operations.'
+                        ? 'Enter the 6-digit code from your authenticator app to continue.'
                         : 'Open your authenticator app and enter the 6-digit code for your CopyM Pay account.'}
                     </p>
                   </div>
@@ -778,7 +765,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   <form onSubmit={handleMfaSubmit}>
                     {/* Verification Code Label */}
                     <label className="block text-xs font-semibold text-[#14171A] mb-2.5">
-                      {isAdmin ? 'Platform Security Token (6 Digits)' : 'Verification code'}
+                      Verification code
                     </label>
 
                     {/* 6 Digit Input Matrix */}
@@ -802,7 +789,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                             onPaste={handleMfaPaste}
                             className={`w-12 h-14 sm:w-14 sm:h-16 text-center font-mono text-xl sm:text-2xl font-bold rounded-xl bg-white text-[#14171A] transition-all ${
                               isFocused
-                                ? 'border-[1.5px] border-[#00C076] shadow-xs outline-none ring-0'
+                                ? 'border-[1.5px] border-[#007F4E] shadow-xs outline-none ring-0'
                                 : 'border border-[#E2E4E9] outline-none hover:border-gray-300'
                             }`}
                           />
@@ -810,30 +797,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       })}
                     </div>
 
-                    {/* Helper Subtext below boxes */}
-                    <div className="flex items-center justify-between text-xs text-[#6B7280] mt-2.5 mb-4">
-                      <span>Use current code in your app.</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const demoCode = isAdmin ? ['1', '2', '3', '4', '5', '6'] : ['8', '4', '9', '2', '0', '1'];
-                          setMfaDigits(demoCode);
-                          setFocusedMfaIndex(5);
-                        }}
-                        className="text-[#00C076] hover:underline font-semibold cursor-pointer"
-                      >
-                        Paste code ({isAdmin ? '123456' : '849201'})
-                      </button>
-                    </div>
-
                     {/* Trust this device checkbox */}
-                    <div className="flex items-center gap-2 mb-5">
+                    <div className="flex items-center gap-2 mt-4 mb-5">
                       <input
                         type="checkbox"
                         id="mfaRemember"
                         checked={rememberDevice}
                         onChange={(e) => setRememberDevice(e.target.checked)}
-                        className="w-4 h-4 rounded text-[#00C076] focus:ring-[#00C076] accent-[#00C076] border-gray-300 cursor-pointer"
+                        className="w-4 h-4 rounded text-[#007F4E] focus:ring-[#007F4E] accent-[#007F4E] border-gray-300 cursor-pointer"
                       />
                       <label htmlFor="mfaRemember" className="text-xs text-[#6B7280] select-none cursor-pointer">
                         Trust this device for 30 days
@@ -844,15 +815,15 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full py-3.5 sm:py-4 bg-[#00C076] hover:bg-[#00AA67] active:bg-[#00965B] text-white rounded-xl text-sm font-bold tracking-wide transition shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                      className="w-full py-3.5 sm:py-4 bg-[#007F4E] hover:bg-[#00663F] active:bg-[#00563A] text-white rounded-xl text-sm font-bold tracking-wide transition shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
                     >
                       {isSubmitting ? (
                         <>
                           <RefreshCw className="w-4 h-4 animate-spin" />
-                          <span>{isAdmin ? 'Verifying admin authorization...' : 'Verifying & signing in...'}</span>
+                          <span>{isAdmin ? 'Verifying code...' : 'Verifying & signing in...'}</span>
                         </>
                       ) : (
-                        <span>{isAdmin ? 'Verify & Access Admin Console' : 'Verify & sign in'}</span>
+                        <span>{isAdmin ? 'Verify & continue' : 'Verify & sign in'}</span>
                       )}
                     </button>
 
@@ -867,7 +838,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                           setMfaError(null);
                           setIsRecoveryMode(true);
                         }}
-                        className="text-xs font-semibold text-[#00C076] hover:underline transition mt-0.5 inline-block cursor-pointer"
+                        className="text-xs font-semibold text-[#007F4E] hover:underline transition mt-0.5 inline-block cursor-pointer"
                       >
                         Use a recovery code
                       </button>
@@ -901,16 +872,16 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         type="text"
                         value={recoveryCode}
                         onChange={(e) => setRecoveryCode(e.target.value)}
-                        placeholder="CPYM-8492-X7"
+                        placeholder="Enter recovery code"
                         required
-                        className="w-full px-3.5 py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm font-mono text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00C076] focus:ring-1 focus:ring-[#00C076] transition shadow-2xs"
+                        className="w-full px-3.5 py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm font-mono text-[#14171A] placeholder-[#6B7280] focus:outline-none focus:border-[#007F4E] focus:ring-1 focus:ring-[#007F4E] transition shadow-2xs"
                       />
                     </div>
 
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full py-3.5 sm:py-4 bg-[#00C076] hover:bg-[#00AA67] active:bg-[#00965B] text-white rounded-xl text-sm font-bold tracking-wide transition shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                      className="w-full py-3.5 sm:py-4 bg-[#007F4E] hover:bg-[#00663F] active:bg-[#00563A] text-white rounded-xl text-sm font-bold tracking-wide transition shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
                     >
                       {isSubmitting ? (
                         <>
@@ -929,7 +900,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                           setMfaError(null);
                           setIsRecoveryMode(false);
                         }}
-                        className="text-xs font-semibold text-[#00C076] hover:underline transition cursor-pointer"
+                        className="text-xs font-semibold text-[#007F4E] hover:underline transition cursor-pointer"
                       >
                         Use authenticator app instead
                       </button>
@@ -950,7 +921,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     setIsRecoveryMode(false);
                     setMode('login');
                   }}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#00C076] hover:underline transition cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#007F4E] hover:underline transition cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Back to sign in</span>
@@ -964,17 +935,19 @@ export const AuthPage: React.FC<AuthPageProps> = ({
           {/* ========================================================= */}
           {mode === 'forgot' && (
             <div className="animate-fadeIn">
-              <button
-                type="button"
-                onClick={() => {
-                  setForgotSubmitted(false);
-                  setMode('login');
-                }}
-                className="text-xs text-gray-500 hover:text-gray-900 flex items-center gap-1.5 mb-6 cursor-pointer"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Back to sign in</span>
-              </button>
+              {!forgotSubmitted && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForgotSubmitted(false);
+                    setMode('login');
+                  }}
+                  className="text-xs text-gray-500 hover:text-gray-900 flex items-center gap-1.5 mb-6 cursor-pointer"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back to sign in</span>
+                </button>
+              )}
 
               {/* Brand Header */}
               <div className="flex items-center justify-center lg:justify-start gap-2.5 mb-6">
@@ -985,11 +958,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 />
                 <h2 className="text-xl font-bold text-[#14171A] tracking-tight leading-tight flex items-center gap-1">
                   <span>CopyM</span>
-                  <span className="text-[#00C076]">Pay</span>
+                  <span className="text-[#007F4E]">Pay</span>
                 </h2>
               </div>
 
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#00C076] flex items-center justify-center mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#007F4E] flex items-center justify-center mb-4">
                 <Lock className="w-6 h-6" />
               </div>
 
@@ -997,15 +970,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 <h1 className="text-2xl sm:text-[28px] font-bold text-[#14171A] tracking-tight leading-tight">
                   {forgotSubmitted
                     ? 'Check your inbox'
-                    : isAdmin
-                    ? 'Privileged Password Reset'
                     : 'Reset your password'}
                 </h1>
                 <p className="text-[13px] text-[#6B7280] mt-1.5 leading-relaxed">
                   {forgotSubmitted
-                    ? 'If an account exists for this email, we have sent a secure recovery link.'
+                    ? "If an account exists for this email, we've sent a link."
                     : isAdmin
-                    ? 'Enter your platform administrator work email to initiate the Security Officer recovery protocol.'
+                    ? 'Enter your platform operator email to receive password reset instructions.'
                     : 'Enter your registered work email to receive password reset instructions.'}
                 </p>
               </div>
@@ -1016,7 +987,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     <p className="font-bold text-sm text-[#065F46] mb-1">
                       Check your inbox
                     </p>
-                    If an account exists for <span className="font-semibold text-gray-900">{forgotEmail}</span>, you will receive password reset instructions shortly.
+                    If an account exists for this email, we've sent a link to <span className="font-semibold text-gray-900">{forgotEmail}</span>.
                   </div>
                   <button
                     type="button"
@@ -1024,7 +995,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       setForgotSubmitted(false);
                       setMode('login');
                     }}
-                    className="w-full py-3 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-sm font-semibold transition cursor-pointer"
+                    className="w-full py-3 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-xl text-sm font-semibold transition cursor-pointer"
                   >
                     Return to Sign In
                   </button>
@@ -1041,16 +1012,16 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       autoComplete="email"
                       value={forgotEmail}
                       onChange={(e) => setForgotEmail(e.target.value)}
-                      placeholder={isAdmin ? 'admin@copym.com' : 'name@example.com'}
+                      placeholder={isAdmin ? `operator.am@${PLATFORM.domain}` : 'name@example.com'}
                       required
-                      className="w-full px-3.5 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00C076] focus:ring-1 focus:ring-[#00C076] transition shadow-2xs"
+                      className="w-full px-3.5 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#6B7280] focus:outline-none focus:border-[#007F4E] focus:ring-1 focus:ring-[#007F4E] transition shadow-2xs"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-3.5 bg-[#00C076] hover:bg-[#00AA67] active:bg-[#00965B] text-white rounded-xl text-sm font-bold tracking-wide transition shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                    className="w-full py-3.5 bg-[#007F4E] hover:bg-[#00663F] active:bg-[#00563A] text-white rounded-xl text-sm font-bold tracking-wide transition shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
                   >
                     {isSubmitting ? (
                       <>
@@ -1071,15 +1042,22 @@ export const AuthPage: React.FC<AuthPageProps> = ({
       {/* Terms of Service & Privacy Policy Modal */}
       {activeLegalModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-[24px] max-w-lg w-full p-6 shadow-2xl border border-gray-100 max-h-[85vh] flex flex-col">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="legal-modal-title"
+            className="bg-white rounded-[24px] max-w-lg w-full p-6 shadow-2xl border border-gray-100 max-h-[85vh] flex flex-col"
+          >
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-              <h3 className="text-base font-bold text-gray-900">
+              <h3 id="legal-modal-title" className="text-base font-bold text-gray-900">
                 {activeLegalModal === 'terms' ? 'Terms of Service' : 'Privacy Policy'}
               </h3>
               <button
                 type="button"
+                autoFocus
+                aria-label="Close legal document"
                 onClick={() => setActiveLegalModal(null)}
-                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg"
+                className="text-[#6B7280] hover:text-gray-600 p-1 rounded-lg"
               >
                 ✕
               </button>
@@ -1089,30 +1067,30 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 <>
                   <p className="font-semibold text-gray-800">1. Acceptance of Terms</p>
                   <p>
-                    By registering for and utilizing CopyM Pay merchant infrastructure, you agree to comply with our enterprise service terms, regulatory guidelines, and anti-fraud policies.
+                    By registering for a CopyM Pay account, you agree to these terms and any account terms provided to you.
                   </p>
                   <p className="font-semibold text-gray-800">2. Merchant Responsibilities</p>
                   <p>
-                    Merchants are responsible for maintaining the confidentiality of API credentials and implementing dual-control policies for treasury disbursement.
+                    Keep your account credentials and API keys confidential, and review account activity regularly.
                   </p>
-                  <p className="font-semibold text-gray-800">3. Compliance & Risk Controls</p>
+                  <p className="font-semibold text-gray-800">3. Use of the Service</p>
                   <p>
-                    All on-chain transactions processed through CopyM Pay undergo real-time screening to ensure alignment with applicable AML regulations.
+                    Service availability and features may change. Contact support if you have questions about your account.
                   </p>
                 </>
               ) : (
                 <>
                   <p className="font-semibold text-gray-800">1. Data Collection & Processing</p>
                   <p>
-                    We collect essential merchant information, including corporate registration records and transaction metadata, strictly to deliver treasury settlement and fraud prevention services.
+                    We collect the information you provide, such as your business details and contact email, to create and administer your account.
                   </p>
-                  <p className="font-semibold text-gray-800">2. Cryptographic Security</p>
+                  <p className="font-semibold text-gray-800">2. Use of Information</p>
                   <p>
-                    Merchant credentials and HMAC webhook secrets are stored using hardware security best practices and enterprise-grade encryption.
+                    We use account information to provide the services you request and to respond to support inquiries.
                   </p>
-                  <p className="font-semibold text-gray-800">3. Retention & Compliance</p>
+                  <p className="font-semibold text-gray-800">3. Retention & Sharing</p>
                   <p>
-                    Audit logs and immutable transaction ledgers are retained in accordance with financial regulatory compliance standards.
+                    We keep account information to administer your account and may use service providers that support the platform.
                   </p>
                 </>
               )}
@@ -1121,7 +1099,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveLegalModal(null)}
-                className="px-4 py-2 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-xs font-semibold shadow-xs"
+                className="px-4 py-2 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-xl text-xs font-semibold shadow-xs"
               >
                 I Understand
               </button>

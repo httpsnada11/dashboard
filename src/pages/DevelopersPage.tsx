@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Play, Check, Copy, CheckCircle2, ChevronDown, X, RefreshCw, Lock } from 'lucide-react';
 import { ApiKey, WebhookDelivery, Environment, KybApplicationData } from '../types';
 import { getKybApplication, subscribeKybStatus } from '../utils/kybStorage';
+import { IDS } from '../utils/sharedMockStore';
 
 const INITIAL_KEYS: ApiKey[] = [
   {
     id: 'key_1',
     name: 'Treasury bridge',
-    environment: 'LIVE - DEMO',
+    environment: 'LIVE',
     maskedKey: 'demo_live_••••N8V4',
     fullKey: 'demo_live_948f21e04a918bca48721N8V4',
     scopes: 'deposits, payouts',
@@ -61,7 +62,7 @@ const INITIAL_WEBHOOKS: WebhookDelivery[] = [
     http: 200,
     event: 'deposit.exception_created',
     deliveryId: 'dlv_demo_744',
-    relatedRecord: 'exc_7MV2..H52',
+    relatedRecord: IDS.exceptions[0],
     latency: '318 ms',
     time: '14:15 UTC',
     attempts: '1 attempt'
@@ -118,10 +119,10 @@ interface ScenarioDetail {
 }
 
 const SCENARIOS: Record<string, ScenarioDetail> = {
-  'underpaid': {
+    'underpaid': {
     label: 'Underpaid deposit - screening clear',
     requested: '320.00 USDC',
-    receipt: '305.00 USDC · Base',
+    receipt: '305.00 USDC • ERC-20',
     event: 'deposit.exception_created',
     description: 'Underpaid by 15.00 USDC. Placed into Exceptions.'
   },
@@ -185,12 +186,14 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
   const setShowCreateKeyModal = setOpenCreateKey !== undefined ? setOpenCreateKey : setInternalCreateKey;
   const [showSendTestEventModal, setShowSendTestEventModal] = useState(false);
   const [revokeModalKey, setRevokeModalKey] = useState<ApiKey | null>(null);
+  const [revoke2Fa, setRevoke2Fa] = useState('');
+  const [revokeError, setRevokeError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
 
   // Form State for Creating Key
   const [newKeyName, setNewKeyName] = useState('');
-  const [newKeyEnv, setNewKeyEnv] = useState<Environment>('LIVE - DEMO');
+  const [newKeyEnv, setNewKeyEnv] = useState<Environment>('LIVE');
   const [newKeyScopes, setNewKeyScopes] = useState('deposits, payouts');
   const [newKeyIp, setNewKeyIp] = useState('192.0.2.100');
 
@@ -212,7 +215,7 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
 
   const handleRotateKey = (keyItem: ApiKey) => {
     const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const prefix = keyItem.environment === 'LIVE - DEMO' ? 'demo_live_' : 'demo_test_';
+    const prefix = keyItem.environment === 'LIVE' ? 'demo_live_' : 'demo_test_';
     setKeys(prev => prev.map(k => k.id === keyItem.id ? {
       ...k,
       maskedKey: `${prefix}••••${randomSuffix}`,
@@ -224,7 +227,14 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
   };
 
   const handleRevokeKey = (keyItem: ApiKey) => {
+    if (!/^\d{6}$/.test(revoke2Fa.trim())) {
+      setRevokeError('Enter a valid 6-digit 2FA code.');
+      return;
+    }
     setKeys(prev => prev.filter(k => k.id !== keyItem.id));
+    setRevokeModalKey(null);
+    setRevoke2Fa('');
+    setRevokeError(null);
     showToast(`Key "${keyItem.name}" has been revoked.`);
   };
 
@@ -233,10 +243,10 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
     if (!newKeyName.trim()) return;
 
     // Progressive Unlock Gate Check
-    if (newKeyEnv === 'LIVE - DEMO' && kybApp.status !== 'APPROVED') {
+    if (newKeyEnv === 'LIVE' && kybApp.status !== 'APPROVED') {
       setShowCreateKeyModal(false);
       if (onOpenLiveGate) {
-        onOpenLiveGate('Production API Keys (LIVE - DEMO)');
+        onOpenLiveGate('Production API Keys (Live)');
       } else {
         showToast('Corporate KYB verification required to generate Live Production API keys.');
       }
@@ -244,7 +254,7 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
     }
 
     const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const prefix = newKeyEnv === 'LIVE - DEMO' ? 'demo_live_' : 'demo_test_';
+    const prefix = newKeyEnv === 'LIVE' ? 'demo_live_' : 'demo_test_';
 
     const newKey: ApiKey = {
       id: 'key_' + Date.now(),
@@ -338,24 +348,24 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
       {/* Toast Feedback */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-gray-900 text-white px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 text-xs font-semibold animate-fadeIn border border-white/10">
-          <CheckCircle2 className="w-4 h-4 text-[#00C076]" />
+          <CheckCircle2 className="w-4 h-4 text-[#007F4E]" />
           <span>{toastMessage}</span>
         </div>
       )}
 
       {/* TOP SECTION: API Keys Table */}
       <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
+        <div className="table-scroll">
           <table className="w-full text-left border-collapse min-w-[780px]">
             {/* Dark Sleek Header Bar */}
             <thead>
-              <tr className="bg-[#18191B] text-white text-[11.5px] sm:text-[12px] font-medium tracking-normal select-none">
+              <tr className="table-header-row select-none">
                 <th className="py-2.5 px-4 sm:px-5 rounded-tl-2xl">NAME / ENVIRONMENT</th>
                 <th className="py-2.5 px-3">KEY ID - MASKED</th>
                 <th className="py-2.5 px-3">SCOPES</th>
                 <th className="py-2.5 px-3">IP ALLOWLIST</th>
                 <th className="py-2.5 px-3">LAST USED</th>
-                <th className="py-2.5 px-4 sm:px-5 text-center rounded-tr-2xl">ACTIONS</th>
+                <th className="table-action-header py-2.5 px-4 sm:px-5 text-center rounded-tr-2xl">ACTIONS</th>
               </tr>
             </thead>
 
@@ -366,8 +376,8 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
                   {/* Name / Environment */}
                   <td className="py-3 px-4 sm:px-5">
                     <div className="font-bold text-[#14171A] text-[13px]">{k.name}</div>
-                    <span className="inline-block mt-1 px-2 py-0.5 bg-[#ECEEF2] text-gray-700 font-semibold text-[10px] rounded-full tracking-wide">
-                      {k.environment}
+                    <span className="inline-block mt-1 px-2 py-0.5 bg-[#ECEEF2] text-gray-700 font-semibold text-xs rounded-full tracking-wide">
+                      {k.environment === 'LIVE' ? 'Live' : 'Sandbox'}
                     </span>
                   </td>
 
@@ -380,7 +390,7 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
                         title="Copy Key"
                         className="text-gray-300 hover:text-gray-600 transition"
                       >
-                        {copiedKeyId === k.id ? <Check className="w-3.5 h-3.5 text-[#00C076]" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copiedKeyId === k.id ? <Check className="w-3.5 h-3.5 text-[#007F4E]" /> : <Copy className="w-3.5 h-3.5" />}
                       </button>
                     </div>
                   </td>
@@ -393,12 +403,12 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
                   {/* IP Allowlist */}
                   <td className="py-3 px-3">
                     {k.ipList.map((ip, idx) => (
-                      <div key={idx} className="font-mono text-[11.5px] text-gray-800 leading-tight">
+                      <div key={idx} className="font-mono text-xs text-gray-800 leading-tight">
                         {ip}
                       </div>
                     ))}
                     {k.ipSub && (
-                      <div className="text-[10px] text-[#8E95A5] mt-0.5">
+                      <div className="text-xs text-[#6B7280] mt-0.5">
                         {k.ipSub}
                       </div>
                     )}
@@ -407,7 +417,7 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
                   {/* Last Used */}
                   <td className="py-3 px-3">
                     <div className="font-medium text-[#14171A] text-[12px]">{k.lastUsedAgo}</div>
-                    <div className="text-[10.5px] text-[#8E95A5] leading-tight mt-0.5">{k.lastUsedTime}</div>
+                    <div className="text-xs text-[#6B7280] leading-tight mt-0.5">{k.lastUsedTime}</div>
                   </td>
 
                   {/* Actions: Rotate & Revoke */}
@@ -415,13 +425,13 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
                     <div className="flex items-center justify-center gap-1.5">
                       <button
                         onClick={() => handleRotateKey(k)}
-                        className="px-3 py-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 rounded-full text-[11px] font-semibold transition shadow-2xs select-none"
+                        className="px-3 py-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 rounded-full text-xs font-semibold transition shadow-2xs select-none"
                       >
                         Rotate
                       </button>
                       <button
-                        onClick={() => setRevokeModalKey(k)}
-                        className="px-3 py-1 bg-white hover:bg-red-50 border border-gray-200 text-gray-700 hover:text-red-600 rounded-full text-[11px] font-semibold transition shadow-2xs select-none cursor-pointer"
+                        onClick={() => { setRevokeModalKey(k); setRevoke2Fa(''); setRevokeError(null); }}
+                        className="px-3 py-1 bg-white hover:bg-red-50 border border-gray-200 text-gray-700 hover:text-red-600 rounded-full text-xs font-semibold transition shadow-2xs select-none cursor-pointer"
                       >
                         Revoke
                       </button>
@@ -445,7 +455,7 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
             </h3>
             <button
               onClick={() => setShowSendTestEventModal(true)}
-              className="px-3.5 py-1 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11.5px] font-semibold shadow-xs transition select-none flex items-center gap-1"
+              className="px-3.5 py-1 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-full text-xs font-semibold shadow-xs transition select-none flex items-center gap-1"
             >
               <span>Send test event</span>
             </button>
@@ -453,11 +463,11 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
 
           {/* Webhook Deliveries Table */}
           <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
+            <div className="table-scroll">
               <table className="w-full text-left border-collapse min-w-[500px]">
                 {/* Dark Header */}
                 <thead>
-                  <tr className="bg-[#18191B] text-white text-[11.5px] font-medium tracking-normal select-none">
+                  <tr className="table-header-row select-none">
                     <th className="py-2 px-3 sm:px-4 rounded-tl-2xl">HTTP</th>
                     <th className="py-2 px-3">EVENT / DELIVERY ID</th>
                     <th className="py-2 px-3">RELATED RECORD</th>
@@ -466,12 +476,12 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
                 </thead>
 
                 {/* Body */}
-                <tbody className="divide-y divide-gray-100/90 text-[11.5px]">
+                <tbody className="divide-y divide-gray-100/90 text-xs">
                   {webhooks.map((wh) => (
                     <tr key={wh.id} className="hover:bg-[#F9FAFB] transition-colors">
                       {/* HTTP Status Badge */}
                       <td className="py-2.5 px-3 sm:px-4">
-                        <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-bold ${
                           wh.http === 200
                             ? 'bg-gray-100 text-gray-800'
                             : 'bg-red-50 text-red-600 border border-red-200'
@@ -483,11 +493,11 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
                       {/* Event / Delivery ID */}
                       <td className="py-2.5 px-3">
                         <div className="font-bold text-[#14171A] text-[12px]">{wh.event}</div>
-                        <div className="font-mono text-[10px] text-[#8E95A5] leading-tight">{wh.deliveryId}</div>
+                        <div className="font-mono text-xs text-[#6B7280] leading-tight">{wh.deliveryId}</div>
                       </td>
 
                       {/* Related Record */}
-                      <td className="py-2.5 px-3 font-mono text-[11.5px] text-gray-700">
+                      <td className="py-2.5 px-3 font-mono text-xs text-gray-700">
                         {wh.relatedRecord}
                       </td>
 
@@ -495,13 +505,13 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
                       <td className="py-2.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <div>
-                            <div className="text-[11.5px] text-gray-800 font-medium">{wh.latency} · {wh.time}</div>
-                            <div className="text-[10px] text-[#8E95A5]">{wh.attempts}</div>
+                            <div className="text-xs text-gray-800 font-medium">{wh.latency} · {wh.time}</div>
+                            <div className="text-xs text-[#6B7280]">{wh.attempts}</div>
                           </div>
                           {wh.canRetry && (
                             <button
                               onClick={() => handleRetryWebhook(wh)}
-                              className="px-2.5 py-1 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[10px] font-bold transition shadow-2xs whitespace-nowrap"
+                              className="px-2.5 py-1 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-full text-xs font-bold transition shadow-2xs whitespace-nowrap"
                             >
                               Retry now
                             </button>
@@ -526,7 +536,7 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
                 <button
                   onClick={handleRunSimulation}
                   disabled={isSimulating}
-                  className="px-3.5 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11.5px] font-semibold transition shadow-xs flex items-center gap-1.5 disabled:opacity-50 select-none"
+                  className="px-3.5 py-1.5 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-full text-xs font-semibold transition shadow-xs flex items-center gap-1.5 disabled:opacity-50 select-none"
                 >
                   {isSimulating ? (
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -541,36 +551,36 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
               <div className="pt-3 space-y-3 text-xs">
                 {/* Deposit session */}
                 <div>
-                  <label className="text-[10.5px] text-[#8E95A5] font-semibold block mb-1">Deposit session</label>
+                  <label className="text-xs text-[#6B7280] font-semibold block mb-1">Deposit session</label>
                   <input
                     type="text"
                     value={depositSession}
                     onChange={(e) => setDepositSession(e.target.value)}
-                    className="w-full p-2 bg-white border border-gray-200 rounded-xl font-mono text-[11.5px] text-gray-800 focus:outline-none focus:border-[#00C076]"
+                    className="w-full p-2 bg-white border border-gray-200 rounded-xl font-mono text-xs text-gray-800 focus:outline-none focus:border-[#007F4E]"
                   />
                 </div>
 
                 {/* Scenario Dropdown */}
                 <div>
-                  <label className="text-[10.5px] text-[#8E95A5] font-semibold block mb-1">Scenario</label>
+                  <label className="text-xs text-[#6B7280] font-semibold block mb-1">Scenario</label>
                   <div className="relative">
                     <select
                       value={selectedScenarioKey}
                       onChange={(e) => setSelectedScenarioKey(e.target.value)}
-                      className="w-full p-2 bg-white border border-gray-200 rounded-xl text-[11.5px] text-gray-800 font-medium appearance-none pr-8 focus:outline-none focus:border-[#00C076]"
+                      className="w-full p-2 bg-white border border-gray-200 rounded-xl text-xs text-gray-800 font-medium appearance-none pr-8 focus:outline-none focus:border-[#007F4E]"
                     >
                       {Object.entries(SCENARIOS).map(([key, s]) => (
                         <option key={key} value={key}>{s.label}</option>
                       ))}
                     </select>
-                    <ChevronDown className="w-4 h-4 text-gray-400 absolute right-2.5 top-2.5 pointer-events-none" />
+                    <ChevronDown className="w-4 h-4 text-gray-500 absolute right-2.5 top-2.5 pointer-events-none" />
                   </div>
                 </div>
 
                 {/* Black Receipt Box */}
                 <div className="bg-[#0C0D10] text-white p-3.5 rounded-xl flex items-center justify-between border border-[#23262D]">
                   <div>
-                    <span className="text-[9.5px] tracking-wider uppercase font-semibold text-[#8E95A5] block">
+                    <span className="text-xs tracking-wider uppercase font-semibold text-[#6B7280] block">
                       REQUESTED
                     </span>
                     <span className="text-[13px] font-bold text-white mt-0.5 block">
@@ -578,7 +588,7 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
                     </span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[9.5px] tracking-wider uppercase font-semibold text-[#8E95A5] block">
+                    <span className="text-xs tracking-wider uppercase font-semibold text-[#6B7280] block">
                       SIMULATED RECEIPT
                     </span>
                     <span className="text-[13px] font-bold text-white mt-0.5 block">
@@ -589,59 +599,59 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
 
                 {/* SIMULATED PROCESSING PATH (4 Steps) */}
                 <div className="pt-1">
-                  <span className="text-[9.5px] tracking-wider uppercase font-semibold text-[#8E95A5] block mb-2">
+                  <span className="text-xs tracking-wider uppercase font-semibold text-[#6B7280] block mb-2">
                     SIMULATED PROCESSING PATH
                   </span>
                   <div className="space-y-2">
                     {/* Step 1: Confirmation */}
                     <div className="flex items-start gap-2.5">
                       <div className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-colors ${
-                        simulatingStep >= 1 ? 'bg-emerald-100 text-[#00C076]' : 'bg-gray-100 text-gray-400'
+                        simulatingStep >= 1 ? 'bg-emerald-100 text-[#007F4E]' : 'bg-gray-100 text-gray-500'
                       }`}>
                         {simulatingStep >= 2 ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <div className="w-2 h-2 rounded-full bg-current" />}
                       </div>
-                      <div className="text-[11px] leading-tight">
+                      <div className="text-xs leading-tight">
                         <span className="font-bold text-gray-900 block">Confirmation</span>
-                        <span className="text-[10px] text-[#8E95A5]">Apply the network confirmation rule.</span>
+                        <span className="text-xs text-[#6B7280]">Apply the network confirmation rule.</span>
                       </div>
                     </div>
 
                     {/* Step 2: Screening */}
                     <div className="flex items-start gap-2.5">
                       <div className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-colors ${
-                        simulatingStep >= 2 ? 'bg-emerald-100 text-[#00C076]' : 'bg-gray-100 text-gray-400'
+                        simulatingStep >= 2 ? 'bg-emerald-100 text-[#007F4E]' : 'bg-gray-100 text-gray-500'
                       }`}>
                         {simulatingStep >= 3 ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <div className="w-2 h-2 rounded-full bg-current" />}
                       </div>
-                      <div className="text-[11px] leading-tight">
+                      <div className="text-xs leading-tight">
                         <span className="font-bold text-gray-900 block">Screening</span>
-                        <span className="text-[10px] text-[#8E95A5]">Evaluate the demo compliance result.</span>
+                        <span className="text-xs text-[#6B7280]">Evaluate the demo compliance result.</span>
                       </div>
                     </div>
 
                     {/* Step 3: Crediting */}
                     <div className="flex items-start gap-2.5">
                       <div className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-colors ${
-                        simulatingStep >= 3 ? 'bg-emerald-100 text-[#00C076]' : 'bg-gray-100 text-gray-400'
+                        simulatingStep >= 3 ? 'bg-emerald-100 text-[#007F4E]' : 'bg-gray-100 text-gray-500'
                       }`}>
                         {simulatingStep >= 4 ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <div className="w-2 h-2 rounded-full bg-current" />}
                       </div>
-                      <div className="text-[11px] leading-tight">
+                      <div className="text-xs leading-tight">
                         <span className="font-bold text-gray-900 block">Crediting</span>
-                        <span className="text-[10px] text-[#8E95A5]">Update the sandbox balance if eligible.</span>
+                        <span className="text-xs text-[#6B7280]">Update the sandbox balance if eligible.</span>
                       </div>
                     </div>
 
                     {/* Step 4: Webhooks */}
                     <div className="flex items-start gap-2.5">
                       <div className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-colors ${
-                        simulatingStep >= 4 ? 'bg-emerald-100 text-[#00C076]' : 'bg-gray-100 text-gray-400'
+                        simulatingStep >= 4 ? 'bg-emerald-100 text-[#007F4E]' : 'bg-gray-100 text-gray-500'
                       }`}>
                         {simulatingStep >= 5 ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <div className="w-2 h-2 rounded-full bg-current" />}
                       </div>
-                      <div className="text-[11px] leading-tight">
+                      <div className="text-xs leading-tight">
                         <span className="font-bold text-gray-900 block">Webhooks</span>
-                        <span className="text-[10px] text-[#8E95A5]">Deliver the matching event to your endpoint.</span>
+                        <span className="text-xs text-[#6B7280]">Deliver the matching event to your endpoint.</span>
                       </div>
                     </div>
                   </div>
@@ -658,47 +668,47 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
           <div className="bg-white rounded-[24px] max-w-md w-full p-5 sm:p-6 shadow-2xl border border-gray-100">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <h3 className="text-base font-bold text-gray-900">Create new API Key</h3>
-              <button onClick={() => setShowCreateKeyModal(false)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setShowCreateKeyModal(false)} className="text-gray-500 hover:text-gray-600">
                 <X className="w-4 h-4" />
               </button>
             </div>
             <form onSubmit={handleCreateKeySubmit} className="py-4 space-y-3.5 text-xs">
               <div>
-                <label className="text-[11.5px] font-semibold text-gray-800 block mb-1">Key Name</label>
+                <label className="text-xs font-semibold text-gray-800 block mb-1">Key Name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Production Checkout Gateway"
                   value={newKeyName}
                   onChange={(e) => setNewKeyName(e.target.value)}
-                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#00C076]"
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#007F4E]"
                 />
               </div>
               <div>
-                <label className="text-[11.5px] font-semibold text-gray-800 block mb-1">Environment</label>
+                <label className="text-xs font-semibold text-gray-800 block mb-1">Environment</label>
                 <select
                   value={newKeyEnv}
                   onChange={(e) => setNewKeyEnv(e.target.value as Environment)}
-                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#00C076]"
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#007F4E]"
                 >
-                  <option value="SANDBOX">SANDBOX (Instant Day-0 Testnet)</option>
-                  <option value="LIVE - DEMO">
-                    {kybApp.status === 'APPROVED' ? 'LIVE - DEMO (Mainnet Production)' : 'LIVE - DEMO 🔒 (Requires Corporate KYB)'}
+                  <option value="SANDBOX">Sandbox (test environment)</option>
+                  <option value="LIVE">
+                    {kybApp.status === 'APPROVED' ? 'Live (production)' : 'Live (requires KYB)'}
                   </option>
                 </select>
-                {newKeyEnv === 'LIVE - DEMO' && kybApp.status !== 'APPROVED' && (
-                  <div className="mt-2 p-2 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-800 flex items-start gap-1.5">
+                {newKeyEnv === 'LIVE' && kybApp.status !== 'APPROVED' && (
+                  <div className="mt-2 p-2 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-start gap-1.5">
                     <Lock className="w-3.5 h-3.5 text-amber-600 flex-shrink-0 mt-0.5" />
                     <span>Live keys are protected. Submitting will open the Corporate KYB verification gate.</span>
                   </div>
                 )}
               </div>
               <div>
-                <label className="text-[11.5px] font-semibold text-gray-800 block mb-1">Scopes</label>
+                <label className="text-xs font-semibold text-gray-800 block mb-1">Scopes</label>
                 <select
                   value={newKeyScopes}
                   onChange={(e) => setNewKeyScopes(e.target.value)}
-                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#00C076]"
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#007F4E]"
                 >
                   <option value="deposits, payouts">deposits, payouts (Full Access)</option>
                   <option value="deposits, simulate">deposits, simulate</option>
@@ -706,13 +716,13 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
                 </select>
               </div>
               <div>
-                <label className="text-[11.5px] font-semibold text-gray-800 block mb-1">IP Allowlist (Optional)</label>
+                <label className="text-xs font-semibold text-gray-800 block mb-1">IP Allowlist (Optional)</label>
                 <input
                   type="text"
                   placeholder="e.g. 192.0.2.46"
                   value={newKeyIp}
                   onChange={(e) => setNewKeyIp(e.target.value)}
-                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs text-gray-900 focus:outline-none focus:border-[#00C076]"
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs text-gray-900 focus:outline-none focus:border-[#007F4E]"
                 />
               </div>
               <div className="pt-2 flex justify-end gap-2">
@@ -725,7 +735,7 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl font-semibold shadow-xs"
+                  className="px-4 py-2 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-xl font-semibold shadow-xs"
                 >
                   Generate Key
                 </button>
@@ -741,13 +751,13 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
           <div className="bg-white rounded-[24px] max-w-sm w-full p-5 shadow-2xl border border-gray-100">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <h3 className="text-sm font-bold text-gray-900">Dispatch Test Webhook</h3>
-              <button onClick={() => setShowSendTestEventModal(false)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setShowSendTestEventModal(false)} className="text-gray-500 hover:text-gray-600">
                 <X className="w-4 h-4" />
               </button>
             </div>
             <form onSubmit={handleSendTestEventSubmit} className="py-3 space-y-3 text-xs">
               <div>
-                <label className="text-[11px] font-semibold text-gray-700 block mb-1">Event Type</label>
+                <label className="text-xs font-semibold text-gray-700 block mb-1">Event Type</label>
                 <select
                   value={testEventName}
                   onChange={(e) => setTestEventName(e.target.value)}
@@ -760,7 +770,7 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
                   <option value="deposit.expired">deposit.expired</option>
                 </select>
               </div>
-              <div className="p-2.5 bg-gray-50 rounded-xl text-[11px] text-gray-500">
+              <div className="p-2.5 bg-gray-50 rounded-xl text-xs text-gray-500">
                 Dispatches a signed HMAC-SHA256 test payload to your webhook destination endpoint.
               </div>
               <div className="pt-2 flex justify-end gap-2">
@@ -773,7 +783,7 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl font-semibold shadow-xs"
+                  className="px-4 py-1.5 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-xl font-semibold shadow-xs"
                 >
                   Send Now
                 </button>
@@ -787,31 +797,40 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
       {revokeModalKey && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
           <div className="bg-white rounded-[24px] max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-gray-100">
-            <h3 className="text-base font-bold text-gray-900">Revoke API Key?</h3>
+            <h3 className="text-base font-bold text-gray-900">Revoke API key?</h3>
             <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-              Are you sure you want to permanently revoke <strong className="text-gray-800">{revokeModalKey.name}</strong> ({revokeModalKey.maskedKey})?
+              Are you sure you want to revoke <strong className="text-gray-800">{revokeModalKey.name}</strong> ({revokeModalKey.maskedKey})?
             </p>
-            <div className="my-3 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-[11px] leading-tight">
-              <strong>Warning:</strong> Any active server integrations or e-commerce cashiers using this key will immediately fail authentication.
+            <div className="my-3 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs leading-tight">
+              <strong>Warning:</strong> Any integrations using this key will stop working immediately.
+            </div>
+            <div className="mb-3">
+              <label className="text-xs font-semibold text-gray-700 block mb-1">2FA code</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                value={revoke2Fa}
+                onChange={(e) => setRevoke2Fa(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="Enter 6-digit 2FA code"
+                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs text-gray-900 focus:outline-none focus:border-[#007F4E]"
+              />
+              {revokeError && <p className="text-xs text-red-600 mt-1">{revokeError}</p>}
             </div>
             <div className="pt-3 border-t border-gray-100 flex justify-end gap-2 text-xs">
               <button
                 type="button"
-                onClick={() => setRevokeModalKey(null)}
+                onClick={() => { setRevokeModalKey(null); setRevoke2Fa(''); setRevokeError(null); }}
                 className="px-3.5 py-1.5 text-gray-600 hover:bg-gray-100 rounded-xl font-medium cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  const keyToRevoke = revokeModalKey;
-                  setRevokeModalKey(null);
-                  handleRevokeKey(keyToRevoke);
-                }}
+                onClick={() => handleRevokeKey(revokeModalKey)}
                 className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold shadow-xs cursor-pointer"
               >
-                Confirm Revoke
+                Confirm revoke
               </button>
             </div>
           </div>

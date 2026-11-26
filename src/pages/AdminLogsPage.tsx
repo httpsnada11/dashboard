@@ -14,19 +14,25 @@ import {
   Activity
 } from 'lucide-react';
 import { MerchantIssueLog } from '../types';
+import {
+  AdminComplianceConfirmModal,
+  AdminDialog,
+} from '../components/AdminComplianceConfirmModal';
+import { appendAuditEvent } from '../utils/auditLogStore';
+import { IDS, MERCHANT } from '../utils/sharedMockStore';
 
 const INITIAL_ISSUE_LOGS: MerchantIssueLog[] = [
   {
     id: 'iss_01',
     merchantId: 'mer_02',
-    merchantName: 'Apex Forex Global',
+    merchantName: MERCHANT.name,
     category: 'Webhook Delivery',
     httpStatus: 503,
     errorCode: 'ERR_WEBHOOK_TIMEOUT_503',
     title: 'Deposit Credited Webhook Failed After 3 Retries',
-    description: 'Endpoint https://crm.apexforex.com/api/v1/copym-webhook returned 503 Service Unavailable. 3 retry delivery attempts exhausted.',
-    endpointUrl: 'https://crm.apexforex.com/api/v1/copym-webhook',
-    affectedCustomerOrTx: 'dep_948271_TRON ($14,200.00 USDT)',
+    description: 'Endpoint https://merchant-api.example.net/webhooks/copym returned 503 Service Unavailable. 3 retry delivery attempts exhausted.',
+    endpointUrl: 'https://merchant-api.example.net/webhooks/copym',
+    affectedCustomerOrTx: `${IDS.deposits[0]} · TRON ($14,200.00 USDT)`,
     timestamp: '4 mins ago',
     severity: 'Critical',
     retryCount: 3,
@@ -35,10 +41,10 @@ const INITIAL_ISSUE_LOGS: MerchantIssueLog[] = [
     requestPayload: JSON.stringify(
       {
         event: 'deposit.credited',
-        delivery_id: 'dlv_apex_98124',
+        delivery_id: 'dlv_98124f6b',
         merchant_id: 'mer_02',
         data: {
-          deposit_id: 'dep_948271',
+          deposit_id: IDS.deposits[0],
           customer_id: 'cust_11029',
           amount: '14200.00',
           currency: 'USDT',
@@ -54,7 +60,7 @@ const INITIAL_ISSUE_LOGS: MerchantIssueLog[] = [
       {
         error: '503 Service Unavailable',
         message: 'Database connection pool timeout while processing webhook credit.',
-        upstream_gateway: 'Kong-API-Gateway/3.1'
+        upstream_gateway: 'Edge-Gateway/2.8'
       },
       null,
       2
@@ -63,7 +69,7 @@ const INITIAL_ISSUE_LOGS: MerchantIssueLog[] = [
   {
     id: 'iss_02',
     merchantId: 'mer_01',
-    merchantName: 'Eagle Vision Market Ltd',
+    merchantName: MERCHANT.name,
     category: 'Rate Limiting',
     httpStatus: 429,
     errorCode: 'ERR_RATE_LIMIT_EXCEEDED_429',
@@ -139,7 +145,7 @@ const INITIAL_ISSUE_LOGS: MerchantIssueLog[] = [
   {
     id: 'iss_04',
     merchantId: 'mer_04',
-    merchantName: 'Vance Capital Markets',
+    merchantName: 'Meridian Trading Ltd',
     category: 'API Integration',
     httpStatus: 401,
     errorCode: 'ERR_INVALID_HMAC_SIGNATURE',
@@ -155,7 +161,7 @@ const INITIAL_ISSUE_LOGS: MerchantIssueLog[] = [
       {
         header_received: 'sha256=9a8bc41...',
         digest_computed: 'sha256=12ef44a...',
-        timestamp_header: '1731908412'
+        timestamp_header: '1764188400'
       },
       null,
       2
@@ -176,8 +182,8 @@ const INITIAL_ISSUE_LOGS: MerchantIssueLog[] = [
     merchantName: 'Quantex Asset Management AG',
     category: 'KYC/AML Trigger',
     errorCode: 'ERR_SANCTION_CLUSTER_MATCH',
-    title: 'High-Risk OFAC Mixer Hop Detected (Score: 89)',
-    description: 'Inbound customer deposit originated from flagged Tornado Cash clustering wallet. Funds quarantined in segregated cold ledger.',
+    title: 'High-Risk Mixer Hop Detected (Score: 89)',
+    description: 'Inbound customer deposit originated from a flagged mixer-cluster wallet. Funds quarantined in segregated cold ledger.',
     affectedCustomerOrTx: 'cust_90124 / tx_0x15eA7721',
     endpointUrl: 'Deposit Ingestion Pipeline',
     timestamp: '2 hrs ago',
@@ -186,9 +192,9 @@ const INITIAL_ISSUE_LOGS: MerchantIssueLog[] = [
     latencyMs: 110,
     requestPayload: JSON.stringify(
       {
-        tx_hash: '0x15eA772180a9bC51098277f0a9918bc',
+        tx_hash: '0x15ea7721a8c6b4903d27e5f81c0b6a94d73e2f10',
         kyt_score: 89,
-        flag: 'SANCTION_OFAC_MIXER_CLUSTER',
+        flag: 'SANCTION_MIXER_CLUSTER',
         network: 'ERC-20'
       },
       null,
@@ -197,7 +203,7 @@ const INITIAL_ISSUE_LOGS: MerchantIssueLog[] = [
     responsePayload: JSON.stringify(
       {
         action_taken: 'AUTO_FREEZE_VAULT',
-        compliance_ticket: 'CMP-OFAC-84910',
+        compliance_ticket: 'CMP-RISK-84910',
         sar_generated: true
       },
       null,
@@ -207,13 +213,13 @@ const INITIAL_ISSUE_LOGS: MerchantIssueLog[] = [
   {
     id: 'iss_06',
     merchantId: 'mer_01',
-    merchantName: 'Eagle Vision Market Ltd',
+    merchantName: MERCHANT.name,
     category: 'Webhook Delivery',
     httpStatus: 500,
     errorCode: 'ERR_MERCHANT_SERVER_CRASH',
     title: 'Merchant CRM Database Timeout Resolved',
     description: 'Resolved. Merchant CRM server database connection pool was re-established after automated restart.',
-    endpointUrl: 'https://api.eaglevision.com/webhooks/copym',
+    endpointUrl: 'https://crm.example.org/webhooks/copym',
     affectedCustomerOrTx: 'po_37F9_ETH ($5,000.00 USDC)',
     timestamp: '3 hrs ago',
     severity: 'Resolved',
@@ -239,91 +245,91 @@ const INITIAL_ISSUE_LOGS: MerchantIssueLog[] = [
   }
 ];
 
+interface PendingLogAction {
+  type: 'retry' | 'investigating' | 'resolved';
+  log: MerchantIssueLog;
+}
+
 export const AdminLogsPage: React.FC = () => {
   const [logs, setLogs] = useState<MerchantIssueLog[]>(INITIAL_ISSUE_LOGS);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMerchant, setSelectedMerchant] = useState<string>('All');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedSeverity, setSelectedSeverity] = useState<string>('All');
-  const [selectedLog, setSelectedLog] = useState<MerchantIssueLog | null>(null);
+  const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingLogAction | null>(null);
   const [retryingId, setRetryingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
 
-  // Trigger toast banner
+  const selectedLog = logs.find((item) => item.id === selectedLogId) ?? null;
+
   const showNotification = (msg: string) => {
     setNotification(msg);
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // 1-Click Webhook Retry Simulation
-  const handleRetryWebhook = (id: string, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    setRetryingId(id);
-    showNotification('Dispatched instant webhook retry to merchant endpoint...');
+  const openAction = (type: PendingLogAction['type'], log: MerchantIssueLog) => {
+    setPendingAction({ type, log });
+  };
 
-    setTimeout(() => {
-      setRetryingId(null);
+  const handleConfirmAction = (reasonCode: string, note: string, approver: string) => {
+    if (!pendingAction) return;
+    const { type, log } = pendingAction;
+
+    if (type === 'retry') {
+      setRetryingId(log.id);
+      showNotification('Dispatching authenticated webhook retry to merchant endpoint...');
+      setTimeout(() => {
+        setRetryingId(null);
+        setLogs((prev) =>
+          prev.map((item) =>
+            item.id === log.id
+              ? {
+                  ...item,
+                  httpStatus: 200,
+                  severity: 'Resolved',
+                  status: 'Resolved',
+                  description: `Webhook redelivered and acknowledged (HTTP 200 OK). Verified by ${approver || 'operator'}.`
+                }
+              : item
+          )
+        );
+        showNotification('Webhook redelivered successfully. HTTP 200 OK.');
+      }, 1200);
+    } else {
+      const newStatus = type === 'investigating' ? 'Investigating' : 'Resolved';
       setLogs((prev) =>
         prev.map((item) =>
-          item.id === id
+          item.id === log.id
             ? {
                 ...item,
-                httpStatus: 200,
-                severity: 'Resolved',
-                status: 'Resolved',
-                description: 'Webhook successfully redelivered and acknowledged (HTTP 200 OK).'
+                status: newStatus,
+                severity: newStatus === 'Resolved' ? 'Resolved' : item.severity
               }
             : item
         )
       );
-      if (selectedLog?.id === id) {
-        setSelectedLog((prev) =>
-          prev
-            ? {
-                ...prev,
-                httpStatus: 200,
-                severity: 'Resolved',
-                status: 'Resolved',
-                description: 'Webhook successfully redelivered and acknowledged (HTTP 200 OK).'
-              }
-            : null
-        );
-      }
-      showNotification('Webhook redelivered successfully! HTTP 200 OK.');
-    }, 1200);
-  };
-
-  // Mark Log Status (Investigating / Resolved)
-  const handleUpdateStatus = (id: string, newStatus: 'Open' | 'Investigating' | 'Resolved') => {
-    setLogs((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              status: newStatus,
-              severity: newStatus === 'Resolved' ? 'Resolved' : item.severity
-            }
-          : item
-      )
-    );
-    if (selectedLog?.id === id) {
-      setSelectedLog((prev) =>
-        prev ? { ...prev, status: newStatus, severity: newStatus === 'Resolved' ? 'Resolved' : prev.severity } : null
-      );
+      showNotification(`Incident ${log.id} updated to ${newStatus}: ${reasonCode} — ${note.slice(0, 48)}`);
     }
-    showNotification(`Incident status updated to ${newStatus}.`);
+
+    setPendingAction(null);
   };
 
-  // Copy helper
   const handleCopy = (text: string, id: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
     navigator.clipboard?.writeText(text);
     setCopiedId(id);
+    appendAuditEvent({
+      action: 'Incident Payload Copied',
+      target: `${id} · ${text.slice(0, 24)}`,
+      reasonCode: 'Manual Review Completed (Evidence Attached)',
+      note: 'Incident payload copied for investigation.',
+      severity: 'Info',
+    });
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  // Export CSV
   const handleExportCsv = () => {
     const headers = ['IssueID', 'Merchant', 'Category', 'HTTPStatus', 'ErrorCode', 'Title', 'Severity', 'Status', 'Timestamp'];
     const rows = logs.map((l) => [
@@ -338,17 +344,22 @@ export const AdminLogsPage: React.FC = () => {
       `"${l.timestamp}"`
     ]);
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
+    link.setAttribute('href', encodeURI(csvContent));
     link.setAttribute('download', `copym-merchant-issues-${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    appendAuditEvent({
+      action: 'Incident Logs Exported',
+      target: `${logs.length} incident records`,
+      reasonCode: 'Manual Review Completed (Evidence Attached)',
+      note: 'Incident log export generated for audit review.',
+      severity: 'Info',
+    });
     showNotification('Incident logs exported to CSV.');
   };
 
-  // Filter computation
   const filteredLogs = logs.filter((item) => {
     const matchSearch =
       item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -365,100 +376,124 @@ export const AdminLogsPage: React.FC = () => {
   });
 
   const uniqueMerchants = ['All', ...Array.from(new Set(logs.map((l) => l.merchantName)))];
-
-  // Key KPI Metrics
   const totalIncidents = logs.length;
   const criticalCount = logs.filter((l) => l.severity === 'Critical').length;
   const warningCount = logs.filter((l) => l.severity === 'Warning').length;
   const resolvedCount = logs.filter((l) => l.severity === 'Resolved').length;
 
+  const actionConfig: Record<PendingLogAction['type'], {
+    title: string;
+    description: string;
+    actionLabel: string;
+    severity: 'Critical' | 'Warning' | 'Info';
+    variant: 'primary' | 'destructive';
+    requireSecondApprover: boolean;
+  }> = {
+    retry: {
+      title: 'Redeliver Merchant Webhook',
+      description: 'Redeliver the failed webhook after documenting the root cause. The action and second approver are recorded in the audit trail.',
+      actionLabel: 'Confirm Redelivery',
+      severity: 'Warning',
+      variant: 'primary',
+      requireSecondApprover: true,
+    },
+    investigating: {
+      title: 'Mark Incident As Investigating',
+      description: 'Record the reason for moving this incident into active investigation.',
+      actionLabel: 'Confirm Investigation',
+      severity: 'Info',
+      variant: 'primary',
+      requireSecondApprover: false,
+    },
+    resolved: {
+      title: 'Resolve Merchant Incident',
+      description: 'Close the incident only after documenting remediation evidence and independent verification.',
+      actionLabel: 'Confirm Resolution',
+      severity: 'Critical',
+      variant: 'primary',
+      requireSecondApprover: true,
+    },
+  };
+
   return (
     <div className="space-y-4 font-sans text-slate-900 animate-fadeIn">
-      {/* Toast Notification */}
       {notification && (
-        <div className="fixed top-5 right-5 z-50 px-4 py-2.5 bg-slate-900 text-white text-xs font-semibold rounded-xl shadow-xl border border-slate-700 flex items-center gap-2 animate-fadeIn">
+        <div className="fixed top-5 right-5 z-[10000] px-4 py-2.5 bg-slate-900 text-white text-xs font-semibold rounded-xl shadow-xl border border-slate-700 flex items-center gap-2 animate-fadeIn">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           <span>{notification}</span>
         </div>
       )}
 
-      {/* Top Header Card (Inter / SF Pro Hierarchy, Blue Accents, Compact Spacing) */}
       <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase bg-blue-50 text-blue-700 border border-blue-200/60 rounded-md">
+            <span className="px-2 py-0.5 text-xs font-bold tracking-wider uppercase bg-slate-100 text-slate-700 border border-slate-200 rounded-md">
               Platform Diagnostics
             </span>
-            <span className="text-xs text-slate-400">· Real-Time Error Observability</span>
+            <span className="text-xs text-[#6B7280]">· Real-Time Error Observability</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
             Merchant Issue & Error Logs
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+          <p className="text-xs text-[#6B7280] mt-0.5 leading-relaxed">
             Monitor and troubleshoot merchant integration failures, webhook dropouts, API rate limits, and cryptographic mismatches.
           </p>
         </div>
 
-        {/* Global Actions */}
         <div className="flex items-center gap-2 self-stretch sm:self-auto shrink-0">
           <button
             type="button"
             onClick={handleExportCsv}
             className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition cursor-pointer shadow-2xs"
           >
-            <Download className="w-3.5 h-3.5 text-slate-500" />
+            <Download className="w-3.5 h-3.5 text-[#6B7280]" />
             <span>Export Log</span>
           </button>
           <div className="px-3 py-2 rounded-xl bg-rose-50 border border-rose-200/70 text-rose-700 text-xs font-semibold flex items-center gap-1.5">
             <AlertOctagon className="w-3.5 h-3.5 text-rose-600" />
-            <span>{criticalCount} Critical Outages</span>
+            <span>{criticalCount} Critical Incidents</span>
           </div>
         </div>
       </div>
 
-      {/* KPI Metric Strip (High Density, Reduced Whitespace) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* Metric 1 */}
+      <div className="grid grid-cols-2 gap-3">
         <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs">
-          <span className="text-[11px] font-medium text-slate-500 block mb-0.5">Total Logged Incidents</span>
+          <span className="text-xs font-medium text-[#6B7280] block mb-0.5">Total Logged Incidents</span>
           <div className="flex items-baseline justify-between">
             <span className="text-xl font-bold text-slate-900">{totalIncidents}</span>
-            <span className="text-[10.5px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
+            <span className="text-xs font-semibold text-[#6B7280] bg-slate-100 px-2 py-0.5 rounded-md">
               Last 24h
             </span>
           </div>
         </div>
 
-        {/* Metric 2: Restrained Red Treatment */}
         <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs">
-          <span className="text-[11px] font-medium text-slate-500 block mb-0.5">Critical Outages (5xx/Auth)</span>
+          <span className="text-xs font-medium text-[#6B7280] block mb-0.5">Critical Outages (5xx/Auth)</span>
           <div className="flex items-baseline justify-between">
             <span className="text-xl font-bold text-rose-700">{criticalCount}</span>
-            <span className="text-[10.5px] font-semibold text-rose-700 bg-rose-50 border border-rose-200/60 px-2 py-0.5 rounded-md flex items-center gap-1">
+            <span className="text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200/60 px-2 py-0.5 rounded-md flex items-center gap-1">
               <AlertTriangle className="w-3 h-3" />
               <span>Urgent</span>
             </span>
           </div>
         </div>
 
-        {/* Metric 3: Restrained Amber Treatment */}
         <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs">
-          <span className="text-[11px] font-medium text-slate-500 block mb-0.5">Rate Limit & Deficit Spikes</span>
+          <span className="text-xs font-medium text-[#6B7280] block mb-0.5">Rate Limit & Deficit Spikes</span>
           <div className="flex items-baseline justify-between">
             <span className="text-xl font-bold text-amber-700">{warningCount}</span>
-            <span className="text-[10.5px] font-semibold text-amber-700 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md flex items-center gap-1">
+            <span className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md flex items-center gap-1">
               <Activity className="w-3 h-3" />
               <span>Warning</span>
             </span>
           </div>
         </div>
 
-        {/* Metric 4: Subtle Green Treatment */}
         <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs">
-          <span className="text-[11px] font-medium text-slate-500 block mb-0.5">Resolved / Self-Healed</span>
+          <span className="text-xs font-medium text-[#6B7280] block mb-0.5">Resolved / Self-Healed</span>
           <div className="flex items-baseline justify-between">
-            <span className="text-xl font-bold text-emerald-700">{resolvedCount}</span>
-            <span className="text-[10.5px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-md flex items-center gap-1">
+            <span className="text-xl font-bold text-[#007F4E]">{resolvedCount}</span>
+            <span className="text-xs font-semibold text-[#007F4E] bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-md flex items-center gap-1">
               <Check className="w-3 h-3" />
               <span>Recovered</span>
             </span>
@@ -466,38 +501,35 @@ export const AdminLogsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Filter & Action Bar (Inter Hierarchy, Blue Accents) */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-        <div className="p-3 sm:p-4 border-b border-slate-100 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-slate-50/50">
-          {/* Search Input */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <div className="p-3 sm:p-4 border-b border-slate-100 flex flex-col gap-3 bg-slate-50/50">
+          <div className="relative w-full">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280]" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by merchant, error code, title, endpoint, or customer..."
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition"
+              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-[#6B7280] focus:outline-none focus:border-[#007F4E] focus:ring-1 focus:ring-[#007F4E] transition"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-slate-600"
+                aria-label="Clear search"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
 
-          {/* Filters */}
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Merchant Filter */}
-            <div className="flex items-center gap-1 text-xs text-slate-500">
-              <Building2 className="w-3.5 h-3.5 text-slate-400" />
+            <div className="flex items-center gap-1 text-xs text-[#6B7280]">
+              <Building2 className="w-3.5 h-3.5 text-[#6B7280]" />
               <select
                 value={selectedMerchant}
                 onChange={(e) => setSelectedMerchant(e.target.value)}
-                className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-600"
+                className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#007F4E]"
               >
                 {uniqueMerchants.map((m) => (
                   <option key={m} value={m}>
@@ -507,11 +539,10 @@ export const AdminLogsPage: React.FC = () => {
               </select>
             </div>
 
-            {/* Category Filter */}
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-600"
+              className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#007F4E]"
             >
               <option value="All">All Categories</option>
               <option value="Webhook Delivery">Webhook Delivery</option>
@@ -521,42 +552,40 @@ export const AdminLogsPage: React.FC = () => {
               <option value="KYC/AML Trigger">KYC/AML Trigger</option>
             </select>
 
-            {/* Severity Filter */}
             <select
               value={selectedSeverity}
               onChange={(e) => setSelectedSeverity(e.target.value)}
-              className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-600"
+              className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#007F4E]"
             >
               <option value="All">All Severities</option>
-              <option value="Critical">Critical Outages</option>
+              <option value="Critical">Critical Incidents</option>
               <option value="Warning">Warnings</option>
               <option value="Resolved">Resolved</option>
             </select>
           </div>
         </div>
 
-        {/* High-Density Incident Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+        <div className="table-scroll">
+          <table className="w-full text-left border-collapse text-xs min-w-[940px]">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+              <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
                 <th className="py-2.5 px-4">Merchant & Incident</th>
                 <th className="py-2.5 px-3">Category</th>
                 <th className="py-2.5 px-3">HTTP Code</th>
                 <th className="py-2.5 px-3">Affected Scope</th>
                 <th className="py-2.5 px-3">Status</th>
                 <th className="py-2.5 px-3 text-right">Time</th>
-                <th className="py-2.5 px-4 text-center">Diagnostics</th>
+                <th className="py-2.5 px-4 text-center sticky right-0 bg-slate-50 z-10 shadow-[-4px_0_8px_rgba(0,0,0,0.03)]">Diagnostics</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-sans">
               {filteredLogs.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                  <td colSpan={7} className="py-12 text-center text-[#6B7280]">
                     <div className="flex flex-col items-center justify-center">
                       <CheckCircle2 className="w-8 h-8 text-emerald-400 mb-2" />
                       <p className="font-semibold text-sm text-slate-700">No active merchant incidents found</p>
-                      <p className="text-xs text-slate-400 mt-0.5">All merchant webhooks and API endpoints are responding normally.</p>
+                      <p className="text-xs text-[#6B7280] mt-0.5">All merchant webhooks and API endpoints are responding normally.</p>
                     </div>
                   </td>
                 </tr>
@@ -568,10 +597,9 @@ export const AdminLogsPage: React.FC = () => {
                   return (
                     <tr
                       key={item.id}
-                      onClick={() => setSelectedLog(item)}
+                      onClick={() => setSelectedLogId(item.id)}
                       className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
                     >
-                      {/* Merchant & Incident Title */}
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2.5">
                           <div
@@ -579,98 +607,91 @@ export const AdminLogsPage: React.FC = () => {
                               isCritical
                                 ? 'bg-rose-50 text-rose-700 border-rose-200/80'
                                 : isWarning
-                                ? 'bg-amber-50 text-amber-700 border-amber-200/80'
-                                : 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
+                                  ? 'bg-amber-50 text-amber-700 border-amber-200/80'
+                                  : 'bg-emerald-50 text-[#007F4E] border-emerald-200/80'
                             }`}
                           >
                             {item.httpStatus || '!'}
                           </div>
                           <div>
-                            <div className="font-bold text-slate-900 group-hover:text-blue-600 transition flex items-center gap-1.5">
+                            <div className="font-bold text-slate-900 group-hover:text-[#007F4E] transition flex items-center gap-1.5">
                               <span>{item.title}</span>
                             </div>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="text-[11px] font-semibold text-blue-600">{item.merchantName}</span>
+                              <span className="text-xs font-semibold text-[#007F4E]">{item.merchantName}</span>
                               <span className="text-slate-300">·</span>
-                              <span className="text-[10px] font-mono text-slate-400">{item.errorCode}</span>
+                              <span className="text-xs font-mono text-[#6B7280]">{item.errorCode}</span>
                             </div>
                           </div>
                         </div>
                       </td>
 
-                      {/* Category */}
                       <td className="py-3 px-3">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-700">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-700">
                           {item.category}
                         </span>
                       </td>
 
-                      {/* HTTP Status Code with Restrained Colors */}
                       <td className="py-3 px-3">
                         {item.httpStatus ? (
                           <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold font-mono ${
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold font-mono ${
                               item.httpStatus >= 500
                                 ? 'bg-rose-50 text-rose-700 border border-rose-200/70'
                                 : item.httpStatus === 429
-                                ? 'bg-amber-50 text-amber-700 border border-amber-200/70'
-                                : item.httpStatus === 401
-                                ? 'bg-rose-50 text-rose-700 border border-rose-200/70'
-                                : 'bg-emerald-50 text-emerald-700 border border-emerald-200/70'
+                                  ? 'bg-amber-50 text-amber-700 border border-amber-200/70'
+                                  : item.httpStatus === 401
+                                    ? 'bg-rose-50 text-rose-700 border border-rose-200/70'
+                                    : 'bg-emerald-50 text-[#007F4E] border border-emerald-200/70'
                             }`}
                           >
                             HTTP {item.httpStatus}
                           </span>
                         ) : (
-                          <span className="text-[11px] text-slate-400 font-mono">N/A (AML)</span>
+                          <span className="text-xs text-[#6B7280] font-mono">N/A (AML)</span>
                         )}
                       </td>
 
-                      {/* Affected Scope / Customer / Endpoint */}
                       <td className="py-3 px-3">
                         <span className="text-xs font-mono text-slate-700 truncate max-w-[190px] block">
                           {item.affectedCustomerOrTx || item.endpointUrl}
                         </span>
                       </td>
 
-                      {/* Incident Status */}
                       <td className="py-3 px-3">
                         {item.status === 'Open' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-rose-50 text-rose-700 border border-rose-200/70">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200/70">
                             <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
                             <span>Open</span>
                           </span>
                         )}
                         {item.status === 'Investigating' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-amber-50 text-amber-700 border border-amber-200/70">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200/70">
                             <RefreshCw className="w-3 h-3 text-amber-600 animate-spin" />
                             <span>Investigating</span>
                           </span>
                         )}
                         {item.status === 'Resolved' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/70">
-                            <Check className="w-3 h-3 text-emerald-600" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-[#007F4E] border border-emerald-200/70">
+                            <Check className="w-3 h-3" />
                             <span>Resolved</span>
                           </span>
                         )}
                       </td>
 
-                      {/* Timestamp */}
-                      <td className="py-3 px-3 text-right font-medium text-slate-400 text-[11px]">
+                      <td className="py-3 px-3 text-right font-medium text-[#6B7280] text-xs">
                         {item.timestamp}
                       </td>
 
-                      {/* Action / Diagnostics Button */}
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-3 px-4 text-center sticky right-0 bg-white z-10 shadow-[-4px_0_8px_rgba(0,0,0,0.03)]">
                         <div className="flex items-center justify-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                          {/* 1-Click Retry for Webhook Failures */}
                           {item.category === 'Webhook Delivery' && item.status !== 'Resolved' && (
                             <button
                               type="button"
-                              onClick={(e) => handleRetryWebhook(item.id, e)}
+                              onClick={() => openAction('retry', item)}
                               disabled={retryingId === item.id}
-                              className="px-2.5 py-1 bg-[#007F4E] hover:bg-[#00663E] text-white rounded-lg text-[11px] font-semibold flex items-center gap-1 transition shadow-xs cursor-pointer disabled:opacity-60"
-                              title="Redeliver webhook to merchant endpoint"
+                              className="px-2.5 py-1 bg-[#007F4E] hover:bg-[#00663E] text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition shadow-xs cursor-pointer disabled:opacity-60"
+                              title="Redeliver webhook with documented approval"
                             >
                               <RefreshCw className={`w-3 h-3 ${retryingId === item.id ? 'animate-spin' : ''}`} />
                               <span>{retryingId === item.id ? 'Retrying...' : 'Redeliver'}</span>
@@ -679,9 +700,9 @@ export const AdminLogsPage: React.FC = () => {
 
                           <button
                             type="button"
-                            onClick={() => setSelectedLog(item)}
-                            className="p-1.5 text-slate-400 hover:text-blue-600 transition"
-                            title="Inspect Payloads & Logs"
+                            onClick={() => setSelectedLogId(item.id)}
+                            className="p-1.5 text-[#6B7280] hover:text-[#007F4E] transition cursor-pointer"
+                            title="Inspect payloads and logs"
                           >
                             <ChevronRight className="w-4 h-4" />
                           </button>
@@ -696,40 +717,43 @@ export const AdminLogsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* DETAILED DIAGNOSTICS & PAYLOAD INSPECTION DRAWER */}
-      {selectedLog && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-2xs flex items-center justify-end animate-fadeIn">
+      <AdminDialog
+        isOpen={!!selectedLog}
+        onClose={() => setSelectedLogId(null)}
+        className="flex items-center justify-end bg-black/50 backdrop-blur-sm"
+        ariaLabel="Incident diagnostics"
+      >
+        {selectedLog && (
           <div className="bg-white w-full max-w-xl h-full p-6 shadow-2xl flex flex-col justify-between overflow-y-auto animate-slideInRight">
             <div>
-              {/* Drawer Top */}
               <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-xs">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs">
                     {selectedLog.merchantName.slice(0, 2).toUpperCase()}
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-slate-900">{selectedLog.title}</h3>
-                    <p className="text-xs text-slate-500">{selectedLog.merchantName} ({selectedLog.merchantId})</p>
+                    <p className="text-xs text-[#6B7280]">{selectedLog.merchantName} ({selectedLog.merchantId})</p>
                   </div>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setSelectedLog(null)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                  onClick={() => setSelectedLogId(null)}
+                  className="p-1.5 rounded-lg text-[#6B7280] hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                  aria-label="Close drawer"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Status Banner */}
               <div className="mt-4">
                 <div
                   className={`p-3.5 rounded-xl border text-xs leading-relaxed space-y-1 ${
                     selectedLog.severity === 'Critical'
                       ? 'bg-rose-50 border-rose-200/80 text-rose-800'
                       : selectedLog.severity === 'Warning'
-                      ? 'bg-amber-50 border-amber-200/80 text-amber-800'
-                      : 'bg-emerald-50 border-emerald-200/80 text-emerald-800'
+                        ? 'bg-amber-50 border-amber-200/80 text-amber-800'
+                        : 'bg-emerald-50 border-emerald-200/80 text-emerald-800'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -737,82 +761,79 @@ export const AdminLogsPage: React.FC = () => {
                       <AlertOctagon className="w-4 h-4" />
                       <span>{selectedLog.errorCode}</span>
                     </span>
-                    <span className="font-mono text-[10.5px]">Latency: {selectedLog.latencyMs}ms</span>
+                    <span className="font-mono text-xs">Latency: {selectedLog.latencyMs}ms</span>
                   </div>
-                  <p className="text-[11.5px] mt-1">{selectedLog.description}</p>
+                  <p className="text-xs mt-1">{selectedLog.description}</p>
                 </div>
               </div>
 
-              {/* Incident Parameters */}
               <div className="mt-5 space-y-3.5 text-xs">
-                <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] text-slate-400">
+                <h4 className="font-bold text-slate-900 uppercase tracking-wider text-xs text-[#6B7280]">
                   Incident Metadata
                 </h4>
 
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between text-slate-500">
+                  <div className="flex items-center justify-between text-[#6B7280]">
                     <span>Category</span>
                     <span className="font-semibold text-slate-800">{selectedLog.category}</span>
                   </div>
                   {selectedLog.endpointUrl && (
-                    <div className="flex items-center justify-between text-slate-500">
+                    <div className="flex items-center justify-between text-[#6B7280]">
                       <span>Endpoint</span>
-                      <span className="font-mono text-slate-800 text-[11px] truncate max-w-[280px]">
+                      <span className="font-mono text-slate-800 text-xs truncate max-w-[280px]">
                         {selectedLog.endpointUrl}
                       </span>
                     </div>
                   )}
                   {selectedLog.affectedCustomerOrTx && (
-                    <div className="flex items-center justify-between text-slate-500">
+                    <div className="flex items-center justify-between text-[#6B7280]">
                       <span>Affected Scope</span>
                       <span className="font-mono font-bold text-slate-900">{selectedLog.affectedCustomerOrTx}</span>
                     </div>
                   )}
-                  <div className="flex items-center justify-between text-slate-500">
+                  <div className="flex items-center justify-between text-[#6B7280]">
                     <span>Occurred At</span>
                     <span className="text-slate-800">{selectedLog.timestamp}</span>
                   </div>
                 </div>
 
-                {/* Request Payload */}
                 {selectedLog.requestPayload && (
                   <>
                     <div className="flex items-center justify-between pt-2">
-                      <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] text-slate-400">
+                      <h4 className="font-bold text-slate-900 uppercase tracking-wider text-xs text-[#6B7280]">
                         Outbound Request Payload
                       </h4>
                       <button
                         type="button"
                         onClick={(e) => handleCopy(selectedLog.requestPayload!, 'req', e)}
-                        className="text-[11px] text-blue-600 hover:underline flex items-center gap-1 font-semibold"
+                        className="text-xs text-[#007F4E] hover:underline flex items-center gap-1 font-semibold cursor-pointer"
                       >
                         {copiedId === 'req' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                         <span>{copiedId === 'req' ? 'Copied' : 'Copy JSON'}</span>
                       </button>
                     </div>
-                    <pre className="p-3 bg-slate-900 text-emerald-400 rounded-xl font-mono text-[11px] overflow-x-auto max-h-48 border border-slate-800">
+                    <pre className="p-3 bg-slate-900 text-emerald-400 rounded-xl font-mono text-xs overflow-x-auto max-h-48 border border-slate-800">
                       {selectedLog.requestPayload}
                     </pre>
                   </>
                 )}
 
-                {/* Response Body */}
                 {selectedLog.responsePayload && (
                   <>
                     <div className="flex items-center justify-between pt-2">
-                      <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] text-slate-400">
+                      <h4 className="font-bold text-slate-900 uppercase tracking-wider text-xs text-[#6B7280]">
                         Merchant Server Response Body
                       </h4>
                       <button
                         type="button"
                         onClick={(e) => handleCopy(selectedLog.responsePayload!, 'res', e)}
-                        className="text-[11px] text-blue-600 hover:underline flex items-center gap-1 font-semibold"
+                        className="text-xs text-[#007F4E] hover:underline flex items-center gap-1 font-semibold cursor-pointer"
                       >
                         {copiedId === 'res' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                         <span>{copiedId === 'res' ? 'Copied' : 'Copy JSON'}</span>
                       </button>
                     </div>
-                    <pre className="p-3 bg-slate-950 text-rose-300 rounded-xl font-mono text-[11px] overflow-x-auto max-h-48 border border-slate-800">
+                    <pre className="p-3 bg-slate-950 text-rose-300 rounded-xl font-mono text-xs overflow-x-auto max-h-48 border border-slate-800">
                       {selectedLog.responsePayload}
                     </pre>
                   </>
@@ -820,12 +841,11 @@ export const AdminLogsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Bottom Actions */}
             <div className="pt-6 border-t border-slate-100 flex items-center gap-2">
               {selectedLog.category === 'Webhook Delivery' && selectedLog.status !== 'Resolved' && (
                 <button
                   type="button"
-                  onClick={(e) => handleRetryWebhook(selectedLog.id, e)}
+                  onClick={() => openAction('retry', selectedLog)}
                   disabled={retryingId === selectedLog.id}
                   className="flex-1 py-2.5 bg-[#007F4E] hover:bg-[#00663E] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition shadow-sm cursor-pointer disabled:opacity-60"
                 >
@@ -837,7 +857,7 @@ export const AdminLogsPage: React.FC = () => {
               {selectedLog.status !== 'Investigating' && selectedLog.status !== 'Resolved' && (
                 <button
                   type="button"
-                  onClick={() => handleUpdateStatus(selectedLog.id, 'Investigating')}
+                  onClick={() => openAction('investigating', selectedLog)}
                   className="py-2.5 px-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer"
                 >
                   Mark Investigating
@@ -847,8 +867,8 @@ export const AdminLogsPage: React.FC = () => {
               {selectedLog.status !== 'Resolved' && (
                 <button
                   type="button"
-                  onClick={() => handleUpdateStatus(selectedLog.id, 'Resolved')}
-                  className="py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold rounded-xl text-xs flex items-center gap-1 transition cursor-pointer"
+                  onClick={() => openAction('resolved', selectedLog)}
+                  className="py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-[#007F4E] font-bold rounded-xl text-xs flex items-center gap-1 transition cursor-pointer"
                 >
                   <Check className="w-3.5 h-3.5" />
                   <span>Mark Resolved</span>
@@ -856,7 +876,22 @@ export const AdminLogsPage: React.FC = () => {
               )}
             </div>
           </div>
-        </div>
+        )}
+      </AdminDialog>
+
+      {pendingAction && (
+        <AdminComplianceConfirmModal
+          isOpen={true}
+          title={actionConfig[pendingAction.type].title}
+          description={actionConfig[pendingAction.type].description}
+          actionLabel={actionConfig[pendingAction.type].actionLabel}
+          targetEntity={`${pendingAction.log.id} · ${pendingAction.log.merchantName} · ${pendingAction.log.errorCode}`}
+          severity={actionConfig[pendingAction.type].severity}
+          variant={actionConfig[pendingAction.type].variant}
+          requireSecondApprover={actionConfig[pendingAction.type].requireSecondApprover}
+          onClose={() => setPendingAction(null)}
+          onConfirm={handleConfirmAction}
+        />
       )}
     </div>
   );

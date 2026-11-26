@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Check,
@@ -15,7 +16,9 @@ import {
   Terminal
 } from 'lucide-react';
 import { Transaction, DepositState } from '../types';
+import { useDialogBehavior } from '../hooks/useDialogBehavior';
 import { CopyMRadialScanner } from './CopyMRadialScanner';
+import { toDepositRef } from '../utils/sharedMockStore';
 
 export type { DepositState };
 
@@ -46,7 +49,7 @@ const NETWORKS: Record<string, NetworkConfig> = {
     address: '0x71C3D8bA52431285093A786B6fD8745E1B4849F',
     explorerName: 'Sepolia Etherscan',
     explorerUrl: 'https://sepolia.etherscan.io/tx/0x8f4c28a9b1c900e231d77a83d47012bc09ef78923a104c83d6a908be140f892a',
-    badge: 'TESTNET · ZERO GAS'
+    badge: 'TESTNET'
   },
   'USDT · TRON': {
     id: 'USDT · TRON',
@@ -56,7 +59,7 @@ const NETWORKS: Record<string, NetworkConfig> = {
     address: 'TYK9A3XmUqZ9z8VnLw7h4Jb1k8Pq5D2gXy',
     explorerName: 'TronScan',
     explorerUrl: 'https://tronscan.org/#/transaction/7a5b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b',
-    badge: 'MAINNET · FAST'
+    badge: 'MAINNET'
   },
   'USDT · ERC-20': {
     id: 'USDT · ERC-20',
@@ -66,7 +69,7 @@ const NETWORKS: Record<string, NetworkConfig> = {
     address: '0x948f21E04A918bca48721c098Ac1237FeE335e23',
     explorerName: 'Etherscan',
     explorerUrl: 'https://etherscan.io/tx/0x8f4c28a9b1c900e231d77a83d47012bc09ef78923a104c83d6a908be140f892a',
-    badge: 'MAINNET · TIER-1'
+    badge: 'MAINNET'
   },
   'USDC · Polygon': {
     id: 'USDC · Polygon',
@@ -76,7 +79,7 @@ const NETWORKS: Record<string, NetworkConfig> = {
     address: '0x38bE8921bca9082ef45511aD9012437FeE335e23',
     explorerName: 'PolygonScan',
     explorerUrl: 'https://polygonscan.com/tx/0x38bE8921bca9082ef45511aD9012437FeE335e23',
-    badge: 'MAINNET · LOW FEE'
+    badge: 'MAINNET'
   }
 };
 
@@ -86,7 +89,7 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
   onAddDeposit,
   initialDeposit
 }) => {
-  // Configurable fields according to user reference
+  const dialogRef = useDialogBehavior(isOpen, onClose);
   const [currentState, setCurrentState] = useState<DepositState>('Credited');
   const [integrationMode, setIntegrationMode] = useState<'HPP' | 'H2H'>('HPP');
   const [selectedNetworkKey, setSelectedNetworkKey] = useState<string>('USDC (SEPOLIA)');
@@ -94,15 +97,10 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
   const [customerId, setCustomerId] = useState<string>('cc001');
   const [targetAmountType, setTargetAmountType] = useState<'choice' | 'fixed'>('choice');
   const [fixedAmount, setFixedAmount] = useState<string>('2,500.00');
-
-  // Timer countdown: Starts at 29:44 (1784 seconds)
   const [secondsRemaining, setSecondsRemaining] = useState<number>(29 * 60 + 44);
   const [isTimerActive, setIsTimerActive] = useState<boolean>(true);
-
-  // Copy feedback state
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  // Initialize or reset if initialDeposit is passed
   useEffect(() => {
     if (initialDeposit) {
       if (initialDeposit.reference) {
@@ -130,7 +128,6 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
         }
       }
     } else {
-      // Default matching user prompt exactly
       setCurrentState('Credited');
       setIntegrationMode('HPP');
       setSelectedNetworkKey('USDC (SEPOLIA)');
@@ -141,7 +138,6 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
     }
   }, [initialDeposit, isOpen]);
 
-  // Countdown timer logic
   useEffect(() => {
     if (!isOpen || !isTimerActive) return;
 
@@ -206,7 +202,7 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
       const amountValue = targetAmountType === 'choice' ? '1,500.00' : fixedAmount;
       onAddDeposit({
         type: 'Deposit',
-        reference: `dep_${orderReference.replace('order_', '')}`,
+        reference: toDepositRef(orderReference),
         customer: customerId,
         network: currentNetwork.name,
         amount: `+ ${amountValue}`,
@@ -218,17 +214,22 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/65 backdrop-blur-xs animate-fadeIn overflow-y-auto">
+  return createPortal(
+    <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5 bg-black/65 backdrop-blur-xs animate-fadeIn overflow-y-auto"
+    >
       <div className="bg-white rounded-[28px] max-w-2xl w-full p-5 sm:p-7 shadow-2xl border border-gray-100 my-auto relative transition-all">
-        {/* Top Bar: CURRENT STATE & Countdown Timer */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-gray-100 gap-3">
           <div className="flex items-center gap-2.5 flex-wrap">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#6B7280]">
               CURRENT STATE
             </span>
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-[#00C076] border border-emerald-200/70 shadow-2xs font-bold text-xs tracking-wide">
-              <span className="w-2 h-2 rounded-full bg-[#00C076] animate-pulse" />
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-[#007F4E] border border-emerald-200/70 shadow-2xs font-bold text-xs tracking-wide">
+              <span className="w-2 h-2 rounded-full bg-[#007F4E] animate-pulse" />
               <span>
                 {currentState.toUpperCase()} · {currentNetwork.chainName}
               </span>
@@ -236,13 +237,12 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
           </div>
 
           <div className="flex items-center justify-between sm:justify-end gap-3">
-            {/* Live Expiration Countdown */}
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-50 border border-gray-200 text-gray-700 text-xs font-semibold">
               <Clock className={`w-3.5 h-3.5 ${isTimerActive ? 'text-gray-500' : 'text-amber-500'}`} />
               <button
                 onClick={() => setIsTimerActive((prev) => !prev)}
                 title={isTimerActive ? "Click to pause timer" : "Click to resume timer"}
-                className="hover:text-[#00C076] transition"
+                className="hover:text-[#007F4E] transition"
               >
                 {timerDisplay}
               </button>
@@ -252,13 +252,12 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
                   setIsTimerActive(true);
                 }}
                 title="Reset timer"
-                className="text-gray-400 hover:text-gray-600 ml-0.5"
+                className="text-[#6B7280] hover:text-gray-600 ml-0.5"
               >
                 <RotateCcw className="w-3 h-3" />
               </button>
             </div>
 
-            {/* Close Button */}
             <button
               onClick={onClose}
               className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition"
@@ -268,14 +267,13 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
           </div>
         </div>
 
-        {/* Integration Mode Switcher: HPP (Hosted Checkout) vs H2H (Host-to-Host API) */}
         <div className="pt-3 pb-2 border-b border-gray-100">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10.5px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
+            <span className="text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
               <span>INTEGRATION FLOW</span>
-              <span className="text-gray-400 font-normal">· Select Cashier Model</span>
+              <span className="text-[#6B7280] font-normal">· Select Cashier Model</span>
             </span>
-            <span className="text-[11px] font-semibold text-[#00C076] flex items-center gap-1">
+            <span className="text-xs font-semibold text-[#007F4E] flex items-center gap-1">
               {integrationMode === 'HPP' ? (
                 <>
                   <Globe className="w-3.5 h-3.5" />
@@ -299,10 +297,10 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
                 : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
                 }`}
             >
-              <Globe className={`w-4 h-4 ${integrationMode === 'HPP' ? 'text-[#00C076]' : 'text-gray-400'}`} />
+              <Globe className={`w-4 h-4 ${integrationMode === 'HPP' ? 'text-[#007F4E]' : 'text-[#6B7280]'}`} />
               <div className="text-left">
                 <span className="block leading-tight font-bold">Hosted Checkout (HPP)</span>
-                <span className="text-[9.5px] font-medium text-gray-400 block leading-tight">Redirect URL · No code</span>
+                <span className="text-xs font-medium text-[#6B7280] block leading-tight">Hosted Checkout</span>
               </div>
             </button>
             <button
@@ -313,41 +311,38 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
                 : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
                 }`}
             >
-              <Zap className={`w-4 h-4 ${integrationMode === 'H2H' ? 'text-[#00C076]' : 'text-gray-400'}`} />
+              <Zap className={`w-4 h-4 ${integrationMode === 'H2H' ? 'text-[#007F4E]' : 'text-[#6B7280]'}`} />
               <div className="text-left">
                 <span className="block leading-tight font-bold">Direct API (H2H)</span>
-                <span className="text-[9.5px] font-medium text-gray-400 block leading-tight">Host-to-Host · White label</span>
+                <span className="text-xs font-medium text-[#6B7280] block leading-tight">Server-to-Server</span>
               </div>
             </button>
           </div>
         </div>
 
-        {/* Main Body: QR Code & Wallet Scan + Metadata Details */}
         <div className="py-4 grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
-          {/* Left Column: QR Code + Scan Instruction (5 cols) */}
           <div className="md:col-span-5 flex flex-col items-center justify-between bg-gradient-to-b from-gray-50 to-gray-100/70 p-4 sm:p-5 rounded-2xl border border-gray-200/80 text-center">
             <div>
               <div className="flex items-center justify-center gap-1.5 mb-1 text-gray-900 font-bold text-xs sm:text-[13px]">
                 {integrationMode === 'HPP' ? (
                   <>
-                    <Wallet className="w-4 h-4 text-[#00C076]" />
-                    <span>Scan to Pay with Any Crypto Wallet</span>
+                    <Wallet className="w-4 h-4 text-[#007F4E]" />
+                    <span>Scan to Pay with a Crypto Wallet</span>
                   </>
                 ) : (
                   <>
-                    <Code2 className="w-4 h-4 text-[#00C076]" />
+                    <Code2 className="w-4 h-4 text-[#007F4E]" />
                     <span>Native Cashier QR Code</span>
                   </>
                 )}
               </div>
-              <p className="text-[10.5px] text-gray-500 max-w-[210px] mx-auto leading-tight mb-3">
+              <p className="text-xs text-gray-500 max-w-[210px] mx-auto leading-tight mb-3">
                 {integrationMode === 'HPP'
-                  ? 'MetaMask, Trust Wallet, Phantom, Rainbow, Ledger or exchange app'
-                  : 'Render directly inside your CRM, native trader room, or mobile app'}
+                  ? 'Use a wallet compatible with the selected network'
+                  : 'Display this QR code in your checkout flow'}
               </p>
             </div>
 
-            {/* High-Definition Scanner: Apple Pay Inspired Radial Code + Classic QR Toggle */}
             <CopyMRadialScanner
               address={rawUri}
               amount={targetAmountType === 'choice' ? '1,500.00' : fixedAmount}
@@ -358,13 +353,10 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
             />
           </div>
 
-          {/* Right Column: Exact Metadata Specifications (7 cols) */}
           <div className="md:col-span-7 space-y-3.5 flex flex-col justify-between">
-            {/* Metadata Grid (2x2) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {/* Order Reference */}
               <div className="bg-gray-50/90 p-3 rounded-xl border border-gray-200">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-0.5">
+                <span className="text-xs uppercase font-bold tracking-wider text-[#6B7280] block mb-0.5">
                   Order Reference
                 </span>
                 <div className="flex items-center justify-between">
@@ -377,7 +369,7 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
                     title="Copy Order Reference"
                   >
                     {copiedField === 'orderRef' ? (
-                      <Check className="w-3.5 h-3.5 text-[#00C076]" />
+                      <Check className="w-3.5 h-3.5 text-[#007F4E]" />
                     ) : (
                       <Copy className="w-3.5 h-3.5" />
                     )}
@@ -385,9 +377,8 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
                 </div>
               </div>
 
-              {/* Merchant Order ID */}
               <div className="bg-gray-50/90 p-3 rounded-xl border border-gray-200">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-0.5">
+                <span className="text-xs uppercase font-bold tracking-wider text-[#6B7280] block mb-0.5">
                   Merchant Order ID
                 </span>
                 <div className="flex items-center justify-between">
@@ -400,7 +391,7 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
                     title="Copy Merchant Order ID"
                   >
                     {copiedField === 'customerId' ? (
-                      <Check className="w-3.5 h-3.5 text-[#00C076]" />
+                      <Check className="w-3.5 h-3.5 text-[#007F4E]" />
                     ) : (
                       <Copy className="w-3.5 h-3.5" />
                     )}
@@ -408,17 +399,16 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
                 </div>
               </div>
 
-              {/* Target Amount */}
               <div className="bg-gray-50/90 p-3 rounded-xl border border-gray-200">
                 <div className="flex items-center justify-between mb-0.5">
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400">
+                  <span className="text-xs uppercase font-bold tracking-wider text-[#6B7280]">
                     Target Amount
                   </span>
                   <button
                     onClick={() =>
                       setTargetAmountType(targetAmountType === 'choice' ? 'fixed' : 'choice')
                     }
-                    className="text-[9.5px] text-[#00C076] hover:underline font-semibold"
+                    className="text-xs text-[#007F4E] hover:underline font-semibold"
                   >
                     {targetAmountType === 'choice' ? 'Set Fixed' : 'Trader Choice'}
                   </button>
@@ -432,23 +422,22 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
                         type="text"
                         value={fixedAmount}
                         onChange={(e) => setFixedAmount(e.target.value)}
-                        className="w-24 bg-white border border-gray-200 rounded px-1.5 py-0.5 font-bold text-[#00C076] text-xs outline-none focus:border-[#00C076]"
+                        className="w-24 bg-white border border-gray-200 rounded px-1.5 py-0.5 font-bold text-[#007F4E] text-xs outline-none focus:border-[#007F4E]"
                       />
-                      <span className="font-bold text-[#00C076]">{currentNetwork.token}</span>
+                      <span className="font-bold text-[#007F4E]">{currentNetwork.token}</span>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Network & Token Selector */}
               <div className="bg-gray-50/90 p-3 rounded-xl border border-gray-200">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-0.5">
+                <span className="text-xs uppercase font-bold tracking-wider text-[#6B7280] block mb-0.5">
                   Network & Token
                 </span>
                 <select
                   value={selectedNetworkKey}
                   onChange={(e) => setSelectedNetworkKey(e.target.value)}
-                  className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs font-bold text-gray-800 focus:outline-none focus:border-[#00C076]"
+                  className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs font-bold text-gray-800 focus:outline-none focus:border-[#007F4E]"
                 >
                   <option value="USDC (SEPOLIA)">USDC (SEPOLIA)</option>
                   <option value="USDT · TRON">USDT · TRON (TRC-20)</option>
@@ -458,14 +447,13 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
               </div>
             </div>
 
-            {/* Assigned Deposit Address */}
             <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-200">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10.5px] uppercase font-bold tracking-wider text-gray-600">
+                <span className="text-xs uppercase font-bold tracking-wider text-gray-600">
                   Assigned Deposit Address ({currentNetwork.chainName})
                 </span>
-                <span className="text-[10px] text-emerald-600 font-semibold bg-emerald-100/60 px-2 py-0.5 rounded-full">
-                  {integrationMode === 'HPP' ? 'Verified Safe' : 'Direct Ingestion Address'}
+                <span className="text-xs text-emerald-600 font-semibold bg-emerald-100/60 px-2 py-0.5 rounded-full">
+                  {integrationMode === 'HPP' ? 'Deposit Address' : 'Direct Ingestion Address'}
                 </span>
               </div>
               <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-gray-200">
@@ -474,7 +462,7 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
                 </span>
                 <button
                   onClick={() => handleCopy(currentNetwork.address, 'assignedAddress')}
-                  className="px-2.5 py-1 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-md text-xs font-bold transition flex items-center gap-1 shadow-2xs whitespace-nowrap cursor-pointer"
+                  className="px-2.5 py-1 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-md text-xs font-bold transition flex items-center gap-1 shadow-2xs whitespace-nowrap cursor-pointer"
                 >
                   {copiedField === 'assignedAddress' ? (
                     <>
@@ -491,26 +479,23 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
               </div>
             </div>
 
-            {/* Dynamic Integration Area: Settled Notice vs HPP Hosted URL vs H2H Server API Payload */}
             {currentState === 'Credited' ? (
-              /* Settled State: Checkout completed */
               <div className="bg-emerald-50/90 p-4 rounded-xl border border-emerald-200/80 text-emerald-900 animate-fadeIn">
                 <div className="flex items-center gap-2 font-bold text-xs text-emerald-800 mb-1">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  <span>Deposit Settled & Credited to Treasury</span>
+                  <span>Deposit Marked as Credited</span>
                 </div>
-                <p className="text-[11px] text-emerald-700 leading-relaxed">
-                  This transaction has finalized on-chain and settled to your corporate vault balance. The payer checkout session is closed.
+                <p className="text-xs text-emerald-700 leading-relaxed">
+                  This demo marks the deposit as credited. Confirm settlement on the selected network before crediting a live ledger.
                 </p>
               </div>
             ) : integrationMode === 'HPP' ? (
-              /* Payer Hosted Checkout URL (HPP) */
               <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-200 animate-fadeIn">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10.5px] uppercase font-bold tracking-wider text-gray-600">
+                  <span className="text-xs uppercase font-bold tracking-wider text-gray-600">
                     Payer Hosted Checkout URL
                   </span>
-                  <span className="text-[10px] text-blue-600 font-semibold bg-blue-50 border border-blue-200/60 px-2 py-0.5 rounded-full">
+                  <span className="text-xs text-blue-600 font-semibold bg-blue-50 border border-blue-200/60 px-2 py-0.5 rounded-full">
                     Redirect Cashier
                   </span>
                 </div>
@@ -524,7 +509,7 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
                     title="Copy Hosted Checkout Link"
                   >
                     {copiedField === 'hostedUrl' ? (
-                      <Check className="w-3.5 h-3.5 text-[#00C076]" />
+                      <Check className="w-3.5 h-3.5 text-[#007F4E]" />
                     ) : (
                       <Copy className="w-3.5 h-3.5" />
                     )}
@@ -533,29 +518,28 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
                     href={`/checkout/${orderReference}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="p-1.5 hover:bg-gray-100 rounded text-[#00C076] transition cursor-pointer"
+                    className="p-1.5 hover:bg-gray-100 rounded text-[#007F4E] transition cursor-pointer"
                     title="Open Hosted Checkout in New Tab"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </div>
-                <p className="text-[10.5px] text-gray-500 mt-2 leading-relaxed">
-                  <span className="font-semibold text-gray-700">HPP Flow:</span> COPYm Pay renders the customer checkout with live 30-min timer, network selector, and Web3 one-click pay.
+                <p className="text-xs text-gray-500 mt-2 leading-relaxed">
+                  <span className="font-semibold text-gray-700">HPP Flow:</span> Redirect the payer to the hosted checkout URL above.
                 </p>
               </div>
             ) : (
-              /* Direct Server-to-Server API Payload (H2H) */
-              <div className="bg-slate-900 text-slate-100 p-3.5 rounded-xl border border-slate-800 animate-fadeIn font-mono text-[11px]">
+              <div className="bg-slate-900 text-slate-100 p-3.5 rounded-xl border border-slate-800 animate-fadeIn font-mono text-xs">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400 flex items-center gap-1.5">
-                    <Terminal className="w-3 h-3 text-[#00C076]" />
+                  <span className="text-xs uppercase font-bold tracking-wider text-emerald-400 flex items-center gap-1.5">
+                    <Terminal className="w-3 h-3 text-[#007F4E]" />
                     <span>POST /v1/orders Payload</span>
                   </span>
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => handleCopy(h2hJsonResponse, 'h2hJson')}
-                      className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] transition flex items-center gap-1 cursor-pointer"
+                      className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs transition flex items-center gap-1 cursor-pointer"
                     >
                       {copiedField === 'h2hJson' ? (
                         <>
@@ -572,7 +556,7 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
                     <button
                       type="button"
                       onClick={() => handleCopy(curlExample, 'curl')}
-                      className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] transition flex items-center gap-1 cursor-pointer"
+                      className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs transition flex items-center gap-1 cursor-pointer"
                     >
                       {copiedField === 'curl' ? (
                         <>
@@ -589,40 +573,38 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
                   </div>
                 </div>
 
-                <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800/80 text-[10.5px] leading-relaxed max-h-32 overflow-y-auto scrollbar-thin">
+                <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800/80 text-xs leading-relaxed max-h-32 overflow-y-auto scrollbar-thin">
                   <pre className="text-slate-300 whitespace-pre font-mono">
                     {h2hJsonResponse}
                   </pre>
                 </div>
 
-                <p className="text-[10px] text-slate-400 mt-2 leading-relaxed">
-                  <span className="font-semibold text-emerald-400">H2H Flow:</span> Embed address & QR inside your native trader room. Webhook status updates will dispatch to your backend.
+                <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                  <span className="font-semibold text-emerald-400">H2H Flow:</span> Use the payload below to create orders from your backend.
                 </p>
               </div>
             )}
 
-            {/* Deposit Settled & Credited On-Chain Notice (Prominent Callout) */}
             {currentState === 'Credited' && (
               <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200/90 text-[#065F46] animate-fadeIn">
                 <div className="flex items-start gap-2.5">
-                  <div className="w-6 h-6 rounded-full bg-[#00C076] text-white flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-full bg-[#007F4E] text-white flex items-center justify-center flex-shrink-0 mt-0.5">
                     <ShieldCheck className="w-4 h-4" />
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-gray-900 leading-tight">
-                      Deposit Settled & Credited On-Chain!
+                      Deposit Marked as Credited
                     </h4>
-                    <p className="text-[11px] text-gray-600 mt-0.5 leading-snug">
-                      Double-entry ledger credited. First-party source address registered for client withdrawals.
+                    <p className="text-xs text-gray-600 mt-0.5 leading-snug">
+                      Demo ledger updated. No on-chain settlement was performed.
                     </p>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Block Explorer Link */}
             <div className="flex items-center justify-between text-xs pt-1 px-1">
-              <span className="text-gray-500 font-medium">Verify on-chain settlement:</span>
+              <span className="text-gray-500 font-medium">Check network activity:</span>
               <a
                 href={currentNetwork.explorerUrl}
                 target="_blank"
@@ -631,7 +613,7 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
                   e.preventDefault();
                   window.open(currentNetwork.explorerUrl, '_blank');
                 }}
-                className="text-[#00C076] hover:text-[#00824E] hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                className="text-[#007F4E] hover:text-[#00663F] hover:underline font-bold flex items-center gap-1 cursor-pointer"
               >
                 <span>View on {currentNetwork.explorerName}</span>
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -640,16 +622,15 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
           </div>
         </div>
 
-        {/* Modal Action Buttons */}
         <div className="pt-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2 flex-wrap text-[11px] text-gray-500 font-mono">
+          <div className="flex items-center gap-2 flex-wrap text-xs text-gray-500 font-mono">
             <span>ID: <strong className="text-gray-800">{orderReference}</strong></span>
             <span>·</span>
             <span className="px-2 py-0.5 rounded-full bg-gray-100 font-bold text-gray-700">
               {integrationMode === 'HPP' ? '🌐 HPP · Hosted Cashier' : '⚡ H2H · Direct Server API'}
             </span>
             <span>·</span>
-            <span>Webhook: <strong className="text-[#00C076]">deposit.credited</strong></span>
+            <span>Webhook: <strong className="text-[#007F4E]">deposit.credited</strong></span>
           </div>
           <div className="flex items-center gap-2.5 w-full sm:w-auto">
             <button
@@ -660,7 +641,7 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
             </button>
             <button
               onClick={handleConfirmCredit}
-              className="flex-1 sm:flex-initial px-5 py-2 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer"
+              className="flex-1 sm:flex-initial px-5 py-2 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <Check className="w-3.5 h-3.5" />
               <span>Credit Deposit to Ledger</span>
@@ -668,7 +649,8 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

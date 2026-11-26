@@ -269,7 +269,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <h2 className="text-[19px] leading-tight font-bold text-[#14171A]">
                   Admin Ops
                 </h2>
-                <p className="text-[11px] text-[#8E95A5] mt-0.5 font-normal tracking-tight">
+                <p className="text-xs text-[#6B7280] mt-0.5 font-normal tracking-tight">
                   High-privilege platform controls
                 </p>
               </div>
@@ -279,7 +279,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   Welcome<br />
                   <span className="font-bold">Back, {firstName}!</span>
                 </h2>
-                <p className="text-[11px] text-[#8E95A5] mt-1 font-normal tracking-tight">
+                <p className="text-xs text-[#6B7280] mt-1 font-normal tracking-tight">
                   Check out your recent financial activity
                 </p>
               </div>
@@ -288,7 +288,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Close button on mobile */}
           <button
             onClick={onClose}
-            className="lg:hidden p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
+            className="lg:hidden p-1.5 rounded-lg text-[#6B7280] hover:text-gray-700 hover:bg-gray-100 transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -298,13 +298,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <nav className="flex flex-col space-y-4 overflow-y-auto pr-0.5">
           {currentSections.map((section, idx) => (
             <div key={idx} className="flex flex-col space-y-1">
-              <span className="text-[10px] tracking-wider uppercase font-bold text-[#8E95A5] px-2.5 mb-0.5 block select-none">
+              <span className="text-xs tracking-wider uppercase font-bold text-[#6B7280] px-2.5 mb-0.5 block select-none">
                 {section.title}
               </span>
 
               {section.items.map((item) => {
                 const isActive = currentActive === item.id;
-                const activeColorClass = 'bg-[#00C076] text-white hover:bg-[#00B16D] shadow-xs';
+                const activeColorClass = 'bg-[#007F4E] text-white hover:bg-[#00B16D] shadow-xs';
 
                 if (isActive) {
                   return (
@@ -352,12 +352,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           title="Refresh"
           className="p-2 rounded-xl hover:bg-white text-gray-700"
         >
-          <RotateCcw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-[#00C076]' : ''}`} />
+          <RotateCcw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-[#007F4E]' : ''}`} />
         </button>
         <button
           onClick={() => setIsLiveSimulating?.(!isLiveSimulating)}
           title="Live Simulation"
-          className={`p-2 rounded-xl transition ${isLiveSimulating ? 'bg-[#00C076] text-white' : 'hover:bg-white text-gray-700'}`}
+          className={`p-2 rounded-xl transition ${isLiveSimulating ? 'bg-[#007F4E] text-white' : 'hover:bg-white text-gray-700'}`}
         >
           <Play className="w-4 h-4" />
         </button>

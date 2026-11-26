@@ -35,6 +35,7 @@ export const KybBanner: React.FC<KybBannerProps> = ({ onOpenWizard, className = 
   };
 
   const status = kybData.status;
+  const showDemoControls = import.meta.env.DEV && import.meta.env.VITE_DEMO_CONTROLS !== 'false';
 
   return (
     <div className={`w-full select-none text-xs transition-all ${className}`}>
@@ -42,17 +43,17 @@ export const KybBanner: React.FC<KybBannerProps> = ({ onOpenWizard, className = 
       {/* 1. DRAFT STATE (Not Started / In Progress)               */}
       {/* ======================================================== */}
       {status === 'DRAFT' && (
-        <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-amber-500/10 border-b border-amber-300/60 px-4 py-2.5 sm:px-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+        <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-amber-500/10 border-b border-amber-300/60 px-4 py-2 sm:px-6 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-6 h-6 rounded-lg bg-amber-100 border border-amber-300/80 flex items-center justify-center text-amber-700 shrink-0">
               <AlertTriangle className="w-3.5 h-3.5" />
             </div>
             <div className="flex items-center gap-2 flex-wrap text-slate-800">
-              <span className="font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded-full text-[10.5px]">
+              <span className="font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded-full text-xs">
                 Sandbox Test Mode
               </span>
-              <span className="text-slate-600">
-                You are currently in Sandbox Mode. Complete <strong className="text-slate-900 font-bold">Corporate Verification (KYB)</strong> to unlock Live mainnet crypto processing and real deposit addresses.
+              <span className="text-slate-600 hidden sm:inline">
+                Complete <strong className="text-slate-900 font-bold">Corporate Verification (KYB)</strong> to unlock Live processing.
               </span>
             </div>
           </div>
@@ -68,13 +69,12 @@ export const KybBanner: React.FC<KybBannerProps> = ({ onOpenWizard, className = 
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
 
-            {/* Demo State Switcher Pill */}
-            <div className="relative">
+            <div className="relative" style={{ display: showDemoControls ? undefined : 'none' }}>
               <button
                 type="button"
                 onClick={() => setShowDemoMenu(!showDemoMenu)}
-                className="px-2 py-1 bg-white/80 hover:bg-white border border-amber-200 text-amber-800 rounded-lg text-[10.5px] font-bold flex items-center gap-1 cursor-pointer transition"
-                title="Switch Progressive Unlock Stage for Demo"
+                className="px-2 py-1 bg-white/80 hover:bg-white border border-amber-200 text-amber-800 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer transition"
+                title="Change verification state"
               >
                 <Sparkles className="w-3 h-3 text-amber-600" />
                 <span className="hidden md:inline">KYB State</span>
@@ -82,8 +82,8 @@ export const KybBanner: React.FC<KybBannerProps> = ({ onOpenWizard, className = 
               </button>
 
               {showDemoMenu && (
-                <div className="absolute right-0 mt-1 w-44 bg-white rounded-xl shadow-xl border border-slate-200 py-1 z-50 animate-fadeIn text-slate-700 text-[11px]">
-                  <div className="px-3 py-1 font-bold text-slate-400 uppercase text-[9.5px] border-b border-slate-100">
+                <div className="absolute right-0 mt-1 w-44 bg-white rounded-xl shadow-xl border border-slate-200 py-1 z-50 animate-fadeIn text-slate-700 text-xs">
+                  <div className="px-3 py-1 font-bold text-slate-400 uppercase text-xs border-b border-slate-100">
                     Simulate Merchant Stage
                   </div>
                   <button
@@ -125,19 +125,19 @@ export const KybBanner: React.FC<KybBannerProps> = ({ onOpenWizard, className = 
       {/* 2. UNDER_REVIEW STATE (Compliance Queue)                 */}
       {/* ======================================================== */}
       {status === 'UNDER_REVIEW' && (
-        <div className="bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-blue-500/10 border-b border-blue-200 px-4 py-2.5 sm:px-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+        <div className="bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-blue-500/10 border-b border-blue-200 px-4 py-2 sm:px-6 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-6 h-6 rounded-lg bg-blue-100 border border-blue-300/80 flex items-center justify-center text-blue-700 shrink-0">
               <Clock className="w-3.5 h-3.5 animate-spin" />
             </div>
             <div className="flex items-center gap-2 flex-wrap text-slate-800">
-              <span className="font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded-full text-[10.5px]">
+              <span className="font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded-full text-xs">
                 Under Compliance Review
               </span>
-              <span className="text-slate-600">
-                Application submitted {kybData.submittedAt ? `on ${kybData.submittedAt}` : 'recently'}. Our corporate compliance desk is verifying your registry filings. <strong className="text-slate-800">Typical turnaround: 24–48 business hours.</strong>
+              <span className="text-slate-600 hidden sm:inline">
+                Submitted {kybData.submittedAt ? `on ${kybData.submittedAt}` : 'recently'}. Review typically takes 24–48 business hours.
               </span>
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 bg-white/70 px-2 py-0.5 rounded border border-slate-200">
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 bg-white/70 px-2 py-0.5 rounded border border-slate-200">
                 <Lock className="w-3 h-3 text-slate-400" />
                 <span>Live Mode Locked</span>
               </span>
@@ -154,18 +154,18 @@ export const KybBanner: React.FC<KybBannerProps> = ({ onOpenWizard, className = 
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
 
-            {/* Demo Switcher */}
             <button
               type="button"
               onClick={() => setShowDemoMenu(!showDemoMenu)}
-              className="px-2 py-1 bg-white/80 hover:bg-white border border-blue-200 text-blue-800 rounded-lg text-[10.5px] font-bold flex items-center gap-1 cursor-pointer transition"
+              style={{ display: showDemoControls ? undefined : 'none' }}
+              className="px-2 py-1 bg-white/80 hover:bg-white border border-blue-200 text-blue-800 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer transition"
             >
               <Sparkles className="w-3 h-3 text-blue-600" />
               <ChevronDown className="w-3 h-3" />
             </button>
-            {showDemoMenu && (
-              <div className="absolute right-4 mt-8 w-44 bg-white rounded-xl shadow-xl border border-slate-200 py-1 z-50 animate-fadeIn text-slate-700 text-[11px]">
-                <div className="px-3 py-1 font-bold text-slate-400 uppercase text-[9.5px] border-b border-slate-100">
+            {showDemoMenu && showDemoControls && (
+              <div className="absolute right-4 mt-8 w-44 bg-white rounded-xl shadow-xl border border-slate-200 py-1 z-50 animate-fadeIn text-slate-700 text-xs">
+                <div className="px-3 py-1 font-bold text-slate-400 uppercase text-xs border-b border-slate-100">
                   Simulate Merchant Stage
                 </div>
                 <button type="button" onClick={() => handleSimulateState('DRAFT')} className="w-full px-3 py-1.5 text-left hover:bg-slate-50 font-semibold text-amber-700">1. Draft / Day-0</button>
@@ -182,17 +182,17 @@ export const KybBanner: React.FC<KybBannerProps> = ({ onOpenWizard, className = 
       {/* 3. ACTION_REQUIRED STATE (Document Re-upload Needed)      */}
       {/* ======================================================== */}
       {status === 'ACTION_REQUIRED' && (
-        <div className="bg-gradient-to-r from-rose-500/10 via-rose-500/5 to-rose-500/10 border-b border-rose-200 px-4 py-2.5 sm:px-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+        <div className="bg-gradient-to-r from-rose-500/10 via-rose-500/5 to-rose-500/10 border-b border-rose-200 px-4 py-2 sm:px-6 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-6 h-6 rounded-lg bg-rose-100 border border-rose-300/80 flex items-center justify-center text-rose-700 shrink-0">
               <FileWarning className="w-3.5 h-3.5" />
             </div>
             <div className="flex items-center gap-2 flex-wrap text-slate-800">
-              <span className="font-bold text-rose-800 bg-rose-100 px-2 py-0.5 rounded-full text-[10.5px]">
+              <span className="font-bold text-rose-800 bg-rose-100 px-2 py-0.5 rounded-full text-xs">
                 Action Required
               </span>
-              <span className="text-slate-700">
-                {kybData.complianceFeedback || 'The proof of address uploaded was older than 90 days. Please upload a recent bank statement or utility bill.'}
+              <span className="text-slate-700 hidden sm:inline">
+                {kybData.complianceFeedback || 'Upload a recent document to continue.'}
               </span>
             </div>
           </div>
@@ -207,18 +207,18 @@ export const KybBanner: React.FC<KybBannerProps> = ({ onOpenWizard, className = 
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
 
-            {/* Demo Switcher */}
             <button
               type="button"
               onClick={() => setShowDemoMenu(!showDemoMenu)}
-              className="px-2 py-1 bg-white/80 hover:bg-white border border-rose-200 text-rose-800 rounded-lg text-[10.5px] font-bold flex items-center gap-1 cursor-pointer transition"
+              style={{ display: showDemoControls ? undefined : 'none' }}
+              className="px-2 py-1 bg-white/80 hover:bg-white border border-rose-200 text-rose-800 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer transition"
             >
               <Sparkles className="w-3 h-3 text-rose-600" />
               <ChevronDown className="w-3 h-3" />
             </button>
-            {showDemoMenu && (
-              <div className="absolute right-4 mt-8 w-44 bg-white rounded-xl shadow-xl border border-slate-200 py-1 z-50 animate-fadeIn text-slate-700 text-[11px]">
-                <div className="px-3 py-1 font-bold text-slate-400 uppercase text-[9.5px] border-b border-slate-100">
+            {showDemoMenu && showDemoControls && (
+              <div className="absolute right-4 mt-8 w-44 bg-white rounded-xl shadow-xl border border-slate-200 py-1 z-50 animate-fadeIn text-slate-700 text-xs">
+                <div className="px-3 py-1 font-bold text-slate-400 uppercase text-xs border-b border-slate-100">
                   Simulate Merchant Stage
                 </div>
                 <button type="button" onClick={() => handleSimulateState('DRAFT')} className="w-full px-3 py-1.5 text-left hover:bg-slate-50 font-semibold text-amber-700">1. Draft / Day-0</button>
@@ -238,25 +238,25 @@ export const KybBanner: React.FC<KybBannerProps> = ({ onOpenWizard, className = 
         <div className="bg-emerald-50/80 border-b border-emerald-200 px-4 py-1.5 sm:px-6 flex items-center justify-between text-emerald-800">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span className="font-bold text-[11px] text-emerald-900">
+            <span className="font-bold text-xs text-emerald-900">
               Corporate Verified (KYB Cleared)
             </span>
-            <span className="text-[11px] text-emerald-700 hidden sm:inline">
+            <span className="text-xs text-emerald-700 hidden sm:inline">
               · Live production API keys and mainnet crypto settlement pipelines unlocked.
             </span>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] border border-emerald-300">
+            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-300">
               Live Mode Active
             </span>
 
-            {/* Demo Reset */}
             <button
               type="button"
               onClick={() => handleSimulateState('DRAFT')}
-              className="text-[10px] text-emerald-700 hover:text-emerald-900 underline font-semibold ml-2 cursor-pointer"
-              title="Reset to Day-0 Sandbox mode for testing"
+              style={{ display: showDemoControls ? undefined : 'none' }}
+              className="text-xs text-emerald-700 hover:text-emerald-900 underline font-semibold ml-2 cursor-pointer"
+              title="Reset to Sandbox draft"
             >
               Reset to Sandbox Draft
             </button>

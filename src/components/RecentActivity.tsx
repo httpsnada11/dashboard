@@ -42,7 +42,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
 
   const getStatusColor = (status: string) => {
     if (status === 'Credited' || status === 'Completed') {
-      return 'text-[#00C076] font-semibold';
+      return 'text-[#007F4E] font-semibold';
     }
     if (status.includes('Confirming')) {
       return 'text-[#3B82F6] font-semibold';
@@ -65,13 +65,13 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
         </h3>
         <div className="flex items-center gap-2 sm:gap-3">
           {searchQuery && (
-            <span className="text-[11px] text-gray-500 hidden sm:inline truncate max-w-[150px]">
+            <span className="text-xs text-gray-500 hidden sm:inline truncate max-w-[150px]">
               Filtering: <strong className="text-gray-800">"{searchQuery}"</strong>
             </span>
           )}
           <button
             onClick={() => setSelectedFilter(selectedFilter === 'ALL' ? 'DEPOSIT' : 'ALL')}
-            className="text-[12px] sm:text-[12.5px] font-medium text-[#00C076] hover:text-[#00AA67] hover:underline flex items-center gap-1 transition-colors select-none"
+            className="text-[12px] sm:text-[12.5px] font-medium text-[#007F4E] hover:text-[#00663F] hover:underline flex items-center gap-1 transition-colors select-none"
           >
             <span>View all</span>
             <ExternalLink className="w-3 h-3 inline-block opacity-80" />
@@ -81,11 +81,11 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
 
       {/* Modern Table Container - Responsive Horizontal Scroll */}
       <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
+        <div className="table-scroll">
           <table className="w-full text-left border-collapse min-w-[640px]">
             {/* Dark Sleek Header */}
             <thead>
-              <tr className="bg-[#18191B] text-white text-[12px] sm:text-[12.5px] font-medium tracking-normal select-none">
+              <tr className="table-header-row select-none">
                 <th className="py-2.5 px-4 sm:px-5 rounded-tl-2xl">Type</th>
                 <th className="py-2.5 px-3">Reference</th>
                 <th className="py-2.5 px-3">Merchant Order ID</th>
@@ -100,7 +100,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
             <tbody className="divide-y divide-gray-100/90 text-[12px] sm:text-[12.5px]">
               {filteredActivities.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-gray-400">
+                  <td colSpan={7} className="py-8 text-center text-gray-500">
                     {searchQuery ? 'No transactions match your search query.' : 'No transaction activity recorded yet for this merchant.'}
                   </td>
                 </tr>
@@ -126,10 +126,10 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
                           <button
                             onClick={(e) => handleCopy(e, row.fullRef || row.reference, row.id)}
                             title="Copy Reference"
-                            className="text-gray-400 hover:text-gray-700 opacity-70 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-0.5"
+                            className="text-gray-500 hover:text-gray-700 opacity-70 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-0.5"
                           >
                             {copiedId === row.id ? (
-                              <Check className="w-3 h-3 text-[#00C076]" />
+                              <Check className="w-3 h-3 text-[#007F4E]" />
                             ) : (
                               <Copy className="w-3 h-3" />
                             )}
@@ -150,7 +150,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
                       {/* Amount */}
                       <td
                         className={`py-2.5 sm:py-3 px-3 font-semibold whitespace-nowrap ${
-                          isPositive ? 'text-[#00C076]' : 'text-[#1F2937]'
+                          isPositive ? 'text-[#007F4E]' : 'text-[#1F2937]'
                         }`}
                       >
                         {row.amount}

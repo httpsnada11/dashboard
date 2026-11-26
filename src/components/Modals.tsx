@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Key, Lock, Play, RotateCcw, ExternalLink, Copy, Check, ChevronDown } from 'lucide-react';
 import { PayoutRecord } from '../types';
+import { useDialogBehavior } from '../hooks/useDialogBehavior';
 import { DepositCheckoutModal, DepositCheckoutModalProps } from './DepositCheckoutModal';
+import { toPayoutRef } from '../utils/sharedMockStore';
 
 export type { DepositCheckoutModalProps as DepositModalProps };
 export const DepositModal = DepositCheckoutModal;
@@ -12,8 +15,8 @@ export interface DeveloperModalProps {
   onSimulateWebhook?: () => void;
 }
 
-// Developer Modal highlighting Key, Lock, Play, RotateCcw, ExternalLink
 export const DeveloperModal: React.FC<DeveloperModalProps> = ({ isOpen, onClose, onSimulateWebhook }) => {
+  const dialogRef = useDialogBehavior(isOpen, onClose);
   const [apiKey, setApiKey] = useState('cpy_live_948f21e04a918bca48721c09');
   const [copied, setCopied] = useState(false);
   const [webhookStatus, setWebhookStatus] = useState<'idle' | 'testing' | 'success'>('idle');
@@ -40,13 +43,18 @@ export const DeveloperModal: React.FC<DeveloperModalProps> = ({ isOpen, onClose,
     }, 1200);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+  return createPortal(
+    <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn"
+    >
       <div className="bg-white rounded-[24px] max-w-lg w-full p-6 shadow-2xl border border-gray-100 relative">
-        {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-gray-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-[#00C076] flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-[#007F4E] flex items-center justify-center">
               <Key className="w-5 h-5" />
             </div>
             <div>
@@ -62,14 +70,12 @@ export const DeveloperModal: React.FC<DeveloperModalProps> = ({ isOpen, onClose,
           </button>
         </div>
 
-        {/* Content */}
         <div className="py-5 space-y-4">
-          {/* API Key Box */}
           <div>
             <label className="text-xs font-semibold text-gray-700 flex items-center justify-between mb-1.5">
               <span>Production Secret Key</span>
-              <span className="text-[11px] text-emerald-600 font-medium flex items-center gap-1">
-                <Lock className="w-3 h-3" /> Encrypted Vault
+              <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+                <Lock className="w-3 h-3" /> Stored as secret
               </span>
             </label>
             <div className="flex items-center gap-2">
@@ -80,12 +86,12 @@ export const DeveloperModal: React.FC<DeveloperModalProps> = ({ isOpen, onClose,
                 onClick={handleCopyKey}
                 className="px-3 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-medium flex items-center gap-1.5 transition"
               >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? <Check className="w-3.5 h-3.5 text-[#007F4E]" /> : <Copy className="w-3.5 h-3.5" />}
                 {copied ? 'Copied' : 'Copy'}
               </button>
               <button
                 onClick={handleRotateKey}
-                title="Rotate Secret Key (RotateCcw)"
+                title="Rotate Secret Key"
                 className="p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition"
               >
                 <RotateCcw className="w-4 h-4" />
@@ -93,35 +99,33 @@ export const DeveloperModal: React.FC<DeveloperModalProps> = ({ isOpen, onClose,
             </div>
           </div>
 
-          {/* Webhook Simulator Action */}
           <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="text-xs font-bold text-gray-800">Webhook Event Dispatcher</h4>
-                <p className="text-[11px] text-gray-500">Dispatch a test deposit notification payload</p>
+                <p className="text-xs text-gray-500">Dispatch a test deposit notification payload</p>
               </div>
               <button
                 onClick={handleRunWebhookTest}
                 disabled={webhookStatus === 'testing'}
-                className="px-3 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition disabled:opacity-50"
+                className="px-3 py-1.5 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition disabled:opacity-50"
               >
                 {webhookStatus === 'testing' ? (
                   <RotateCcw className="w-3.5 h-3.5 animate-spin" />
                 ) : (
                   <Play className="w-3.5 h-3.5 fill-white" />
                 )}
-                {webhookStatus === 'testing' ? 'Sending...' : 'Test Webhook (Play)'}
+                {webhookStatus === 'testing' ? 'Sending...' : 'Test Webhook'}
               </button>
             </div>
             {webhookStatus === 'success' && (
-              <div className="mt-3 p-2 bg-emerald-100/60 text-[#00824E] text-xs rounded-lg flex items-center gap-2">
-                <Check className="w-4 h-4 text-[#00C076]" />
-                Webhook 200 OK: Deposit event dep_8Hq2..f31 received
+              <div className="mt-3 p-2 bg-emerald-100/60 text-[#007F4E] text-xs rounded-lg flex items-center gap-2">
+                <Check className="w-4 h-4 text-[#007F4E]" />
+                Test webhook event dispatched locally
               </div>
             )}
           </div>
 
-          {/* Docs Link */}
           <div className="pt-2 flex items-center justify-between text-xs">
             <span className="text-gray-500">Read the complete API specifications</span>
             <a
@@ -129,7 +133,7 @@ export const DeveloperModal: React.FC<DeveloperModalProps> = ({ isOpen, onClose,
               target="_blank"
               rel="noreferrer"
               onClick={(e) => e.preventDefault()}
-              className="text-[#00C076] hover:underline font-semibold flex items-center gap-1"
+              className="text-[#007F4E] hover:underline font-semibold flex items-center gap-1"
             >
               API Reference Docs
               <ExternalLink className="w-3.5 h-3.5" />
@@ -137,7 +141,6 @@ export const DeveloperModal: React.FC<DeveloperModalProps> = ({ isOpen, onClose,
           </div>
         </div>
 
-        {/* Footer */}
         <div className="pt-3 border-t border-gray-100 flex justify-end">
           <button
             onClick={onClose}
@@ -147,7 +150,8 @@ export const DeveloperModal: React.FC<DeveloperModalProps> = ({ isOpen, onClose,
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -158,8 +162,8 @@ export interface PayoutModalProps {
   availableBalance?: number;
 }
 
-// Create Payout Modal - Matching Exact User Design with 2-Step Review & 2FA
 export const PayoutModal: React.FC<PayoutModalProps> = ({ isOpen, onClose, onAddPayout, availableBalance = 0 }) => {
+  const dialogRef = useDialogBehavior(isOpen, onClose);
   const [assetNetwork, setAssetNetwork] = useState('USDT - TRON (TRC-20)');
   const [amount, setAmount] = useState('');
   const [destinationAddress, setDestinationAddress] = useState('');
@@ -195,16 +199,16 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({ isOpen, onClose, onAdd
     const parsedNum = parseFloat(amount);
 
     const formattedAmount = parsedNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const shortRef = `pay_${Math.random().toString(36).substring(2, 5).toUpperCase()}X8..${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
+    const payoutRef = toPayoutRef(`PAY-${Date.now().toString().slice(-6)}`);
     const cleanNetwork = assetNetwork.includes('TRON') ? 'USDT · TRON' : assetNetwork.includes('Polygon') ? 'USDC · Polygon' : assetNetwork.includes('BEP-20') ? 'USDT · BEP-20' : assetNetwork.includes('USDC') ? 'USDC · ERC-20' : 'USDT · ERC-20';
     const shortDest = destinationAddress.length > 14
       ? `${destinationAddress.substring(0, 6)}..${destinationAddress.substring(destinationAddress.length - 4)}`
       : destinationAddress;
 
     const newPayoutItem: PayoutRecord = {
-      id: 'pay_' + Date.now(),
-      ref: shortRef,
-      fullRef: `pay_${Math.random().toString(36).substring(2, 14)}`,
+      id: payoutRef,
+      ref: payoutRef,
+      fullRef: payoutRef,
       amount: formattedAmount,
       numericAmount: parsedNum,
       network: cleanNetwork,
@@ -213,7 +217,7 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({ isOpen, onClose, onAdd
       destinationAddress: shortDest,
       fullAddress: destinationAddress,
       requestedBy: 'Nora Vale (Owner)',
-      complianceText: 'Screening passed · 2FA verified',
+      complianceText: 'Awaiting compliance review',
       status: parsedNum > 5000 ? 'Needs approval' : 'Needs approval',
       createdAt: 'Just now'
     };
@@ -226,10 +230,15 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({ isOpen, onClose, onAdd
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+  return createPortal(
+    <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-fadeIn"
+    >
       <div className="bg-white rounded-[24px] max-w-[440px] w-full p-5 sm:p-6 shadow-2xl border border-gray-100 relative">
-        {/* Modal Header */}
         <div className="flex items-center justify-between pb-3.5 border-b border-gray-100">
           <div className="flex items-center gap-2">
             <h2 className="text-[19px] font-bold text-[#14171A]">
@@ -251,18 +260,16 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({ isOpen, onClose, onAdd
         )}
 
         {step === 'form' ? (
-          /* Step 1: Payout Details Input */
           <form onSubmit={handleProceedToReview} className="pt-4 space-y-3.5 text-xs">
-            {/* Asset and network */}
             <div>
-              <label className="text-[11.5px] font-semibold text-[#14171A] block mb-1">
+              <label className="text-xs font-semibold text-[#14171A] block mb-1">
                 Asset and network
               </label>
               <div className="relative">
                 <select
                   value={assetNetwork}
                   onChange={(e) => setAssetNetwork(e.target.value)}
-                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 appearance-none pr-8 focus:outline-none focus:border-[#00C076] transition"
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 appearance-none pr-8 focus:outline-none focus:border-[#007F4E] transition"
                 >
                   <option value="USDT - TRON (TRC-20)">USDT - TRON (TRC-20)</option>
                   <option value="USDC - Ethereum (ERC-20)">USDC - Ethereum (ERC-20)</option>
@@ -274,17 +281,15 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({ isOpen, onClose, onAdd
               </div>
             </div>
 
-            {/* Available in vault */}
             <div>
-              <span className="text-[10.5px] text-[#8E95A5] block">Available in vault</span>
+              <span className="text-xs text-[#6B7280] block">Available in vault</span>
               <span className="text-[13px] font-bold text-[#14171A] mt-0.5 block">
                 {vaultBalance}
               </span>
             </div>
 
-            {/* Amount Input with Currency inside */}
             <div>
-              <label className="text-[11.5px] font-semibold text-[#14171A] block mb-1">
+              <label className="text-xs font-semibold text-[#14171A] block mb-1">
                 Amount
               </label>
               <div className="relative flex items-center">
@@ -295,7 +300,7 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({ isOpen, onClose, onAdd
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
-                  className="w-full pl-3 pr-16 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-900 focus:outline-none focus:border-[#00C076] transition"
+                  className="w-full pl-3 pr-16 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-900 focus:outline-none focus:border-[#007F4E] transition"
                 />
                 <span className="absolute right-3.5 text-xs font-bold text-gray-700 pointer-events-none">
                   {currentCurrency}
@@ -303,17 +308,15 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({ isOpen, onClose, onAdd
               </div>
             </div>
 
-            {/* Est. network fee */}
             <div>
-              <span className="text-[10.5px] text-[#8E95A5] block">Est. network fee</span>
+              <span className="text-xs text-[#6B7280] block">Est. network fee</span>
               <span className="text-[12px] font-bold text-[#14171A] mt-0.5 block">
                 {networkFee}
               </span>
             </div>
 
-            {/* Destination address */}
             <div>
-              <label className="text-[11.5px] font-semibold text-[#14171A] block mb-1">
+              <label className="text-xs font-semibold text-[#14171A] block mb-1">
                 Destination address
               </label>
               <input
@@ -322,20 +325,19 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({ isOpen, onClose, onAdd
                 value={destinationAddress}
                 onChange={(e) => setDestinationAddress(e.target.value)}
                 placeholder="Enter destination blockchain address (e.g. TRON / Ethereum)"
-                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl font-mono text-[11.5px] text-gray-900 focus:outline-none focus:border-[#00C076] transition"
+                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs text-gray-900 focus:outline-none focus:border-[#007F4E] transition"
               />
             </div>
 
-            {/* Purpose code (Structured Dropdown) */}
             <div>
-              <label className="text-[11.5px] font-semibold text-[#14171A] block mb-1">
+              <label className="text-xs font-semibold text-[#14171A] block mb-1">
                 Purpose code
               </label>
               <div className="relative">
                 <select
                   value={purposeCode}
                   onChange={(e) => setPurposeCode(e.target.value)}
-                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-900 appearance-none pr-8 focus:outline-none focus:border-[#00C076] transition"
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-900 appearance-none pr-8 focus:outline-none focus:border-[#007F4E] transition"
                 >
                   <option value="CUSTOMER_WITHDRAWAL">Customer Withdrawal / Client Return</option>
                   <option value="AFFILIATE_PAYOUT">Affiliate & Partner Commission</option>
@@ -346,7 +348,6 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({ isOpen, onClose, onAdd
               </div>
             </div>
 
-            {/* Form Action Buttons */}
             <div className="grid grid-cols-2 gap-2.5 pt-2">
               <button
                 type="button"
@@ -357,14 +358,13 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({ isOpen, onClose, onAdd
               </button>
               <button
                 type="submit"
-                className="w-full py-2.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-xs font-semibold transition text-center shadow-xs cursor-pointer"
+                className="w-full py-2.5 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-xl text-xs font-semibold transition text-center shadow-xs cursor-pointer"
               >
                 Review payout
               </button>
             </div>
           </form>
         ) : (
-          /* Step 2: Maker-Checker Review & 2FA Authorization */
           <form onSubmit={handleFinalSubmit} className="pt-4 space-y-4 text-xs">
             <div className="p-3.5 bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
               <div className="flex justify-between items-center border-b border-gray-200/60 pb-2">
@@ -377,7 +377,7 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({ isOpen, onClose, onAdd
               </div>
               <div className="flex justify-between items-start border-b border-gray-200/60 pb-2">
                 <span className="text-gray-500">Destination</span>
-                <span className="font-mono text-gray-800 text-[11px] max-w-[220px] break-all text-right">{destinationAddress}</span>
+                <span className="font-mono text-gray-800 text-xs max-w-[220px] break-all text-right">{destinationAddress}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Purpose</span>
@@ -385,17 +385,15 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({ isOpen, onClose, onAdd
               </div>
             </div>
 
-            {/* Maker-Checker Rule Warning if > 5000 */}
             {parseFloat(amount) > 5000 && (
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-[11px] leading-relaxed">
-                <span className="font-bold block mb-0.5">Dual-Control Policy Triggered</span>
-                Payouts exceeding $5,000.00 require a second authorized approver before cryptographic dispatch to the blockchain node.
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs leading-relaxed">
+                <span className="font-bold block mb-0.5">Additional approval required</span>
+                Payouts exceeding $5,000.00 require a second authorized approver before dispatch.
               </div>
             )}
 
-            {/* 2FA Code Input */}
             <div>
-              <label className="text-[11.5px] font-semibold text-[#14171A] block mb-1">
+              <label className="text-xs font-semibold text-[#14171A] block mb-1">
                 Security Authorization (2FA)
               </label>
               <input
@@ -403,12 +401,11 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({ isOpen, onClose, onAdd
                 maxLength={6}
                 value={mfaCode}
                 onChange={(e) => setMfaCode(e.target.value)}
-                placeholder="Enter 6-digit authenticator code (or leave blank for demo)"
-                className="w-full p-2.5 bg-white border border-gray-200 rounded-xl font-mono text-xs text-gray-900 focus:outline-none focus:border-[#00C076] transition"
+                placeholder="Enter 6-digit authenticator code"
+                className="w-full p-2.5 bg-white border border-gray-200 rounded-xl font-mono text-xs text-gray-900 focus:outline-none focus:border-[#007F4E] transition"
               />
             </div>
 
-            {/* Action Buttons */}
             <div className="grid grid-cols-2 gap-2.5 pt-2">
               <button
                 type="button"
@@ -419,7 +416,7 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({ isOpen, onClose, onAdd
               </button>
               <button
                 type="submit"
-                className="w-full py-2.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-xs font-bold transition text-center shadow-xs cursor-pointer"
+                className="w-full py-2.5 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-xl text-xs font-bold transition text-center shadow-xs cursor-pointer"
               >
                 Confirm & Dispatch
               </button>
@@ -427,7 +424,8 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({ isOpen, onClose, onAdd
           </form>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -437,8 +435,8 @@ export interface SwapModalProps {
   onExecuteSwap?: () => void;
 }
 
-// Convert Modal
 export const SwapModal: React.FC<SwapModalProps> = ({ isOpen, onClose, onExecuteSwap }) => {
+  const dialogRef = useDialogBehavior(isOpen, onClose);
   const [fromAmount, setFromAmount] = useState('1000');
   const [fromToken, setFromToken] = useState('USDT (TRON)');
   const [toToken, setToToken] = useState('USDC (ERC-20)');
@@ -456,8 +454,14 @@ export const SwapModal: React.FC<SwapModalProps> = ({ isOpen, onClose, onExecute
     setToToken(prev);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+  return createPortal(
+    <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn"
+    >
       <div className="bg-white rounded-[24px] max-w-md w-full p-6 shadow-2xl border border-gray-100">
         <div className="flex items-center justify-between pb-4 border-b border-gray-100">
           <h3 className="text-lg font-bold text-gray-900">Instant Convert</h3>
@@ -467,7 +471,7 @@ export const SwapModal: React.FC<SwapModalProps> = ({ isOpen, onClose, onExecute
         </div>
         <div className="py-4 space-y-4">
           <div className="bg-gray-50 p-3.5 rounded-2xl border border-gray-200">
-            <span className="text-[11px] text-gray-500">You pay</span>
+            <span className="text-xs text-gray-500">You pay</span>
             <div className="flex items-center justify-between mt-1">
               <input
                 type="number"
@@ -491,27 +495,27 @@ export const SwapModal: React.FC<SwapModalProps> = ({ isOpen, onClose, onExecute
             </button>
           </div>
           <div className="bg-gray-50 p-3.5 rounded-2xl border border-gray-200">
-            <span className="text-[11px] text-gray-500">You receive (Estimated)</span>
+            <span className="text-xs text-gray-500">You receive (Estimated)</span>
             <div className="flex items-center justify-between mt-1">
-              <span className="text-lg font-bold text-[#00C076]">{fromAmount}</span>
+              <span className="text-lg font-bold text-[#007F4E]">{fromAmount}</span>
               <span className="px-3 py-1 bg-white border border-gray-200 rounded-full text-xs font-semibold text-gray-800 shadow-sm">
                 {toToken}
               </span>
             </div>
           </div>
-          <div className="text-[11px] text-gray-400 flex justify-between px-1">
+          <div className="text-xs text-[#6B7280] flex justify-between px-1">
             <span>Exchange rate</span>
-            <span className="text-gray-700 font-medium">1 {fromToken.split(' ')[0]} ≈ 1.0000 {toToken.split(' ')[0]}</span>
+            <span className="text-gray-700 font-medium">Live rate unavailable in demo</span>
           </div>
           <button
             onClick={handleSwap}
-            className="w-full py-3 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-xs font-bold shadow-md transition cursor-pointer"
+            className="w-full py-3 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-xl text-xs font-bold shadow-md transition cursor-pointer"
           >
             Confirm Conversion
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
-

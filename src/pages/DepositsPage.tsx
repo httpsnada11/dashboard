@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { DepositRecord } from '../types';
 import { api } from '../services/api';
+import { toDepositRef } from '../utils/sharedMockStore';
 
 export interface DepositsPageProps {
   searchQuery?: string;
@@ -28,7 +29,6 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
   onSelectDeposit
 }) => {
   const [depositsList, setDepositsList] = useState<DepositRecord[]>([]);
-  const [hasRealData, setHasRealData] = useState(false);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [simulating, setSimulating] = useState(false);
@@ -82,7 +82,7 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
             return {
               id: orderId,
               depositId: address ? `${address.slice(0, 8)}...${address.slice(-4)}` : orderId.slice(0, 14),
-              refId: d.order_id ? `order: ${d.order_id.slice(0, 14)}` : 'order: LIVE',
+              refId: toDepositRef(orderId, idx),
               customer: d.merchant_order_id || d.order_id || 'ord_live',
               assetChain: `${d.currency || 'USDT'} · ${d.network || 'TRON'}`,
               flow: d.mode === 'H2H_DIRECT' ? 'H2H · Direct API' : 'HPP · Hosted',
@@ -94,17 +94,13 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
             };
           });
           setDepositsList(mapped);
-          setHasRealData(true);
         } else {
-          // Zero records in DB for fresh merchant
           setDepositsList([]);
-          setHasRealData(true);
         }
       }
     } catch (err) {
       console.warn('Could not load deposits from backend:', err);
       setDepositsList([]);
-      setHasRealData(true);
     } finally {
       setLoading(false);
     }
@@ -222,17 +218,17 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
       <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 rounded-2xl p-4 sm:p-5 text-white shadow-xl border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-[#00C076] text-[10px] font-extrabold uppercase tracking-wider border border-emerald-500/30 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00C076] animate-pulse"></span>
-              Live Settlement
+            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-[#007F4E] text-xs font-extrabold uppercase tracking-wider border border-emerald-500/30 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#007F4E] animate-pulse"></span>
+              Live settlement
             </span>
-            <span className="text-[11px] text-slate-400">· Multi-Chain Ingestion</span>
+            <span className="text-xs text-slate-300">Payment tracking</span>
           </div>
           <h1 className="text-lg sm:text-xl font-black tracking-tight text-white flex items-center gap-2">
             <span>Deposits</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-0.5 max-w-xl leading-relaxed">
-            Real-time multi-chain deposit monitoring and automated merchant treasury settlement.
+          <p className="text-xs text-slate-300 mt-0.5 max-w-xl leading-relaxed">
+            Track incoming customer payments and see when funds are credited to your balance.
           </p>
         </div>
 
@@ -244,8 +240,8 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
             rel="noreferrer"
             className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold border border-slate-700 transition cursor-pointer shadow-xs"
           >
-            <Play className="w-3.5 h-3.5 text-[#00C076] fill-[#00C076]" />
-            <span>Interactive Simulator</span>
+            <Play className="w-3.5 h-3.5 text-[#007F4E] fill-[#007F4E]" />
+            <span>Test deposit flow</span>
           </a>
           {onOpenNewDeposit && (
             <button
@@ -260,10 +256,10 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
             type="button"
             onClick={handleCreateDeposit}
             disabled={creating}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-xs font-bold transition cursor-pointer shadow-sm shadow-emerald-500/20 disabled:opacity-60"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-xl text-xs font-bold transition cursor-pointer shadow-sm shadow-emerald-500/20 disabled:opacity-60"
           >
             <ArrowDownToLine className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>{creating ? 'Generating Order...' : '+ New Deposit Order ($250 USDT)'}</span>
+            <span>{creating ? 'Creating deposit...' : '+ New deposit ($250 USDT)'}</span>
           </button>
         </div>
       </div>
@@ -277,8 +273,8 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
               <span>Live Cashier Session Created!</span>
             </div>
             <div className="text-xs font-mono mt-1 text-emerald-800">
-              Order ID: <span className="font-bold">{newOrder.order_id || newOrder.id}</span> • 
-              Deposit Address: <span className="font-bold select-all bg-emerald-100 px-1.5 py-0.5 rounded">{newOrder.payment_address || newOrder.deposit_address || newOrder.address || 'TYDZSx...'}</span>
+              Order ID: <span className="font-bold">{newOrder.order_id || newOrder.id}</span> · 
+              Deposit address: <span className="font-bold select-all bg-emerald-100 px-1.5 py-0.5 rounded">{newOrder.payment_address || newOrder.deposit_address || newOrder.address || 'TYDZSx...'}</span>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -288,16 +284,16 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
               disabled={simulating}
               className="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
             >
-              <span>{simulating ? 'Simulating On-Chain Confirmation...' : '⚡ Simulate Payment & Credit'}</span>
+              <span>{simulating ? 'Simulating payment...' : 'Simulate payment'}</span>
             </button>
             {(newOrder.checkout_url || newOrder.hosted_checkout_url) && (
               <a
                 href={newOrder.checkout_url || newOrder.hosted_checkout_url}
                 target="_blank"
                 rel="noreferrer"
-                className="px-3.5 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-lg text-xs font-bold transition shadow-xs"
+                className="px-3.5 py-1.5 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-lg text-xs font-bold transition shadow-xs"
               >
-                Open Hosted Checkout ↗
+                Open deposit checkout
               </a>
             )}
             <button
@@ -316,53 +312,53 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Metric 1: Total Volume */}
         <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500 text-[11px] font-medium mb-1">
-            <span>Total 24h Ingestion</span>
-            <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.2 rounded">
-              {depositsList.length > 0 ? '+14.2%' : 'Live'}
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium mb-1">
+            <span>Total received (24h)</span>
+            <span className="text-xs text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.2 rounded">
+              {depositsList.length > 0 ? 'Live' : 'Live'}
             </span>
           </div>
           <div className="text-xl font-bold text-slate-900">
             ${totalIngestion.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </div>
-          <span className="text-[10.5px] text-slate-400 mt-0.5 block">{depositsList.length} transactions processed</span>
+          <span className="text-xs text-slate-500 mt-0.5 block">{depositsList.length} deposits processed</span>
         </div>
 
         {/* Metric 2: Active Sessions (30m Timelock) */}
         <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500 text-[11px] font-medium mb-1">
-            <span>Active Cashier Sessions</span>
-            <span className="text-[10px] text-blue-700 font-bold bg-blue-50 px-1.5 py-0.2 rounded flex items-center gap-1">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium mb-1">
+            <span>Awaiting payment</span>
+            <span className="text-xs text-blue-700 font-bold bg-blue-50 px-1.5 py-0.2 rounded flex items-center gap-1">
               <Clock className="w-2.5 h-2.5 text-blue-600" />
-              <span>30m Limit</span>
+              <span>Active</span>
             </span>
           </div>
-          <div className="text-xl font-bold text-blue-700">{awaitingCount} Live</div>
-          <span className="text-[10.5px] text-slate-400 mt-0.5 block">Awaiting client broadcast</span>
+          <div className="text-xl font-bold text-blue-700">{awaitingCount}</div>
+          <span className="text-xs text-slate-500 mt-0.5 block">Waiting for customer payment</span>
         </div>
 
         {/* Metric 3: Confirming in Mempool */}
         <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500 text-[11px] font-medium mb-1">
-            <span>Confirming on Chain</span>
-            <span className="text-[10px] text-amber-800 font-bold bg-amber-50 px-1.5 py-0.2 rounded">
-              Mempool
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium mb-1">
+            <span>Confirming</span>
+            <span className="text-xs text-amber-800 font-bold bg-amber-50 px-1.5 py-0.2 rounded">
+              In progress
             </span>
           </div>
-          <div className="text-xl font-bold text-amber-700">{confirmingCount} In-Flight</div>
-          <span className="text-[10.5px] text-slate-400 mt-0.5 block">Validating blocks</span>
+          <div className="text-xl font-bold text-amber-700">{confirmingCount}</div>
+          <span className="text-xs text-slate-500 mt-0.5 block">Waiting for network confirmation</span>
         </div>
 
         {/* Metric 4: Deposit Success Rate */}
         <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500 text-[11px] font-medium mb-1">
-            <span>Deposit Success Rate</span>
-            <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.2 rounded">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium mb-1">
+            <span>Credited deposits</span>
+            <span className="text-xs text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.2 rounded">
               Settled
             </span>
           </div>
           <div className="text-xl font-bold text-slate-900">{successRate}</div>
-          <span className="text-[10.5px] text-slate-400 mt-0.5 block">Avg confirmation time 3.2m</span>
+          <span className="text-xs text-slate-500 mt-0.5 block">{creditedCount} of {depositsList.length} deposits credited</span>
         </div>
       </div>
 
@@ -381,7 +377,7 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
               placeholder="Search by deposit address, merchant order ID, or asset..."
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#00C076] transition shadow-2xs"
+              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-500 focus:outline-none focus:border-[#007F4E] transition shadow-2xs"
             />
             {localSearch && (
               <button
@@ -417,7 +413,7 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
                         setShowNetworkMenu(false);
                       }}
                       className={`w-full px-3 py-1.5 text-left hover:bg-slate-50 text-xs ${
-                        selectedNetwork === net ? 'font-bold text-[#00C076] bg-emerald-50/50' : 'text-slate-700'
+                        selectedNetwork === net ? 'font-bold text-[#007F4E] bg-emerald-50/50' : 'text-slate-700'
                       }`}
                     >
                       {net === 'All' ? 'All Networks' : net}
@@ -448,9 +444,9 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveFilter(tab.id)}
-                className={`px-3 py-1 rounded-full text-[11px] font-semibold transition-all whitespace-nowrap cursor-pointer ${
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
                   isActive
-                    ? 'bg-[#00C076] text-white shadow-2xs'
+                    ? 'bg-[#007F4E] text-white shadow-2xs'
                     : 'bg-slate-100 hover:bg-slate-200/80 text-slate-600'
                 }`}
               >
@@ -463,184 +459,61 @@ export const DepositsPage: React.FC<DepositsPageProps> = ({
         {/* ======================================================== */}
         {/* 4. DENSE CASHIER INGESTION TABLE (LATEST WIREFRAME)      */}
         {/* ======================================================== */}
-        <div className="overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider select-none">
+              <tr className="border-b border-slate-700 bg-[#18191B] text-xs font-semibold text-slate-200 uppercase tracking-wider select-none">
                 <th className="py-2.5 px-4">Deposit & Ref</th>
                 <th className="py-2.5 px-3">Merchant Order ID</th>
-                <th className="py-2.5 px-3">Rail / Network</th>
+                <th className="py-2.5 px-3">Asset / Network</th>
                 <th className="py-2.5 px-3 text-right">Expected</th>
                 <th className="py-2.5 px-3 text-right">Received</th>
-                <th className="py-2.5 px-3 text-center">Cashier State</th>
+                <th className="py-2.5 px-3 text-center">Status</th>
                 <th className="py-2.5 px-3 text-right">Created</th>
-                <th className="py-2.5 px-4 text-center sticky right-0 bg-slate-50 z-10 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)]">Action</th>
+                <th className="py-2.5 px-4 text-center sticky right-0 bg-[#18191B] z-10 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.2)]">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-400">
-                    <p className="font-semibold text-sm text-slate-600">Loading live deposits from database...</p>
-                  </td>
-                </tr>
+                <tr><td colSpan={8} className="py-12 text-center text-slate-500"><p className="font-semibold text-sm text-slate-600">Loading deposits...</p></td></tr>
               ) : filteredData.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-400">
-                    {hasRealData ? (
-                      <div className="flex flex-col items-center">
-                        <p className="font-bold text-sm text-slate-700">No deposit records found for this merchant</p>
-                        <p className="text-xs text-slate-400 mt-1 mb-3">
-                          Click the <strong>"+ New Deposit Order ($250 USDT)"</strong> button above to create your first real transaction!
-                        </p>
-                        <button
-                          type="button"
-                          onClick={handleCreateDeposit}
-                          disabled={creating}
-                          className="px-4 py-2 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer disabled:opacity-60"
-                        >
-                          {creating ? 'Generating Order...' : '+ New Deposit Order ($250 USDT)'}
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <p className="font-semibold text-sm text-slate-600">No deposit records match your filters.</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Try resetting search or chain filters.</p>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ) : (
-                filteredData.map((row) => {
-                  const isCredited = row.status === 'Credited';
-                  const isConfirming = row.status.includes('Confirming');
-                  const isAwaiting = row.status.includes('Awaiting');
-                  const isException = row.status.includes('Exception');
-
-                  return (
-                    <tr
-                      key={row.id}
-                      onClick={() => onSelectDeposit?.(row)}
-                      className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
-                    >
-                      {/* Deposit ID & Ref */}
-                      <td className="py-2.5 px-4">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-slate-900 group-hover:text-[#00C076] transition">
-                            {row.depositId}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={(e) => handleCopy(e, row.depositId, row.id)}
-                            title="Copy Deposit ID"
-                            className="text-slate-400 hover:text-slate-700 p-0.5 rounded transition"
-                          >
-                            {copiedId === row.id ? (
-                              <Check className="w-3 h-3 text-emerald-600" />
-                            ) : (
-                              <Copy className="w-3 h-3" />
-                            )}
-                          </button>
-                        </div>
-                        <div className="text-[10.5px] text-slate-400 font-mono mt-0.5 leading-tight">
-                          {row.refId}
-                        </div>
-                      </td>
-
-                      {/* Merchant Order ID */}
-                      <td className="py-2.5 px-3 font-mono text-slate-700">
-                        {row.customer}
-                      </td>
-
-                      {/* Asset · Chain */}
-                      <td className="py-2.5 px-3">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-700">
-                          {row.assetChain}
-                        </span>
-                      </td>
-
-                      {/* Expected */}
-                      <td className="py-2.5 px-3 text-right font-mono text-slate-500">
-                        {row.expected === '—' ? (
-                          <span title="Open cashier session: payment amount specified by customer at checkout" className="cursor-help text-slate-400 font-semibold underline decoration-dotted">
-                            —
-                          </span>
-                        ) : (
-                          row.expected
-                        )}
-                      </td>
-
-                      {/* Received */}
-                      <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">
-                        {row.received !== '—' ? (
-                          <span className="text-emerald-700">+{row.received}</span>
-                        ) : (
-                          <span className="text-slate-400">—</span>
-                        )}
-                      </td>
-
-                      {/* Status Pill Badge (CTO Guidelines) */}
-                      <td className="py-2.5 px-3 text-center">
-                        {isCredited && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/70">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                            <span>Credited</span>
-                          </span>
-                        )}
-                        {isConfirming && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200/70">
-                            <Clock className="w-3 h-3 text-amber-600 animate-spin" />
-                            <span>{row.status}</span>
-                          </span>
-                        )}
-                        {isAwaiting && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/70">
-                            <Clock className="w-3 h-3 text-blue-600" />
-                            <span>Awaiting</span>
-                          </span>
-                        )}
-                        {isException && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/70">
-                            <AlertTriangle className="w-3 h-3 text-rose-600" />
-                            <span>Exception</span>
-                          </span>
-                        )}
-                        {!isCredited && !isConfirming && !isAwaiting && !isException && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-                            <span>{row.status}</span>
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Created */}
-                      <td className="py-2.5 px-3 text-right text-slate-500 whitespace-nowrap text-[11.5px]">
-                        {row.created}
-                      </td>
-
-                      {/* Sticky Action Column */}
-                      <td className="py-2.5 px-4 text-center sticky right-0 bg-white group-hover:bg-slate-50/90 z-10 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)]">
-                        <button
-                          type="button"
-                          onClick={() => onSelectDeposit?.(row)}
-                          className="px-2.5 py-1 bg-slate-100 hover:bg-[#00C076] hover:text-white text-slate-700 rounded-lg text-[11px] font-bold transition flex items-center gap-1 mx-auto shadow-2xs cursor-pointer group-hover:bg-[#00C076] group-hover:text-white"
-                        >
-                          <span>Cashier</span>
-                          <ChevronRight className="w-3 h-3" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
+                <tr><td colSpan={8} className="py-12 text-center text-slate-500"><p className="font-semibold text-sm text-slate-600">No deposit records match your filters.</p></td></tr>
+              ) : filteredData.map((row) => {
+                const isCredited = row.status === 'Credited';
+                const isConfirming = row.status.includes('Confirming');
+                const isAwaiting = row.status.includes('Awaiting');
+                const isException = row.status.includes('Exception');
+                return (
+                  <tr key={row.id} onClick={() => onSelectDeposit?.(row)} className="hover:bg-slate-50/80 transition-colors cursor-pointer group">
+                    <td className="py-2.5 px-4"><div className="flex items-center gap-1.5"><span className="font-bold text-slate-900 group-hover:text-[#007F4E] transition">{row.depositId}</span><button type="button" onClick={(e) => handleCopy(e, row.depositId, row.id)} title="Copy Deposit ID" className="text-slate-500 hover:text-slate-700 p-0.5 rounded transition">{copiedId === row.id ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}</button></div><div className="text-xs text-slate-500 font-mono mt-0.5 leading-tight">{row.refId}</div></td>
+                    <td className="py-2.5 px-3 font-mono text-slate-700">{row.customer}</td>
+                    <td className="py-2.5 px-3"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-700">{row.assetChain}</span></td>
+                    <td className="py-2.5 px-3 text-right font-mono text-slate-500">{row.expected === '?' || row.expected === '?' ? <span title="Amount specified by customer at checkout" className="cursor-help text-slate-500 font-semibold underline decoration-dotted">?</span> : row.expected}</td>
+                    <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">{row.received !== '?' && row.received !== '?' ? <span className="text-emerald-700">+{row.received}</span> : <span className="text-slate-500">?</span>}</td>
+                    <td className="py-2.5 px-3 text-center">{isCredited && <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/70"><CheckCircle2 className="w-3 h-3 text-emerald-600" /><span>Credited</span></span>}{isConfirming && <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200/70"><Clock className="w-3 h-3 text-amber-600 animate-spin" /><span>{row.status}</span></span>}{isAwaiting && <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/70"><Clock className="w-3 h-3 text-blue-600" /><span>Awaiting</span></span>}{isException && <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200/70"><AlertTriangle className="w-3 h-3 text-rose-600" /><span>Exception</span></span>}{!isCredited && !isConfirming && !isAwaiting && !isException && <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200"><span>{row.status}</span></span>}</td>
+                    <td className="py-2.5 px-3 text-right text-slate-500 whitespace-nowrap text-xs">{row.created}</td>
+                    <td className="py-2.5 px-4 text-center sticky right-0 bg-white group-hover:bg-slate-50/90 z-10 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)]"><button type="button" onClick={() => onSelectDeposit?.(row)} className="px-2.5 py-1 bg-slate-100 hover:bg-[#007F4E] hover:text-white text-slate-700 rounded-lg text-xs font-bold transition flex items-center gap-1 mx-auto shadow-2xs cursor-pointer group-hover:bg-[#007F4E] group-hover:text-white"><span>Details</span><ChevronRight className="w-3 h-3" /></button></td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
+        </div>
+        <div className="md:hidden p-3 space-y-2">
+          {loading ? <p className="py-8 text-center text-sm text-slate-500">Loading deposits...</p> : filteredData.length === 0 ? <p className="py-8 text-center text-sm text-slate-500">No deposits match your filters.</p> : filteredData.map((row) => (
+            <button key={row.id} type="button" onClick={() => onSelectDeposit?.(row)} className="w-full text-left bg-white border border-slate-200 rounded-xl p-3 shadow-2xs">
+              <div className="flex items-center justify-between gap-2"><span className="font-bold text-slate-900 text-xs">{row.depositId}</span><span className="text-xs text-slate-500">{row.created}</span></div>
+              <div className="mt-1 text-xs text-slate-500 font-mono">{row.customer} ? {row.assetChain}</div>
+              <div className="mt-2 flex items-center justify-between"><span className="text-xs font-semibold text-slate-900">{row.received !== '?' && row.received !== '?' ? `+${row.received}` : '?'}</span><span className="text-xs text-slate-600">{row.status}</span></div>
+            </button>
+          ))}
         </div>
 
         {/* Table Footer */}
         <div className="p-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 bg-slate-50/50">
-          <span>Showing {filteredData.length} of {depositsList.length} cashier sessions</span>
+          <span>Showing {filteredData.length} of {depositsList.length} deposits</span>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] text-slate-400">COPYm Settlement Engine active</span>
+            <span className="text-xs text-slate-500">Live deposit tracking active</span>
           </div>
         </div>
 

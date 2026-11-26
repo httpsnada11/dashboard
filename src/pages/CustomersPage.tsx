@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { AllowlistedAddress } from '../types';
 import { api } from '../services/api';
+import { MERCHANT } from '../utils/sharedMockStore';
 
 export interface CustomersPageProps {
   onOpenPayoutWithDestination?: (dest: AllowlistedAddress) => void;
@@ -32,7 +33,7 @@ const INITIAL_ADDRESSES: AllowlistedAddress[] = [
     address: '0x4d8A..91eC',
     fullAddress: '0x4d8A00912cb84910ef123491eC10293847561a',
     status: 'Active',
-    addedBy: 'Daniel Vance (Owner)',
+    addedBy: MERCHANT.owner,
     createdAt: '14 Oct 2026',
     totalPaidOut: '$38,750.00'
   },
@@ -45,7 +46,7 @@ const INITIAL_ADDRESSES: AllowlistedAddress[] = [
     address: 'TYK9A..8v2L',
     fullAddress: 'TYK9A3XmUqZ9z8VnLw7h4Jb1k8Pq5D2gXy8v2L',
     status: 'Active',
-    addedBy: 'Elena Rostova',
+    addedBy: MERCHANT.signedInUser,
     createdAt: '22 Oct 2026',
     totalPaidOut: '$84,200.00'
   },
@@ -58,7 +59,7 @@ const INITIAL_ADDRESSES: AllowlistedAddress[] = [
     address: '7XqP..2vNp',
     fullAddress: '7XqP110293847aa1928374bb2vNp884912039485',
     status: 'Active',
-    addedBy: 'Daniel Vance (Owner)',
+    addedBy: MERCHANT.owner,
     createdAt: '26 Oct 2026',
     totalPaidOut: '$150,000.00'
   },
@@ -73,7 +74,7 @@ const INITIAL_ADDRESSES: AllowlistedAddress[] = [
     status: 'Cooling Period',
     coolingRemainingHours: 8,
     coolingEndsAt: 'Today at 21:30 UTC',
-    addedBy: 'Marcus Vance',
+    addedBy: 'Alex Morgan',
     createdAt: 'Yesterday, 21:30',
     totalPaidOut: '$0.00'
   },
@@ -88,20 +89,20 @@ const INITIAL_ADDRESSES: AllowlistedAddress[] = [
     status: 'Cooling Period',
     coolingRemainingHours: 19,
     coolingEndsAt: 'Tomorrow at 08:15 UTC',
-    addedBy: 'David Zhang',
+    addedBy: 'Priya Nair',
     createdAt: 'Today, 03:15',
     totalPaidOut: '$0.00'
   },
   {
     id: 'addr_06',
     customerId: 'ref_otc_30017',
-    beneficiaryName: 'Eagle Vision Prime Liquidity',
+    beneficiaryName: `${MERCHANT.name} Liquidity`,
     category: 'OTC Liquidity Pool',
     network: 'USDT · BSC (BEP-20)',
     address: '0x38bE..11aD',
     fullAddress: '0x38bE8921bca9082ef45511aD9012437FeE335e23',
     status: 'Active',
-    addedBy: 'Elena Rostova',
+    addedBy: MERCHANT.signedInUser,
     createdAt: '18 Oct 2026',
     totalPaidOut: '$22,500.00'
   }
@@ -206,7 +207,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
       status: 'Cooling Period',
       coolingRemainingHours: 24,
       coolingEndsAt: coolingEndsAt,
-      addedBy: 'Daniel Vance (You)',
+      addedBy: MERCHANT.owner,
       createdAt: 'Just now',
       totalPaidOut: '$0.00'
     };
@@ -246,7 +247,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
       {/* 24-Hour Cooling Period Security Advisory Banner */}
       <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#14171A] via-[#1E293B] to-[#14171A] text-white border border-gray-800 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 select-none">
         <div className="flex items-center gap-3.5">
-          <div className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 text-[#00C076] shrink-0">
+          <div className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 text-[#007F4E] shrink-0">
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
@@ -254,7 +255,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
               <h2 className="text-base sm:text-lg font-bold tracking-tight">
                 Payout addresses · 24h security hold
               </h2>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#00C076] text-white">
+              <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-[#007F4E] text-white">
                 Cooling Period Enforced
               </span>
             </div>
@@ -266,7 +267,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
 
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center gap-1.5 px-4 py-2 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-xs font-semibold shadow-sm transition-all select-none shrink-0"
+          className="flex items-center gap-1.5 px-4 py-2 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-full text-xs font-semibold shadow-sm transition-all select-none shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Allowlist New Address</span>
@@ -276,18 +277,18 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
       {/* KPI Stats Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-2xs">
-          <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider block mb-1">
+          <span className="text-xs text-gray-500 font-semibold uppercase tracking-wider block mb-1">
             Total Allowlisted
           </span>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-black text-gray-900 font-sans">{addresses.length}</span>
             <span className="text-xs font-bold text-gray-500">Destinations</span>
           </div>
-          <p className="text-[11px] text-gray-400 mt-1">First-party & verified vendors</p>
+          <p className="text-xs text-gray-500 mt-1">First-party & verified vendors</p>
         </div>
 
         <div className="bg-white rounded-2xl p-4 sm:p-5 border border-emerald-100 shadow-2xs bg-emerald-50/20">
-          <span className="text-xs text-[#00C076] font-semibold uppercase tracking-wider block mb-1 flex items-center gap-1">
+          <span className="text-xs text-[#007F4E] font-semibold uppercase tracking-wider block mb-1 flex items-center gap-1">
             <CheckCircle2 className="w-3.5 h-3.5" />
             Active Ready for Payout
           </span>
@@ -295,7 +296,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
             <span className="text-2xl font-black text-[#00875A] font-sans">{activeCount}</span>
             <span className="text-xs font-bold text-emerald-600">Zero Wait</span>
           </div>
-          <p className="text-[11px] text-gray-500 mt-1">Passed 24h cooling verification</p>
+          <p className="text-xs text-gray-500 mt-1">Passed 24h cooling verification</p>
         </div>
 
         <div className="bg-white rounded-2xl p-4 sm:p-5 border border-amber-100 shadow-2xs bg-amber-50/20">
@@ -307,18 +308,18 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
             <span className="text-2xl font-black text-amber-700 font-sans">{coolingCount}</span>
             <span className="text-xs font-bold text-amber-600">Locked</span>
           </div>
-          <p className="text-[11px] text-gray-500 mt-1">Pending security cooling countdown</p>
+          <p className="text-xs text-gray-500 mt-1">Pending security cooling countdown</p>
         </div>
 
         <div className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-2xs">
-          <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider block mb-1">
+          <span className="text-xs text-gray-500 font-semibold uppercase tracking-wider block mb-1">
             Total Disbursed Volume
           </span>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-black text-gray-900 font-sans">$295,450</span>
             <span className="text-xs font-bold text-emerald-600">100% Whitelisted</span>
           </div>
-          <p className="text-[11px] text-gray-400 mt-1">Across 14 settled batches</p>
+          <p className="text-xs text-gray-500 mt-1">Across 14 settled batches</p>
         </div>
       </div>
 
@@ -327,19 +328,19 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
         {/* Table Controls */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-5 border-b border-gray-100">
           <div className="relative flex-1 sm:max-w-md">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search merchant ref, beneficiary, or wallet address..."
-              className="w-full pl-9 pr-3 py-1.5 bg-[#EAEBEF] hover:bg-[#E4E6EA] focus:bg-white border border-transparent focus:border-[#00C076] rounded-full text-xs text-gray-800 placeholder-gray-400 focus:outline-none transition-all"
+              className="w-full pl-9 pr-3 py-1.5 bg-[#EAEBEF] hover:bg-[#E4E6EA] focus:bg-white border border-transparent focus:border-[#007F4E] rounded-full text-xs text-gray-800 placeholder-[#6B7280] focus:outline-none transition-all"
             />
           </div>
 
           <div className="flex items-center gap-1.5">
-            <Filter className="w-3.5 h-3.5 text-gray-400 mr-1" />
-            <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider mr-1">Status:</span>
+            <Filter className="w-3.5 h-3.5 text-gray-500 mr-1" />
+            <span className="text-xs text-gray-500 font-semibold uppercase tracking-wider mr-1">Status:</span>
             {(['All', 'Active', 'Cooling Period'] as const).map((st) => (
               <button
                 key={st}
@@ -357,9 +358,9 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
         </div>
 
         {/* Addresses Table */}
-        <div className="overflow-x-auto mt-4">
+        <div className="table-scroll mt-4">
           <table className="w-full text-left text-xs">
-            <thead className="bg-gray-50/70 text-gray-400 uppercase tracking-wider text-[11px] border-b border-gray-100">
+            <thead className="bg-gray-50/70 text-gray-500 uppercase tracking-wider text-xs border-b border-gray-100">
               <tr>
                 <th className="py-3.5 px-4 font-semibold">Beneficiary / Merchant Ref</th>
                 <th className="py-3.5 px-4 font-semibold">Purpose & Category</th>
@@ -367,7 +368,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
                 <th className="py-3.5 px-4 font-semibold">Destination Address</th>
                 <th className="py-3.5 px-4 font-semibold">Security Status</th>
                 <th className="py-3.5 px-4 font-semibold">Added By</th>
-                <th className="py-3.5 px-4 font-semibold text-right">Actions</th>
+                <th className="table-action-header-light py-3.5 px-4 font-semibold text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 text-gray-700">
@@ -375,10 +376,10 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
                 <tr key={item.id} className="hover:bg-gray-50/80 transition-colors">
                   <td className="py-3.5 px-4">
                     <div className="font-bold text-gray-900 text-xs">{item.beneficiaryName}</div>
-                    <div className="text-[11px] text-gray-400 font-mono">{item.customerId}</div>
+                    <div className="text-xs text-gray-500 font-mono">{item.customerId}</div>
                   </td>
                   <td className="py-3.5 px-4">
-                    <span className="inline-block px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-[10.5px] font-medium">
+                    <span className="inline-block px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-medium">
                       {item.category}
                     </span>
                   </td>
@@ -387,16 +388,16 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
                   </td>
                   <td className="py-3.5 px-4 font-mono text-gray-600">
                     <div className="flex items-center gap-1.5">
-                      <span className="bg-gray-100 px-2 py-0.5 rounded text-[11px] text-gray-700">
+                      <span className="bg-gray-100 px-2 py-0.5 rounded text-xs text-gray-700">
                         {item.address}
                       </span>
                       <button
                         onClick={() => handleCopy(item.id, item.fullAddress)}
                         title="Copy Full Address"
-                        className="p-1 hover:text-gray-900 text-gray-400 rounded transition-colors"
+                        className="p-1 hover:text-gray-900 text-gray-500 rounded transition-colors"
                       >
                         {copiedId === item.id ? (
-                          <Check className="w-3.5 h-3.5 text-[#00C076]" />
+                          <Check className="w-3.5 h-3.5 text-[#007F4E]" />
                         ) : (
                           <Copy className="w-3.5 h-3.5" />
                         )}
@@ -405,13 +406,13 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
                   </td>
                   <td className="py-3.5 px-4">
                     {item.status === 'Active' ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10.5px] font-bold">
-                        <CheckCircle2 className="w-3 h-3 text-[#00C076]" />
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
+                        <CheckCircle2 className="w-3 h-3 text-[#007F4E]" />
                         Active & Verified
                       </span>
                     ) : (
                       <div className="space-y-1">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10.5px] font-bold">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold">
                           <Lock className="w-3 h-3 text-amber-600" />
                           Cooling: {item.coolingRemainingHours}h remaining
                         </span>
@@ -424,23 +425,23 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
                       </div>
                     )}
                   </td>
-                  <td className="py-3.5 px-4 text-gray-500 text-[11.5px]">
+                  <td className="py-3.5 px-4 text-gray-500 text-xs">
                     <div>{item.addedBy}</div>
-                    <div className="text-[10px] text-gray-400">{item.createdAt}</div>
+                    <div className="text-xs text-gray-500">{item.createdAt}</div>
                   </td>
-                  <td className="py-3.5 px-4 text-right">
+                  <td className="table-action-cell py-3.5 px-4 text-right">
                     <div className="flex items-center justify-end gap-1.5">
                       {item.status === 'Active' ? (
                         <button
                           onClick={() => onOpenPayoutWithDestination?.(item)}
-                          className="px-2.5 py-1 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-lg font-bold text-[11px] shadow-2xs transition flex items-center gap-1"
+                          className="px-2.5 py-1 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-lg font-bold text-xs shadow-2xs transition flex items-center gap-1"
                         >
                           <span>Pay</span>
                           <ArrowUpRight className="w-3 h-3" />
                         </button>
                       ) : (
                         <span
-                          className="px-2.5 py-1 bg-gray-100 text-gray-400 rounded-lg font-semibold text-[11px] cursor-not-allowed"
+                          className="px-2.5 py-1 bg-gray-100 text-gray-500 rounded-lg font-semibold text-xs cursor-not-allowed"
                           title="Locked under 24-hour security hold rule"
                         >
                           Locked
@@ -448,7 +449,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
                       )}
                       <button
                         onClick={() => setRemovingAddress(item)}
-                        className="p-1 hover:bg-red-50 hover:text-red-600 text-gray-400 rounded-lg transition"
+                        className="p-1 hover:bg-red-50 hover:text-red-600 text-gray-500 rounded-lg transition"
                         title="Remove from Whitelist"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -468,18 +469,18 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
           <div className="relative w-full max-w-lg bg-white border border-gray-200 rounded-3xl shadow-2xl p-6 text-gray-800">
             <button
               onClick={() => setIsAddModalOpen(false)}
-              className="absolute top-5 right-5 p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition"
+              className="absolute top-5 right-5 p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition"
             >
               <X className="w-5 h-5" />
             </button>
 
             <div className="flex items-center gap-3 mb-4">
-              <span className="p-2.5 rounded-2xl bg-emerald-50 text-[#00C076] border border-emerald-100">
+              <span className="p-2.5 rounded-2xl bg-emerald-50 text-[#007F4E] border border-emerald-100">
                 <Users className="w-6 h-6" />
               </span>
               <div>
                 <h3 className="text-lg font-bold text-gray-900">Allowlist New Destination Address</h3>
-                <p className="text-xs text-gray-400">Save a trusted counterparty for recurring outbound payouts.</p>
+                <p className="text-xs text-gray-500">Save a trusted counterparty for recurring outbound payouts.</p>
               </div>
             </div>
 
@@ -506,7 +507,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
                     value={newCustId}
                     onChange={(e) => setNewCustId(e.target.value)}
                     placeholder="e.g. ref_otc_88192"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#00C076] focus:outline-none"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#007F4E] focus:outline-none"
                   />
                 </div>
                 <div>
@@ -516,7 +517,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
                     value={newBeneficiary}
                     onChange={(e) => setNewBeneficiary(e.target.value)}
                     placeholder="e.g. Acme Liquidity Desk"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#00C076] focus:outline-none"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#007F4E] focus:outline-none"
                   />
                 </div>
               </div>
@@ -527,7 +528,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
                   <select
                     value={newNetwork}
                     onChange={(e) => setNewNetwork(e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#00C076] focus:outline-none font-medium text-gray-800"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#007F4E] focus:outline-none font-medium text-gray-800"
                   >
                     <option value="USDT · TRON">USDT · TRON (TRC-20)</option>
                     <option value="USDC · ERC-20">USDC · Ethereum (ERC-20)</option>
@@ -541,7 +542,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
                   <select
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value as AllowlistedAddress['category'])}
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#00C076] focus:outline-none font-medium text-gray-800"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#007F4E] focus:outline-none font-medium text-gray-800"
                   >
                     <option value="Vendor Settlement">Vendor Settlement</option>
                     <option value="First-Party Deposit">First-Party Deposit</option>
@@ -558,20 +559,20 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
                   value={newAddress}
                   onChange={(e) => setNewAddress(e.target.value)}
                   placeholder="Paste destination wallet address (0x... or T...)"
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs focus:border-[#00C076] focus:outline-none"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs focus:border-[#007F4E] focus:outline-none"
                 />
               </div>
 
               <div className="p-3 bg-gray-50 rounded-2xl border border-gray-200">
                 <label className="block font-bold text-gray-800 mb-1">Hardware / Authenticator 2FA Code</label>
-                <p className="text-[11px] text-gray-500 mb-2">Authorize this security change using your registered YubiKey or authenticator app.</p>
+                <p className="text-xs text-gray-500 mb-2">Authorize this security change using your registered YubiKey or authenticator app.</p>
                 <input
                   type="text"
                   maxLength={6}
                   value={twoFactorCode}
                   onChange={(e) => setTwoFactorCode(e.target.value.replace(/[^0-9]/g, ''))}
                   placeholder="000000"
-                  className="w-36 px-3 py-2 bg-white border border-gray-300 rounded-xl font-mono font-bold text-center tracking-widest text-base focus:border-[#00C076] focus:outline-none"
+                  className="w-36 px-3 py-2 bg-white border border-gray-300 rounded-xl font-mono font-bold text-center tracking-widest text-base focus:border-[#007F4E] focus:outline-none"
                 />
               </div>
 
@@ -585,7 +586,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl font-bold shadow-sm transition"
+                  className="px-5 py-2 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-xl font-bold shadow-sm transition"
                 >
                   Confirm & Start 24h Cooling
                 </button>
@@ -605,14 +606,14 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
               </span>
               <div>
                 <h3 className="text-base font-bold text-gray-900">Remove Allowlisted Address?</h3>
-                <p className="text-xs text-gray-400">This action requires a re-cooling period if added again.</p>
+                <p className="text-xs text-gray-500">This action requires a re-cooling period if added again.</p>
               </div>
             </div>
 
             <div className="p-3 bg-gray-50 rounded-xl space-y-1 text-xs">
               <div className="font-bold text-gray-900">{removingAddress.beneficiaryName}</div>
-              <div className="text-gray-500 font-mono text-[11px]">{removingAddress.fullAddress}</div>
-              <div className="text-gray-400 text-[10px]">{removingAddress.network} • Ref: {removingAddress.customerId}</div>
+              <div className="text-gray-500 font-mono text-xs">{removingAddress.fullAddress}</div>
+              <div className="text-gray-500 text-xs">{removingAddress.network} • Ref: {removingAddress.customerId}</div>
             </div>
 
             <p className="text-xs text-gray-500">

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Upload, CheckCircle2, Check, Copy, X } from 'lucide-react';
 import { PayoutRecord } from '../types';
 import { api } from '../services/api';
+import { getPayoutRisk, MERCHANT, toPayoutRef } from '../utils/sharedMockStore';
 
 export interface PayoutsPageProps {
   payouts?: PayoutRecord[];
@@ -14,7 +15,6 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
   payouts = [],
   setPayouts,
   globalSearchQuery = '',
-  onOpenCreatePayout,
 }) => {
   const [activeTab, setActiveTab] = useState('needs-approval');
   const [localSearch, setLocalSearch] = useState('');
@@ -25,7 +25,11 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
   const [approveModalItem, setApproveModalItem] = useState<PayoutRecord | null>(null);
   const [approval2Fa, setApproval2Fa] = useState('');
   const [approvalError, setApprovalError] = useState<string | null>(null);
+  const [secondChecker, setSecondChecker] = useState('');
   const [showBatchModal, setShowBatchModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createForm, setCreateForm] = useState({ amount: '', address: '', purpose: 'CUSTOMER_WITHDRAWAL', assetNetwork: 'USDT - TRON (TRC-20)', twoFa: '' });
+  const [createError, setCreateError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   // Dynamic counts for each status tab
@@ -64,19 +68,23 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
           const dest = p.destination_address || p.destination || '';
           const shortDest = dest.length > 14 ? `${dest.substring(0, 6)}...${dest.substring(dest.length - 4)}` : dest;
 
+          const sourceRef = p.merchant_order_id || p.merchant_reference || p.id;
+          const canonicalRef = toPayoutRef(sourceRef, idx);
+          const risk = getPayoutRisk(sourceRef);
+
           return {
-            id: p.id || `pay_${idx}`,
-            ref: p.merchant_order_id ? p.merchant_order_id.slice(0, 14) : (p.id?.slice(0, 12) || `WD-${idx}`),
-            fullRef: p.merchant_order_id || p.merchant_reference || p.id,
+            id: p.id || canonicalRef,
+            ref: canonicalRef,
+            fullRef: canonicalRef,
             amount: p.amount ? Number(p.amount).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '0.00',
             numericAmount: Number(p.amount || 0),
-            network: `${p.currency || 'USDT'} · ${p.network || 'TRON'}`,
+            network: `${p.currency || 'USDT'} • ${p.network || 'TRON'}`,
             customer: p.merchant_order_id || p.payer_id || p.external_customer_id || 'ord_live',
-            destinationType: 'DESTINATION · FIRST-PARTY DEPOSIT',
+            destinationType: 'DESTINATION • FIRST-PARTY DEPOSIT',
             destinationAddress: shortDest,
             fullAddress: dest,
-            requestedBy: p.requested_by || 'Admin Console',
-            complianceText: 'KYC verified · sanctions clear',
+            requestedBy: p.requested_by || MERCHANT.owner,
+            complianceText: risk.label,
             status: statusText,
             createdAt: p.created_at || p.createdAt || 'Just now',
           };
@@ -94,6 +102,22 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
     loadPayouts();
   }, []);
 
+  useEffect(() => {
+    const pending = payouts.filter(p => p.createdAt === 'Just now' && /Screening passed|KYC verified/i.test(p.complianceText));
+    if (pending.length === 0) return;
+    setPayouts(prev => prev.map(p => (
+      p.createdAt === 'Just now' && /Screening passed|KYC verified/i.test(p.complianceText)
+        ? { ...p, complianceText: 'Screening…' }
+        : p
+    )));
+    const t = setTimeout(() => {
+      setPayouts(prev => prev.map(p => (
+        p.complianceText === 'Screening…' ? { ...p, complianceText: getPayoutRisk(p.ref).label } : p
+      )));
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [payouts.length]);
+
   const handleCopy = (e: React.MouseEvent, text: string, id: string) => {
     e.stopPropagation();
     navigator.clipboard?.writeText(text);
@@ -103,17 +127,64 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
 
   const handleConfirmApprove = async () => {
     if (!approveModalItem) return;
+    const amt = approveModalItem.numericAmount || parseFloat(approveModalItem.amount.replace(/,/g, '')) || 0;
+    if (!/^\d{6}$/.test(approval2Fa.trim())) {
+      setApprovalError('Enter a valid 6-digit 2FA code.');
+      return;
+    }
+    if (amt > 5000 && secondChecker.trim().length < 2) {
+      setApprovalError('A second checker name is required for payouts over $5,000.');
+      return;
+    }
     try {
       await api.approvePayout(approveModalItem.id);
-      setToastMessage(`Payout ${approveModalItem.ref} authorized! Dispatched to node.`);
+      setToastMessage(`Payout ${approveModalItem.ref} approved for processing.`);
       setApproveModalItem(null);
       setApproval2Fa('');
+      setSecondChecker('');
       setApprovalError(null);
       await loadPayouts();
     } catch (err: any) {
       setApprovalError(err.message || 'Error authorizing payout');
     }
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const handleCreatePayoutSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreateError(null);
+    const amt = parseFloat(createForm.amount);
+    if (!createForm.amount || isNaN(amt) || amt <= 0) { setCreateError('Enter a valid amount.'); return; }
+    if (!createForm.address.trim()) { setCreateError('Enter a destination address.'); return; }
+    if (!/^\d{6}$/.test(createForm.twoFa.trim())) { setCreateError('Enter a valid 6-digit 2FA code.'); return; }
+    const [currency, netPart] = createForm.assetNetwork.split(' - ');
+    const network = netPart?.includes('TRON') ? 'TRON' : netPart?.includes('BEP-20') ? 'BSC' : netPart?.includes('Polygon') ? 'POLYGON' : 'ETHEREUM';
+    try {
+      await api.createPayout({ amount: amt.toFixed(2), currency: currency || 'USDT', network, destination_address: createForm.address.trim(), merchant_order_id: `ord_${Date.now()}` });
+      const newItem: PayoutRecord = {
+        id: `PAY-${Date.now().toString().slice(-6)}`,
+        ref: `PAY-${Date.now().toString().slice(-6)}`,
+        fullRef: `PAY-${Date.now().toString().slice(-6)}`,
+        amount: amt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+        numericAmount: amt,
+        network: `${currency || 'USDT'} • ${netPart?.replace(/\(.*\)/, '').trim() || 'TRON'}`,
+        customer: `ord_${Math.floor(10000 + Math.random() * 90000)}`,
+        destinationType: 'DESTINATION • FIRST-PARTY DEPOSIT',
+        destinationAddress: createForm.address.length > 14 ? `${createForm.address.slice(0, 6)}...${createForm.address.slice(-4)}` : createForm.address,
+        fullAddress: createForm.address.trim(),
+        requestedBy: MERCHANT.owner,
+        complianceText: 'Screening…',
+        status: 'Needs approval',
+        createdAt: 'Just now',
+      };
+      setPayouts(prev => [newItem, ...prev]);
+      setShowCreateModal(false);
+      setCreateForm({ amount: '', address: '', purpose: 'CUSTOMER_WITHDRAWAL', assetNetwork: 'USDT - TRON (TRC-20)', twoFa: '' });
+      setToastMessage('Payout created. Screening started.');
+    } catch (err: any) {
+      setCreateError(err.message || 'Failed to create payout');
+    }
+    setTimeout(() => setToastMessage(null), 3000);
   };
 
   const handleConfirmDecline = async () => {
@@ -159,7 +230,7 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-gray-900 text-white px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 text-xs font-semibold animate-fadeIn border border-white/10">
-          <CheckCircle2 className="w-4 h-4 text-[#00C076]" />
+          <CheckCircle2 className="w-4 h-4 text-[#007F4E]" />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -174,9 +245,9 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all whitespace-nowrap select-none ${
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap select-none ${
                   isActive
-                    ? 'bg-[#00C076] text-white shadow-sm'
+                    ? 'bg-[#007F4E] text-white shadow-sm'
                     : 'bg-white hover:bg-gray-100 text-gray-700 border border-gray-200/60'
                 }`}
               >
@@ -190,18 +261,18 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
         <div className="flex items-center gap-2">
           {/* Search Box */}
           <div className="relative flex items-center min-w-[210px] sm:min-w-[240px]">
-            <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 pointer-events-none" />
+            <Search className="w-3.5 h-3.5 text-gray-500 absolute left-3 pointer-events-none" />
             <input
               type="text"
               placeholder="Search payout or merchant order ID"
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-200/80 hover:border-gray-300 focus:border-[#00C076] rounded-full text-[11.5px] text-gray-800 placeholder-gray-400 focus:outline-none transition shadow-2xs"
+              className="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-200/80 hover:border-gray-300 focus:border-[#007F4E] rounded-full text-xs text-gray-800 placeholder-gray-500 focus:outline-none transition shadow-2xs"
             />
             {localSearch && (
               <button
                 onClick={() => setLocalSearch('')}
-                className="absolute right-2.5 text-gray-400 hover:text-gray-600 text-xs"
+                className="absolute right-2.5 text-gray-500 hover:text-gray-600 text-xs"
               >
                 ×
               </button>
@@ -211,7 +282,7 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
           {/* Sort: Oldest First Toggle */}
           <button
             onClick={() => setSortOrder(sortOrder === 'oldest' ? 'newest' : 'oldest')}
-            className="flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 rounded-full text-[11.5px] font-medium transition shadow-2xs whitespace-nowrap select-none"
+            className="flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 rounded-full text-xs font-medium transition shadow-2xs whitespace-nowrap select-none"
           >
             {/* Sort icon matching screenshot */}
             <svg className="w-3.5 h-3.5 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -224,27 +295,73 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
         </div>
       </div>
 
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-[24px] max-w-md w-full p-5 sm:p-6 shadow-2xl border border-gray-100">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <h3 className="text-base font-bold text-gray-900">Create payout</h3>
+              <button onClick={() => setShowCreateModal(false)} className="text-gray-500 hover:text-gray-700"><X className="w-4 h-4" /></button>
+            </div>
+            <form onSubmit={handleCreatePayoutSubmit} className="pt-4 space-y-3 text-xs">
+              <div>
+                <label className="text-xs font-semibold text-gray-700 block mb-1">Asset and network</label>
+                <select value={createForm.assetNetwork} onChange={e => setCreateForm(f => ({ ...f, assetNetwork: e.target.value }))} className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs">
+                  <option value="USDT - TRON (TRC-20)">USDT - TRON (TRC-20)</option>
+                  <option value="USDC - Ethereum (ERC-20)">USDC - Ethereum (ERC-20)</option>
+                  <option value="USDT - Ethereum (ERC-20)">USDT - Ethereum (ERC-20)</option>
+                  <option value="USDT - BNB Chain (BEP-20)">USDT - BNB Chain (BEP-20)</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-700 block mb-1">Amount</label>
+                <input type="number" step="any" value={createForm.amount} onChange={e => setCreateForm(f => ({ ...f, amount: e.target.value }))} placeholder="0.00" className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-700 block mb-1">Destination address</label>
+                <input type="text" value={createForm.address} onChange={e => setCreateForm(f => ({ ...f, address: e.target.value }))} placeholder="Enter destination address" className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-700 block mb-1">Purpose</label>
+                <select value={createForm.purpose} onChange={e => setCreateForm(f => ({ ...f, purpose: e.target.value }))} className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs">
+                  <option value="CUSTOMER_WITHDRAWAL">Customer withdrawal</option>
+                  <option value="AFFILIATE_PAYOUT">Affiliate payout</option>
+                  <option value="VENDOR_EXPENSE">Vendor expense</option>
+                  <option value="TREASURY_REBALANCE">Treasury rebalance</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-700 block mb-1">2FA code</label>
+                <input type="text" inputMode="numeric" maxLength={6} value={createForm.twoFa} onChange={e => setCreateForm(f => ({ ...f, twoFa: e.target.value.replace(/\D/g, '').slice(0, 6) }))} placeholder="Enter 6-digit 2FA code" className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs" />
+              </div>
+              {createError && <div className="p-2 bg-red-50 text-red-700 rounded-lg">{createError}</div>}
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setShowCreateModal(false)} className="px-3.5 py-1.5 text-gray-600 hover:bg-gray-100 rounded-xl font-medium">Cancel</button>
+                <button type="submit" className="px-4 py-1.5 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-xl font-semibold">Create payout</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Payout Cards Stack */}
       <div className="space-y-2.5">
         {loading ? (
-          <div className="bg-white rounded-2xl p-8 text-center text-gray-400 text-xs border border-gray-100 shadow-sm">
+          <div className="bg-white rounded-2xl p-8 text-center text-gray-500 text-xs border border-gray-100 shadow-sm">
             Loading payouts from database...
           </div>
         ) : filteredPayouts.length === 0 ? (
-          <div className="bg-white rounded-2xl p-8 text-center text-gray-400 text-xs border border-gray-100 shadow-sm">
+          <div className="bg-white rounded-2xl p-8 text-center text-gray-500 text-xs border border-gray-100 shadow-sm">
             <p className="font-semibold text-sm text-gray-700">No payout records found</p>
-            <p className="text-xs text-gray-400 mt-1 mb-3">
-              Click <strong>"+ Create payout"</strong> above to request an outbound crypto transfer.
+            <p className="text-xs text-gray-500 mt-1 mb-3">
+              Click <strong>"+ Create payout"</strong> to create a payout request.
             </p>
-            {onOpenCreatePayout && (
-              <button
-                type="button"
-                onClick={onOpenCreatePayout}
-                className="px-4 py-2 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
-              >
-                + Create Payout
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setShowCreateModal(true)}
+              className="px-4 py-2 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+            >
+              + Create payout
+            </button>
           </div>
         ) : (
           filteredPayouts.map((item) => (
@@ -258,7 +375,7 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
                   <div className="text-[17px] sm:text-[18px] font-bold text-[#14171A] leading-tight">
                     {item.amount}
                   </div>
-                  <div className="flex items-center gap-2 mt-0.5 text-[11.5px] text-[#8E95A5]">
+                  <div className="flex items-center gap-2 mt-0.5 text-xs text-[#6B7280]">
                     <span>{item.network}</span>
                     <div className="flex items-center gap-1">
                       <span>{item.ref}</span>
@@ -267,7 +384,7 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
                         className="text-gray-300 hover:text-gray-600 transition"
                         title="Copy Reference"
                       >
-                        {copiedId === item.id ? <Check className="w-3 h-3 text-[#00C076]" /> : <Copy className="w-3 h-3" />}
+                        {copiedId === item.id ? <Check className="w-3 h-3 text-[#007F4E]" /> : <Copy className="w-3 h-3" />}
                       </button>
                     </div>
                   </div>
@@ -279,7 +396,7 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
                     <>
                       <button
                         onClick={() => setDeclineModalItem(item)}
-                        className="px-2.5 py-1 text-[11.5px] font-semibold text-[#DC2626] hover:text-red-700 hover:bg-red-50 rounded-lg transition"
+                        className="px-2.5 py-1 text-xs font-semibold text-[#DC2626] hover:text-red-700 hover:bg-red-50 rounded-lg transition"
                       >
                         Decline
                       </button>
@@ -287,15 +404,16 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
                         onClick={() => {
                           setApproveModalItem(item);
                           setApproval2Fa('');
+                          setSecondChecker('');
                           setApprovalError(null);
                         }}
-                        className="px-4 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11.5px] font-semibold transition shadow-xs select-none cursor-pointer"
+                        className="px-4 py-1.5 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-full text-xs font-semibold transition shadow-xs select-none cursor-pointer"
                       >
                         Approve
                       </button>
                     </>
                   ) : (
-                    <span className={`px-3 py-1 rounded-full text-[11px] font-semibold ${
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                       item.status === 'Completed'
                         ? 'bg-emerald-50 text-[#00824E]'
                         : item.status === 'In flight'
@@ -309,10 +427,10 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
               </div>
 
               {/* Card Bottom Row: 4 Diverse Metadata Columns */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-3 pt-3 border-t border-gray-100/70 text-[11.5px]">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-3 pt-3 border-t border-gray-100/70 text-xs">
                 {/* Column 1: Merchant Order ID */}
                 <div>
-                  <span className="text-[9.5px] font-semibold tracking-wider uppercase text-[#8E95A5] block">
+                  <span className="text-xs font-semibold tracking-wider uppercase text-[#6B7280] block">
                     MERCHANT ORDER ID
                   </span>
                   <span className="font-medium text-gray-800 mt-0.5 block truncate font-mono">
@@ -322,7 +440,7 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
 
                 {/* Column 2: Destination */}
                 <div>
-                  <span className="text-[9.5px] font-semibold tracking-wider uppercase text-[#8E95A5] block">
+                  <span className="text-xs font-semibold tracking-wider uppercase text-[#6B7280] block">
                     {item.destinationType}
                   </span>
                   <span className="font-mono text-gray-800 mt-0.5 block truncate">
@@ -332,7 +450,7 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
 
                 {/* Column 3: Requested By */}
                 <div>
-                  <span className="text-[9.5px] font-semibold tracking-wider uppercase text-[#8E95A5] block">
+                  <span className="text-xs font-semibold tracking-wider uppercase text-[#6B7280] block">
                     REQUESTED BY
                   </span>
                   <span className="font-medium text-gray-800 mt-0.5 block truncate">
@@ -342,11 +460,11 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
 
                 {/* Column 4: Compliance Checks */}
                 <div>
-                  <span className="text-[9.5px] font-semibold tracking-wider uppercase text-[#8E95A5] block">
+                  <span className="text-xs font-semibold tracking-wider uppercase text-[#6B7280] block">
                     COMPLIANCE CHECKS
                   </span>
                   <div className="flex items-center gap-1.5 mt-0.5 text-gray-700 font-medium">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-[#00C076] flex-shrink-0" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#007F4E] flex-shrink-0" />
                     <span className="truncate">{item.complianceText}</span>
                   </div>
                 </div>
@@ -380,7 +498,7 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
               </div>
               <div className="flex justify-between items-start border-b border-gray-200/60 pb-2">
                 <span className="text-gray-500">Destination</span>
-                <span className="font-mono text-gray-800 text-[11px] max-w-[200px] break-all text-right">{approveModalItem.fullAddress || approveModalItem.destinationAddress}</span>
+                <span className="font-mono text-gray-800 text-xs max-w-[200px] break-all text-right">{approveModalItem.fullAddress || approveModalItem.destinationAddress}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Requested By</span>
@@ -388,27 +506,43 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
               </div>
             </div>
 
-            {/* Maker-Checker Rule Notice if over $5,000 */}
             {(approveModalItem.numericAmount > 5000 || parseFloat(approveModalItem.amount.replace(/,/g, '')) > 5000) && (
-              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-[11px] leading-relaxed">
-                <span className="font-bold block mb-0.5">Dual-Control Policy Enforced</span>
-                This payout exceeds the $5,000.00 threshold. By approving, you sign as the secondary authorized checker.
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs leading-relaxed">
+                <span className="font-bold block mb-0.5">Second approval required</span>
+                This payout is over $5,000. Enter a 6-digit 2FA code and a second checker before approving.
               </div>
             )}
 
             {/* 2FA Input */}
-            <div className="mb-4">
-              <label className="text-[11.5px] font-semibold text-gray-800 block mb-1">
-                Security Officer 2FA Code
-              </label>
-              <input
-                type="text"
-                maxLength={6}
-                value={approval2Fa}
-                onChange={(e) => setApproval2Fa(e.target.value)}
-                placeholder="Enter 6-digit authenticator code (optional for demo)"
-                className="w-full p-2.5 bg-white border border-gray-200 rounded-xl font-mono text-xs text-gray-900 focus:outline-none focus:border-[#00C076] transition"
-              />
+            <div className="mb-4 space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-800 block mb-1">
+                  2FA code
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={approval2Fa}
+                  onChange={(e) => setApproval2Fa(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="Enter 6-digit 2FA code"
+                  className="w-full p-2.5 bg-white border border-gray-200 rounded-xl font-mono text-xs text-gray-900 focus:outline-none focus:border-[#007F4E] transition"
+                />
+              </div>
+              {(approveModalItem.numericAmount > 5000 || parseFloat(approveModalItem.amount.replace(/,/g, '')) > 5000) && (
+                <div>
+                  <label className="text-xs font-semibold text-gray-800 block mb-1">
+                    Second checker
+                  </label>
+                  <input
+                    type="text"
+                    value={secondChecker}
+                    onChange={(e) => setSecondChecker(e.target.value)}
+                    placeholder="Enter second checker name"
+                    className="w-full p-2.5 bg-white border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#007F4E] transition"
+                  />
+                </div>
+              )}
             </div>
 
             {approvalError && (
@@ -426,9 +560,9 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
               </button>
               <button
                 onClick={handleConfirmApprove}
-                className="px-4 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl font-semibold shadow-xs cursor-pointer"
+                className="px-4 py-1.5 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-xl font-semibold shadow-xs cursor-pointer"
               >
-                Authorize & Dispatch
+                Approve payout
               </button>
             </div>
           </div>
@@ -467,18 +601,18 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
           <div className="bg-white rounded-[24px] max-w-md w-full p-5 sm:p-6 shadow-2xl border border-gray-100">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2">
-                <Upload className="w-4 h-4 text-[#00C076]" />
+                <Upload className="w-4 h-4 text-[#007F4E]" />
                 <h3 className="text-sm font-bold text-gray-900">Import CSV Batch Payouts</h3>
               </div>
-              <button onClick={() => setShowBatchModal(false)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setShowBatchModal(false)} className="text-gray-500 hover:text-gray-600">
                 <X className="w-4 h-4" />
               </button>
             </div>
             <div className="py-4 space-y-3 text-xs">
-              <div className="border-2 border-dashed border-gray-200 hover:border-[#00C076] rounded-2xl p-6 text-center cursor-pointer transition">
-                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+              <div className="border-2 border-dashed border-gray-200 hover:border-[#007F4E] rounded-2xl p-6 text-center cursor-pointer transition">
+                <Upload className="w-8 h-8 text-gray-500 mx-auto mb-2" />
                 <p className="font-semibold text-gray-800">Drop your payouts .csv file here</p>
-                <p className="text-[11px] text-gray-400 mt-1">Columns: merchant_order_id, network, amount, address</p>
+                <p className="text-xs text-gray-500 mt-1">Columns: merchant_order_id, network, amount, address</p>
               </div>
             </div>
             <div className="pt-3 border-t border-gray-100 flex justify-end gap-2 text-xs">
@@ -488,10 +622,10 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
               <button
                 onClick={() => {
                   setShowBatchModal(false);
-                  setToastMessage("Batch of 14 payouts queued for compliance check!");
+                  setToastMessage("Batch of 14 payouts queued for compliance check.");
                   setTimeout(() => setToastMessage(null), 3500);
                 }}
-                className="px-4 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl font-semibold shadow-xs"
+                className="px-4 py-1.5 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-xl font-semibold shadow-xs"
               >
                 Upload & Process
               </button>

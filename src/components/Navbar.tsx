@@ -16,6 +16,7 @@ import {
 import { CopyMLogo } from './Graphics';
 import { AMLRiskBadge } from './AMLRiskBadge';
 import { PortalMode } from '../types';
+import { MERCHANT, PLATFORM } from '../utils/sharedMockStore';
 
 export interface NavbarProps {
   searchQuery: string;
@@ -57,6 +58,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotificationMenu, setShowNotificationMenu] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [sessionSeconds, setSessionSeconds] = useState(0);
 
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -84,9 +86,21 @@ export const Navbar: React.FC<NavbarProps> = ({
     };
   }, []);
 
-  const fullDisplayName = currentUser?.name || (portalMode === 'admin' ? 'Sarah Chen (Platform SuperAdmin)' : 'Nora Vale');
-  const displayName = fullDisplayName.trim().split(' ')[0] || fullDisplayName;
-  const displayEmail = currentUser?.email || (portalMode === 'admin' ? 'admin@copym.com' : 'nora@apexforex.example.com');
+  useEffect(() => {
+    if (portalMode !== 'admin') return;
+    const readSession = () => {
+      const startedAt = Number(localStorage.getItem('copym_admin_session_started_at') || Date.now());
+      setSessionSeconds(Math.max(0, Math.floor((Date.now() - startedAt) / 1000)));
+    };
+    readSession();
+    const timer = window.setInterval(readSession, 1000);
+    return () => window.clearInterval(timer);
+  }, [portalMode]);
+
+  const fullDisplayName = currentUser?.name || (portalMode === 'admin' ? PLATFORM.superAdmin : MERCHANT.signedInUser);
+  const displayName = portalMode === 'admin' ? fullDisplayName : (fullDisplayName.trim().split(' ')[0] || fullDisplayName);
+  const displayEmail = currentUser?.email || (portalMode === 'admin' ? `operator.am@${PLATFORM.domain}` : `nora@${MERCHANT.domain}`);
+  const sessionLabel = `${String(Math.floor(sessionSeconds / 60)).padStart(2, '0')}:${String(sessionSeconds % 60).padStart(2, '0')}`;
 
   return (
     <header className="w-full bg-white px-3 sm:px-6 lg:px-6 py-2.5 flex items-center justify-between border-b border-gray-100/90 sticky top-0 z-40">
@@ -106,16 +120,16 @@ export const Navbar: React.FC<NavbarProps> = ({
           <CopyMLogo className="w-6 h-6 sm:w-7 sm:h-7" />
           <div className="flex items-baseline text-[18px] sm:text-[20px] tracking-tight">
             <span className="font-bold text-[#14171A]">CopyM</span>
-            <span className="font-bold text-[#00C076] ml-1">Pay</span>
+            <span className="font-bold text-[#007F4E] ml-1">Pay</span>
           </div>
         </div>
 
         {/* Environment Mode Switcher (Sandbox vs Live) - Merchant Only, or Admin Operator Pill */}
         {portalMode === 'merchant' ? (
-          <div className="hidden md:flex items-center bg-gray-100/90 p-0.5 rounded-full border border-gray-200/70 select-none text-[11px] font-semibold ml-1 sm:ml-2">
+          <div className="flex items-center bg-gray-100/90 p-0.5 rounded-full border border-gray-200/70 select-none text-xs sm:text-xs font-semibold ml-1 sm:ml-2">
             <button
               onClick={() => onToggleEnvironment?.(false)}
-              className={`px-2.5 py-1 rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-1.5 sm:px-2.5 py-1 rounded-full transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer ${
                 !isLiveEnvironment
                   ? 'bg-amber-100 text-amber-900 border border-amber-300/80 shadow-2xs font-bold'
                   : 'text-gray-500 hover:text-gray-900'
@@ -127,9 +141,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
             <button
               onClick={() => onToggleEnvironment?.(true)}
-              className={`px-2.5 py-1 rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-1.5 sm:px-2.5 py-1 rounded-full transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer ${
                 isLiveEnvironment
-                  ? 'bg-[#00C076] text-white shadow-2xs font-bold'
+                  ? 'bg-[#007F4E] text-white shadow-2xs font-bold'
                   : 'text-gray-500 hover:text-gray-900'
               }`}
               title={kybStatus === 'APPROVED' ? 'Live Production Mode' : 'Live Mode (Requires Corporate KYB Verification)'}
@@ -141,20 +155,23 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
               <span>Live</span>
               {kybStatus !== 'APPROVED' && (
-                <span className="text-[9px] px-1 py-0.2 bg-amber-200 text-amber-900 rounded font-bold">
+                <span className="text-xs px-1 py-0.2 bg-amber-200 text-amber-900 rounded font-bold">
                   LOCK
                 </span>
               )}
             </button>
           </div>
         ) : (
-          <div className="hidden md:flex items-center gap-2 ml-2">
-            <span className="px-2.5 py-1 rounded-full bg-slate-900 text-white text-[11px] font-bold tracking-wide flex items-center gap-1.5 border border-slate-700">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00C076] animate-pulse" />
-              <span>OPS CONSOLE · PRODUCTION</span>
+          <div className="flex items-center gap-1 sm:gap-2 ml-1 sm:ml-2">
+            <span className="px-1.5 sm:px-2.5 py-1 rounded-full bg-slate-900 text-white text-xs sm:text-xs font-bold tracking-wide flex items-center gap-1 sm:gap-1.5 border border-slate-700">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#007F4E] animate-pulse" />
+              <span>OPS CONSOLE</span>
             </span>
-            <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-[#007F4E] text-[11px] font-bold border border-emerald-200">
-              Role: SuperAdmin
+            <span className="hidden md:inline px-2.5 py-1 rounded-full bg-emerald-50 text-[#007F4E] text-xs font-bold border border-emerald-200">
+              {fullDisplayName} · SuperAdmin
+            </span>
+            <span className="px-1.5 sm:px-2.5 py-1 rounded-full bg-emerald-50 text-[#007F4E] text-xs sm:text-xs font-bold border border-emerald-200">
+              {isLiveEnvironment ? 'Live' : 'Sandbox'} · {sessionLabel}
             </span>
           </div>
         )}
@@ -165,18 +182,18 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Search Bar (Desktop / Tablet) */}
         <div className="w-40 sm:w-48 md:w-56 lg:w-64 hidden md:block">
           <div className="relative flex items-center">
-            <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3.5 pointer-events-none" />
+            <Search className="w-3.5 h-3.5 text-[#6B7280] absolute left-3.5 pointer-events-none" />
             <input
               type="text"
               placeholder={portalMode === 'admin' ? "Search alerts, KYB, sweeps..." : "Search..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-7 py-1.5 bg-[#EAEBEF] hover:bg-[#E4E6EA] focus:bg-white text-[13px] text-gray-800 placeholder-gray-400 rounded-full border border-transparent focus:border-[#00C076] focus:outline-none transition-all duration-200"
+              className="w-full pl-9 pr-7 py-1.5 bg-[#EAEBEF] hover:bg-[#E4E6EA] focus:bg-white text-[13px] text-gray-800 placeholder-[#6B7280] rounded-full border border-transparent focus:border-[#007F4E] focus:outline-none transition-all duration-200"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 text-xs text-gray-400 hover:text-gray-600 bg-gray-200 hover:bg-gray-300 rounded-full w-4 h-4 flex items-center justify-center cursor-pointer"
+                className="absolute right-2.5 text-xs text-[#6B7280] hover:text-gray-600 bg-gray-200 hover:bg-gray-300 rounded-full w-4 h-4 flex items-center justify-center cursor-pointer"
               >
                 ×
               </button>
@@ -202,7 +219,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               title="Refresh Transactions"
               className="p-1.5 rounded-full hover:bg-white text-gray-600 hover:text-gray-900 transition-all shadow-none hover:shadow-sm cursor-pointer"
             >
-              <RotateCcw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#00C076]' : ''}`} />
+              <RotateCcw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#007F4E]' : ''}`} />
             </button>
 
             {/* Play: Live Feed Simulator */}
@@ -211,12 +228,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               title={isLiveSimulating ? "Live Streaming Active" : "Simulate Incoming Payments"}
               className={`p-1.5 rounded-full transition-all flex items-center gap-1 cursor-pointer ${
                 isLiveSimulating
-                  ? 'bg-[#00C076] text-white shadow-sm'
-                  : 'hover:bg-white text-gray-600 hover:text-gray-900'
+                ? 'bg-[#007F4E] text-white shadow-sm'
+                : 'hover:bg-white text-gray-600 hover:text-gray-900'
               }`}
             >
               <Play className={`w-3 h-3 ${isLiveSimulating ? 'fill-white' : ''}`} />
-              {isLiveSimulating && <span className="text-[9px] font-semibold pr-1">LIVE</span>}
+              {isLiveSimulating && <span className="text-xs font-semibold pr-1">LIVE</span>}
             </button>
 
             {/* Key: Developer API Keys */}
@@ -258,19 +275,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             title="Notifications"
           >
             <Bell className="w-3.5 h-3.5 text-gray-700" />
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-[#00C076] rounded-full ring-2 ring-white"></span>
+            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-[#007F4E] rounded-full ring-2 ring-white"></span>
           </button>
 
           {showNotificationMenu && (
             <div className="absolute right-0 mt-2 w-72 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-xl border border-gray-100 py-3 z-50 animate-fadeIn">
               <div className="px-4 pb-2 border-b border-gray-100 flex items-center justify-between">
                 <span className="font-semibold text-xs text-gray-700">Notifications</span>
-                <span className="text-[11px] text-[#00C076] font-medium cursor-pointer">Mark read</span>
+                <span className="text-xs text-[#007F4E] font-medium cursor-pointer">Mark read</span>
               </div>
               <div className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-xs">
                 <p className="font-medium text-gray-900">Deposit dep_8Hq2..f31 Credited</p>
-                <p className="text-gray-500 text-[11px]">2,500.00 USDT received on TRON</p>
-                <span className="text-[10px] text-gray-400">2 min ago</span>
+                <p className="text-gray-500 text-xs">2,500.00 USDT received on TRON</p>
+                <span className="text-xs text-[#6B7280]">2 min ago</span>
               </div>
             </div>
           )}
@@ -284,7 +301,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               setShowProfileMenu(next);
               if (next) setShowNotificationMenu(false);
             }}
-            className="flex items-center gap-1.5 sm:gap-2 text-white pl-1 pr-2 sm:pr-2.5 py-1 rounded-full shadow-sm transition-all select-none bg-[#00C076] hover:bg-[#00AA67] cursor-pointer"
+            className="flex items-center gap-1.5 sm:gap-2 text-white pl-1 pr-2 sm:pr-2.5 py-1 rounded-full shadow-sm transition-all select-none bg-[#007F4E] hover:bg-[#00663F] cursor-pointer"
           >
             {/* Dark circular avatar */}
             <div className="w-6 h-6 rounded-full bg-[#111827] flex items-center justify-center overflow-hidden border border-white/20 flex-shrink-0">
@@ -293,10 +310,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Profile info */}
             <div className="text-left flex flex-col leading-none">
-              <span className="text-[11.5px] font-bold text-white tracking-wide truncate max-w-[90px] sm:max-w-[120px]">
+              <span className="text-xs font-bold text-white tracking-wide truncate max-w-[90px] sm:max-w-[120px]">
                 {displayName}
               </span>
-              <span className="text-[9.5px] text-emerald-100/90 font-medium tracking-normal mt-0.5 hidden xs:inline truncate max-w-[120px]">
+              <span className="text-xs text-emerald-100/90 font-medium tracking-normal mt-0.5 hidden xs:inline truncate max-w-[120px]">
                 {portalMode === 'admin' ? 'SuperAdmin' : displayEmail}
               </span>
             </div>
@@ -309,8 +326,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-fadeIn">
               <div className="px-4 py-2 border-b border-gray-100">
                 <p className="text-xs font-semibold text-gray-900 truncate">{fullDisplayName}</p>
-                <p className="text-[11px] text-gray-500 truncate">{displayEmail}</p>
-                <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700">
+                <p className="text-xs text-gray-500 truncate">{displayEmail}</p>
+                <span className="inline-block mt-1 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-slate-100 text-slate-700">
                   {portalMode === 'admin' ? 'Platform SuperAdmin' : 'Merchant Owner'}
                 </span>
               </div>
@@ -319,14 +336,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onClick={() => { setShowProfileMenu(false); onOpenSecurityModal(); }}
                 className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
               >
-                <ShieldCheck className="w-3.5 h-3.5 text-gray-400" />
+                <ShieldCheck className="w-3.5 h-3.5 text-[#6B7280]" />
                 Security & 2FA
               </button>
               <button
                 onClick={() => { setShowProfileMenu(false); onOpenDevModal(); }}
                 className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
               >
-                <Key className="w-3.5 h-3.5 text-gray-400" />
+                <Key className="w-3.5 h-3.5 text-[#6B7280]" />
                 API Credentials
               </button>
               <div className="border-t border-gray-100 my-1"></div>
@@ -349,14 +366,14 @@ export const Navbar: React.FC<NavbarProps> = ({
       {mobileSearchOpen && (
         <div className="absolute top-full left-0 w-full bg-white px-4 py-2.5 border-b border-gray-200 md:hidden z-30 shadow-md">
           <div className="relative flex items-center">
-            <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3.5 pointer-events-none" />
+            <Search className="w-3.5 h-3.5 text-[#6B7280] absolute left-3.5 pointer-events-none" />
             <input
               type="text"
               autoFocus
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 bg-[#EAEBEF] text-xs text-gray-800 rounded-full border border-transparent focus:border-[#00C076] focus:outline-none"
+              className="w-full pl-9 pr-8 py-2 bg-[#EAEBEF] text-xs text-gray-800 rounded-full border border-transparent focus:border-[#007F4E] focus:outline-none"
             />
             <button
               onClick={() => {

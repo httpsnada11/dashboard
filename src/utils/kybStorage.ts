@@ -1,7 +1,5 @@
 import { KybApplicationData, MerchantKybLifecycleStatus, KybDocumentItem } from '../types';
-
-const STORAGE_KEY = 'copym_merchant_kyb_application';
-const EVENT_NAME = 'copym_kyb_state_change';
+import { createStoredState, MERCHANT } from './sharedMockStore';
 
 const DEFAULT_DOCUMENTS: KybDocumentItem[] = [
   {
@@ -69,11 +67,11 @@ export const INITIAL_KYB_DATA: KybApplicationData = {
   reviewedAt: undefined,
   complianceFeedback: undefined,
   company: {
-    legalName: 'Apex Liquidity Services BVI Corp',
+    legalName: MERCHANT.legalName,
     registrationNumber: 'BVI-771920-REG',
     jurisdiction: 'British Virgin Islands (BVI FSC)',
     operatingAddress: 'Commerce House, Wickhams Cay 1, Road Town, Tortola VG1110',
-    websiteUrl: 'https://apexforex.example.com'
+    websiteUrl: `https://${MERCHANT.domain}`
   },
   profile: {
     industry: 'Forex Broker & Liquidity Provider',
@@ -108,18 +106,14 @@ export const INITIAL_KYB_DATA: KybApplicationData = {
   authorizedRepresentativeConfirmed: true
 };
 
+const kybStore = createStoredState<KybApplicationData>(
+  'copym_merchant_kyb_application',
+  INITIAL_KYB_DATA,
+  'copym_kyb_state_change'
+);
+
 export function getKybApplication(): KybApplicationData {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      // Default initial state: DRAFT
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_KYB_DATA));
-      return INITIAL_KYB_DATA;
-    }
-    return JSON.parse(raw);
-  } catch {
-    return INITIAL_KYB_DATA;
-  }
+  return kybStore.read();
 }
 
 export function saveKybDraft(updates: Partial<KybApplicationData>): KybApplicationData {
@@ -133,14 +127,7 @@ export function saveKybDraft(updates: Partial<KybApplicationData>): KybApplicati
     documents: updates.documents || current.documents
   };
 
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: next }));
-  } catch (err) {
-    console.warn('Failed to save KYB draft to localStorage', err);
-  }
-
-  return next;
+  return kybStore.write(next);
 }
 
 export function submitKybApplication(updates?: Partial<KybApplicationData>): KybApplicationData {
@@ -153,14 +140,7 @@ export function submitKybApplication(updates?: Partial<KybApplicationData>): Kyb
     currentStep: 5
   };
 
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: next }));
-  } catch (err) {
-    console.warn('Failed to submit KYB application', err);
-  }
-
-  return next;
+  return kybStore.write(next);
 }
 
 export function setKybStatus(status: MerchantKybLifecycleStatus, feedback?: string): KybApplicationData {
@@ -172,12 +152,10 @@ export function setKybStatus(status: MerchantKybLifecycleStatus, feedback?: stri
     reviewedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   };
 
-  // If approved, update documents to verified
   if (status === 'APPROVED') {
     next.documents = next.documents.map(d => ({ ...d, status: 'VERIFIED', rejectionReason: undefined }));
   }
 
-  // If action required, ensure proof of address is flagged
   if (status === 'ACTION_REQUIRED') {
     next.complianceFeedback = feedback || 'The proof of address uploaded was older than 90 days. Please upload a recent bank statement or utility bill.';
     next.documents = next.documents.map(d =>
@@ -187,43 +165,11 @@ export function setKybStatus(status: MerchantKybLifecycleStatus, feedback?: stri
     );
   }
 
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: next }));
-  } catch (err) {
-    console.warn('Failed to set KYB status', err);
-  }
-
-  return next;
+  return kybStore.write(next);
 }
 
 export function subscribeKybStatus(callback: (data: KybApplicationData) => void): () => void {
-  const handleCustomEvent = (e: Event) => {
-    const custom = e as CustomEvent<KybApplicationData>;
-    if (custom.detail) {
-      callback(custom.detail);
-    } else {
-      callback(getKybApplication());
-    }
-  };
-
-  const handleStorageEvent = (e: StorageEvent) => {
-    if (e.key === STORAGE_KEY && e.newValue) {
-      try {
-        callback(JSON.parse(e.newValue));
-      } catch {
-        callback(getKybApplication());
-      }
-    }
-  };
-
-  window.addEventListener(EVENT_NAME, handleCustomEvent);
-  window.addEventListener('storage', handleStorageEvent);
-
-  return () => {
-    window.removeEventListener(EVENT_NAME, handleCustomEvent);
-    window.removeEventListener('storage', handleStorageEvent);
-  };
+  return kybStore.subscribe(callback);
 }
 
 export function getKybStatusLabel(status: MerchantKybLifecycleStatus): string {

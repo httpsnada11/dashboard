@@ -13,7 +13,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ title, category, action 
         <h1 className="text-[20px] xs:text-[24px] sm:text-[28px] lg:text-[32px] font-bold text-[#14171A] tracking-tight leading-tight break-words">
           {title}
         </h1>
-        <p className="text-[10.5px] sm:text-[11.5px] text-[#788292] mt-0.5 font-normal truncate">
+        <p className="text-xs sm:text-xs text-[#788292] mt-0.5 font-normal truncate">
           {category} &gt; {title}
         </p>
       </div>

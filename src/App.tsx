@@ -41,6 +41,7 @@ import {
 
 import { Transaction, PayoutRecord, PortalMode, AdminTabId, MerchantKybLifecycleStatus } from './types';
 import { getKybApplication, subscribeKybStatus } from './utils/kybStorage';
+import { MERCHANT, toDepositRef, toPayoutRef } from './utils/sharedMockStore';
 import { api } from './services/api';
 
 // Uniform Page Metadata matching the exact screenshot structure
@@ -109,7 +110,7 @@ export function App() {
       if (isAdm) {
         const savedName = localStorage.getItem('copym_admin_name');
         const savedEmail = localStorage.getItem('copym_admin_email');
-        return { name: savedName || 'Sarah Chen (Platform SuperAdmin)', email: savedEmail || 'admin@copym.com' };
+        return { name: savedName || 'Platform Operator AM (SuperAdmin)', email: savedEmail || 'admin@copym.example' };
       }
       const savedName = localStorage.getItem('copym_merchant_name');
       const savedEmail = localStorage.getItem('copym_merchant_email');
@@ -142,17 +143,22 @@ export function App() {
   const handleSuccessLogin = (merchantInfo?: { name: string; email: string }) => {
     const defaultUser =
       portalMode === 'admin'
-        ? { name: 'Sarah Chen (Platform SuperAdmin)', email: 'admin@copym.com' }
+        ? { name: 'Platform Operator AM (SuperAdmin)', email: 'admin@copym.example' }
         : { name: 'Nora Vale', email: 'nora@apexforex.example.com' };
     const user = merchantInfo || defaultUser;
     setCurrentUser(user);
     try {
       if (portalMode === 'admin') {
+        localStorage.removeItem('copym_merchant_session');
         localStorage.setItem('copym_admin_session', 'true');
+        localStorage.setItem('copym_session_role', 'admin');
+        localStorage.setItem('copym_admin_session_started_at', Date.now().toString());
         localStorage.setItem('copym_admin_name', user.name);
         localStorage.setItem('copym_admin_email', user.email);
       } else {
+        localStorage.removeItem('copym_admin_session');
         localStorage.setItem('copym_merchant_session', 'true');
+        localStorage.setItem('copym_session_role', 'merchant');
         localStorage.setItem('copym_merchant_name', user.name);
         localStorage.setItem('copym_merchant_email', user.email);
       }
@@ -166,21 +172,41 @@ export function App() {
     try {
       if (portalMode === 'admin') {
         await api.adminLogout().catch(() => {});
-        localStorage.removeItem('copym_admin_session');
-        localStorage.removeItem('copym_admin_name');
-        localStorage.removeItem('copym_admin_email');
       } else {
         await api.logout().catch(() => {});
-        localStorage.removeItem('copym_merchant_session');
-        localStorage.removeItem('copym_merchant_name');
-        localStorage.removeItem('copym_merchant_email');
-        localStorage.removeItem('copym_auth_session');
       }
+      localStorage.removeItem('copym_admin_session');
+      localStorage.removeItem('copym_admin_name');
+      localStorage.removeItem('copym_admin_email');
+      localStorage.removeItem('copym_admin_session_started_at');
+      localStorage.removeItem('copym_merchant_session');
+      localStorage.removeItem('copym_merchant_name');
+      localStorage.removeItem('copym_merchant_email');
+      localStorage.removeItem('copym_auth_session');
+      localStorage.removeItem('copym_session_role');
     } catch {
       // ignore
     }
     setIsAuthenticated(false);
   };
+
+  useEffect(() => {
+    try {
+      const isAdminPortal = portalMode === 'admin';
+      const sessionKey = isAdminPortal ? 'copym_admin_session' : 'copym_merchant_session';
+      setIsAuthenticated(localStorage.getItem(sessionKey) === 'true');
+      const savedName = localStorage.getItem(isAdminPortal ? 'copym_admin_name' : 'copym_merchant_name');
+      const savedEmail = localStorage.getItem(isAdminPortal ? 'copym_admin_email' : 'copym_merchant_email');
+      if (savedName) {
+        setCurrentUser({
+          name: savedName,
+          email: savedEmail || (isAdminPortal ? 'admin@copym.example' : 'nora@apexforex.example.com'),
+        });
+      }
+    } catch {
+      setIsAuthenticated(false);
+    }
+  }, [portalMode]);
 
   const [activeTab, setActiveTab] = useState<string>(() => {
     try {
@@ -254,11 +280,11 @@ export function App() {
         .then((res: any) => {
           const list = res?.data || res?.orders || (Array.isArray(res) ? res : []);
           if (Array.isArray(list) && list.length > 0) {
-            const mapped: Transaction[] = list.map((item: any) => ({
+            const mapped: Transaction[] = list.map((item: any, index: number) => ({
               id: item.order_id || item.id,
               type: 'Deposit',
-              reference: item.order_id ? item.order_id.slice(0, 12) : 'ord_live',
-              fullRef: item.order_id || item.id,
+              reference: toDepositRef(item.order_id || item.id, index),
+              fullRef: toDepositRef(item.order_id || item.id, index),
               customer: item.merchant_order_id || item.order_id || 'ord_live',
               network: `${item.currency || 'USDT'} · ${item.network || 'TRON'}`,
               amount: `+ ${item.amount}`,
@@ -358,8 +384,15 @@ export function App() {
           window.history.pushState(null, '', target);
         }
       } else {
-        // Merchant Portal URL synchronization with pushState
         const currentPath = window.location.pathname.toLowerCase();
+        const isPublicRoute =
+          currentPath.startsWith('/simulator') ||
+          currentPath.startsWith('/cashier-simulator') ||
+          currentPath.startsWith('/scanner') ||
+          currentPath.startsWith('/radial-scanner') ||
+          currentPath.startsWith('/checkout') ||
+          currentPath.startsWith('/c/');
+        if (isPublicRoute) return;
         const target = activeTab === 'dashboard' ? '/' : `/${activeTab}`;
         if (window.location.pathname !== target && currentPath !== `/merchant/${activeTab}`) {
           window.history.pushState(null, '', target);
@@ -450,8 +483,8 @@ export function App() {
     const completeTx: Transaction = {
       id: 'tx_' + Date.now(),
       type: newDeposit.type || 'Deposit',
-      reference: newDeposit.reference || 'dep_manual',
-      fullRef: newDeposit.fullRef || newDeposit.reference || 'dep_manual',
+      reference: toDepositRef(newDeposit.reference, activities.length),
+      fullRef: toDepositRef(newDeposit.fullRef || newDeposit.reference, activities.length),
       customer: newDeposit.customer || 'cust_anonymous',
       network: newDeposit.network || 'USDT · TRON',
       amount: newDeposit.amount || '+ 0.00',
@@ -495,8 +528,8 @@ export function App() {
     setActivities(prev => [{
       id: newPayoutItem.id,
       type: 'Payout',
-      reference: newPayoutItem.ref,
-      fullRef: newPayoutItem.fullRef,
+      reference: toPayoutRef(newPayoutItem.ref),
+      fullRef: toPayoutRef(newPayoutItem.fullRef),
       customer: newPayoutItem.customer,
       network: newPayoutItem.network,
       amount: `- ${newPayoutItem.amount}`,
@@ -525,8 +558,8 @@ export function App() {
     setActivities(prev => [{
       id: 'tx_swap_' + Date.now(),
       type: 'Swap',
-      reference: 'swp_' + Math.random().toString(36).substring(2, 6),
-      fullRef: 'swp_conversion_internal',
+      reference: `CNV-${Date.now().toString().slice(-4)}`,
+      fullRef: `CNV-${Date.now().toString().slice(-4)}`,
       customer: 'Self Treasury',
       network: 'USDT -> USDC',
       amount: `~ $${toAmount.toLocaleString()}`,
@@ -550,8 +583,8 @@ export function App() {
       const incomingTx: Transaction = {
         id: 'tx_sim_' + Date.now(),
         type: 'Deposit',
-        reference: `dep_${refSuffix}..live`,
-        fullRef: `dep_${refSuffix}_live_generated_event`,
+        reference: `DEP-${refSuffix.toUpperCase()}`,
+        fullRef: `DEP-${refSuffix.toUpperCase()}`,
         customer: `cust_${custNum}`,
         network: chosenNet,
         amount: `+ ${randAmt.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
@@ -568,6 +601,11 @@ export function App() {
     return () => clearInterval(interval);
   }, [isLiveSimulating]);
 
+  const criticalKytCount = activities.filter((item) => /critical|kyt review/i.test(item.status)).length;
+  const pendingKybCount = kybStatus === 'UNDER_REVIEW' || kybStatus === 'ACTION_REQUIRED' ? 1 : 0;
+  const coolingAddressCount = Number(localStorage.getItem('copym_cooling_address_count') || 0) || 0;
+  const exceptionCount = activities.filter((item) => /exception/i.test(item.status)).length;
+
   // Context-Aware Action Button for Uniform Page Header
   const renderHeaderAction = () => {
     // Admin Operations Actions
@@ -576,7 +614,7 @@ export function App() {
         return (
           <div className="flex items-center gap-2">
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-600 border border-red-200">
-              3 Critical KYT Flags
+              {criticalKytCount} Critical KYT Flags
             </span>
           </div>
         );
@@ -585,7 +623,7 @@ export function App() {
         return (
           <div className="flex items-center gap-2">
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-              2 KYB Reviews Pending
+              {pendingKybCount} KYB Reviews Pending
             </span>
           </div>
         );
@@ -594,7 +632,7 @@ export function App() {
         return (
           <div className="flex items-center gap-2">
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200/80">
-              2 Addresses in 24h Cooling
+              {coolingAddressCount} Addresses in 24h Cooling
             </span>
           </div>
         );
@@ -603,7 +641,7 @@ export function App() {
         return (
           <div className="flex items-center gap-2">
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-600 border border-blue-200">
-              Hot-Vault Sweeps Active
+              {exceptionCount} Open Exceptions
             </span>
           </div>
         );
@@ -613,7 +651,7 @@ export function App() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsPayoutModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11.5px] sm:text-[12px] font-semibold shadow-sm transition-all select-none"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-full text-xs sm:text-[12px] font-semibold shadow-sm transition-all select-none"
             >
               <span className="text-sm font-bold leading-none">+</span>
               <span>Submit Payout for Approval</span>
@@ -635,7 +673,7 @@ export function App() {
             setDepositModalInitial(null);
             setIsDepositModalOpen(true);
           }}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11.5px] sm:text-[12px] font-semibold shadow-sm transition-all select-none"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-full text-xs sm:text-[12px] font-semibold shadow-sm transition-all select-none"
         >
           <span className="text-sm font-bold leading-none">+</span>
           <span>New deposit flow</span>
@@ -648,14 +686,14 @@ export function App() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsPayoutModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 rounded-full text-[11.5px] sm:text-[12px] font-medium shadow-2xs transition-all select-none"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 rounded-full text-xs sm:text-[12px] font-medium shadow-2xs transition-all select-none"
           >
             <Upload className="w-3.5 h-3.5 text-gray-600" />
             <span>Import CSV batch</span>
           </button>
           <button
             onClick={() => setIsPayoutModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11.5px] sm:text-[12px] font-semibold shadow-sm transition-all select-none"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-full text-xs sm:text-[12px] font-semibold shadow-sm transition-all select-none"
           >
             <span className="text-sm font-bold leading-none">+</span>
             <span>Create payout</span>
@@ -681,21 +719,21 @@ export function App() {
             href="/simulator.html"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-full text-[11px] sm:text-[11.5px] font-semibold shadow-2xs transition select-none"
+            className="flex items-center gap-1.5 px-3 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-full text-xs sm:text-xs font-semibold shadow-2xs transition select-none"
           >
-            <Play className="w-3.5 h-3.5 text-[#00C076] fill-[#00C076]" />
+            <Play className="w-3.5 h-3.5 text-[#007F4E] fill-[#007F4E]" />
             <span>Simulate Cashier (HPP / H2H)</span>
           </a>
           <button
             onClick={() => setIsDevModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 rounded-full text-[11px] sm:text-[11.5px] font-medium shadow-2xs transition select-none"
+            className="flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 rounded-full text-xs sm:text-xs font-medium shadow-2xs transition select-none"
           >
             <BookOpen className="w-3.5 h-3.5 text-gray-600" />
             <span>API documentation</span>
           </button>
           <button
             onClick={() => setIsCreateKeyOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11.5px] sm:text-[12px] font-semibold shadow-xs transition select-none"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-full text-xs sm:text-[12px] font-semibold shadow-xs transition select-none"
           >
             <span className="text-sm font-bold leading-none">+</span>
             <span>Create key</span>
@@ -709,13 +747,13 @@ export function App() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsRolesOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 rounded-full text-[11.5px] sm:text-[12px] font-medium shadow-2xs transition-all select-none"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 rounded-full text-xs sm:text-[12px] font-medium shadow-2xs transition-all select-none"
           >
             <span>Review roles</span>
           </button>
           <button
             onClick={() => setIsInviteOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11.5px] sm:text-[12px] font-semibold shadow-sm transition-all select-none"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-full text-xs sm:text-[12px] font-semibold shadow-sm transition-all select-none"
           >
             <span className="text-sm font-bold leading-none">+</span>
             <span>Invite member</span>
@@ -763,7 +801,7 @@ export function App() {
     return (
       <HostedCheckoutPage
         invoiceId={invoiceId}
-        merchantName="Apex Forex Global Ltd"
+        merchantName={MERCHANT.name}
         orderReference="ORD-948271"
         amount="2,500.00"
       />
@@ -781,7 +819,7 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen lg:h-screen bg-white flex flex-col font-sans selection:bg-[#00C076] selection:text-white lg:overflow-hidden">
+    <div className="min-h-screen lg:h-screen bg-white flex flex-col font-sans selection:bg-[#007F4E] selection:text-white lg:overflow-hidden">
       {/* Top Header / Navigation Bar */}
       <Navbar
         searchQuery={searchQuery}
@@ -890,8 +928,8 @@ export function App() {
                   onSelectDeposit={(dep) => setSelectedTx({
                     id: dep.id,
                     type: 'Deposit',
-                    reference: dep.depositId,
-                    fullRef: dep.refId,
+                    reference: toDepositRef(dep.id),
+                    fullRef: toDepositRef(dep.id),
                     customer: dep.customer,
                     network: dep.assetChain,
                     amount: dep.received !== '—' ? `+ ${dep.received}` : `(Expected ${dep.expected})`,
@@ -911,7 +949,6 @@ export function App() {
                   onOpenCreatePayout={() => setIsPayoutModalOpen(true)}
                 />
               ) : activeTab === 'customers' ? (
-                /* FE-07: Address Book & Allowlisted Destinations with Cooling Period */
                 <CustomersPage
                   onOpenPayoutWithDestination={() => {
                     setIsPayoutModalOpen(true);
@@ -962,7 +999,7 @@ export function App() {
         onSimulateWebhook={() => {
           handleAddDeposit({
             type: 'Deposit',
-            reference: 'dep_webhook..ok1',
+            reference: 'DEP-WEBHOOK',
             customer: 'cust_webhook',
             network: 'USDT · TRON',
             amount: '+ 500.00',

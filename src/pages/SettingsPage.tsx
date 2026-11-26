@@ -12,6 +12,7 @@ import {
   ExternalLink,
   Users
 } from 'lucide-react';
+import { Toggle } from '../components/Toggle';
 import { KybApplicationData } from '../types';
 import {
   getKybApplication,
@@ -25,67 +26,80 @@ export interface SettingsPageProps {
   initialTab?: string;
 }
 
-export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, initialTab = 'financial-controls' }) => {
-  // Active Tab
+interface SettingsState {
+  makerCheckerEnabled: boolean;
+  thresholdValue: string;
+  dailyCap: string;
+  autoAmlFreeze: boolean;
+  orgName: string;
+  timezone: string;
+  baseCurrency: string;
+  enforce2fa: boolean;
+  sessionTimeout: string;
+}
+
+const defaultSettings: SettingsState = {
+  makerCheckerEnabled: true,
+  thresholdValue: '$ 5,000.00',
+  dailyCap: '$ 100,000.00',
+  autoAmlFreeze: true,
+  orgName: 'CopyM Global Ltd',
+  timezone: 'UTC (+00:00)',
+  baseCurrency: 'USD',
+  enforce2fa: true,
+  sessionTimeout: '30 minutes'
+};
+
+const selectedCurrency = 'USDT/USDC';
+const workspaceId = 'ws_copym_live_09';
+
+export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, initialTab = 'general' }) => {
   const [activeSubTab, setActiveSubTab] = useState(initialTab);
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Live KYB Subscription
   const [kybApp, setKybApp] = useState<KybApplicationData>(getKybApplication());
+  const [settings, setSettings] = useState<SettingsState>(defaultSettings);
+  const [savedSettings, setSavedSettings] = useState<SettingsState>(defaultSettings);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
   useEffect(() => {
     const unsub = subscribeKybStatus(setKybApp);
     return unsub;
   }, []);
 
-  // Financial Controls State
-  const [makerCheckerEnabled, setMakerCheckerEnabled] = useState(true);
-  const [thresholdValue, setThresholdValue] = useState('$ 5,000.00');
-  const [selectedCurrency] = useState('USDT/USDC');
-  const [dailyCap, setDailyCap] = useState('$ 100,000.00');
-  const [autoAmlFreeze, setAutoAmlFreeze] = useState(true);
-
-  // General Settings State
-  const [orgName, setOrgName] = useState('CopyM Global Ltd');
-  const [workspaceId] = useState('ws_copym_live_09');
-  const [timezone, setTimezone] = useState('UTC (+00:00)');
-  const [baseCurrency, setBaseCurrency] = useState('USD');
-
-  // Security & 2FA Settings State
-  const [enforce2fa, setEnforce2fa] = useState(true);
-  const [sessionTimeout, setSessionTimeout] = useState('30 minutes');
-
-  // Toast
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const hasUnsavedChanges = (Object.keys(settings) as Array<keyof SettingsState>).some(
+    (key) => settings[key] !== savedSettings[key]
+  );
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handlePublishToProd = () => {
-    showToast('Governance rules published to Production successfully!');
+  const updateSetting = <K extends keyof SettingsState>(key: K, value: SettingsState[K]) => {
+    setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSaveFinancialPolicy = (e: React.FormEvent) => {
-    e.preventDefault();
-    showToast('Payout Authorization Policy updated & synced with Sandbox.');
+  const handleSave = () => {
+    setSavedSettings(settings);
+    showToast('Settings saved.');
   };
 
   const tabs = [
     { id: 'compliance-kyb', label: 'Corporate Verification (KYB)' },
     { id: 'general', label: 'General' },
-    { id: 'team-access', label: 'Team & Access' },
     { id: 'security-2fa', label: 'Security & 2FA' },
     { id: 'financial-controls', label: 'Financial Controls' },
     { id: 'audit-log', label: 'Audit Log' }
   ];
+
+  const visibleTabs = tabs.filter((tab) => tab.label.toLowerCase().includes(searchQuery.trim().toLowerCase()));
 
   return (
     <div className="w-full flex flex-col space-y-4 animate-fadeIn">
       {/* Toast Feedback */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-gray-900 text-white px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 text-xs font-semibold animate-fadeIn border border-white/10">
-          <CheckCircle2 className="w-4 h-4 text-[#00C076]" />
+          <CheckCircle2 className="w-4 h-4 text-[#007F4E]" />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -94,13 +108,13 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, ini
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 select-none">
         {/* Horizontal Navigation Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 -webkit-overflow-scrolling-touch">
-          {tabs.map((tab) => {
+          {visibleTabs.map((tab) => {
             const isActive = activeSubTab === tab.id;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveSubTab(tab.id)}
-                className={`px-3.5 py-1.5 rounded-full text-[11.5px] sm:text-[12px] font-medium transition-all whitespace-nowrap ${
+                className={`px-3.5 py-1.5 rounded-full text-xs sm:text-[12px] font-medium transition-all whitespace-nowrap ${
                   isActive
                     ? 'bg-white text-gray-900 shadow-2xs border border-gray-200/90 font-semibold'
                     : 'bg-[#ECEEF2]/80 text-[#64748B] hover:text-gray-900 hover:bg-[#E2E5EA]'
@@ -114,13 +128,13 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, ini
 
         {/* Search Bar matching screenshot */}
         <div className="relative w-full sm:w-64 md:w-80">
-          <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className="w-3.5 h-3.5 text-[#6B7280] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             placeholder="Search settings, policies, members..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-1.5 bg-white text-[12px] text-gray-800 placeholder-gray-400 rounded-full border border-gray-200/80 focus:border-[#00C076] focus:outline-none transition shadow-2xs"
+            className="w-full pl-9 pr-4 py-1.5 bg-white text-[12px] text-gray-800 placeholder-[#6B7280] rounded-full border border-gray-200/80 focus:border-[#007F4E] focus:outline-none transition shadow-2xs"
           />
         </div>
       </div>
@@ -140,12 +154,12 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, ini
                     <h3 className="text-base sm:text-lg font-bold text-[#14171A]">
                       Corporate Verification (KYB)
                     </h3>
-                    <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${getKybStatusColor(kybApp.status)}`}>
+                    <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${getKybStatusColor(kybApp.status)}`}>
                       {getKybStatusLabel(kybApp.status)}
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Stage-gated verification aligned with global compliance and corporate registry standards.
+                    Submit company details and documents for verification.
                   </p>
                 </div>
               </div>
@@ -181,8 +195,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, ini
                 )}
                 {kybApp.status === 'APPROVED' && (
                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-full text-xs font-bold">
-                    <CheckCircle2 className="w-4 h-4 text-[#00C076]" />
-                    <span>Live Processing Enabled</span>
+                    <CheckCircle2 className="w-4 h-4 text-[#007F4E]" />
+                    <span>Verification Complete</span>
                   </div>
                 )}
               </div>
@@ -193,7 +207,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, ini
               <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200/80 text-xs text-blue-900 flex items-start gap-2.5">
                 <AlertTriangle className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                 <div className="leading-relaxed">
-                  <strong>Verification Incomplete (Step {kybApp.currentStep || 1} of 4):</strong> You have instant Sandbox access to generate test keys and run cashier simulations. To unlock mainnet crypto processing and live deposit sweeps, complete the 4-step corporate verification wizard.
+                  <strong>Verification Incomplete (Step {kybApp.currentStep || 1} of 4):</strong> Sandbox access is available for test keys and cashier simulations. Complete verification to enable live processing.
                 </div>
               </div>
             )}
@@ -202,7 +216,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, ini
               <div className="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200/90 text-xs text-amber-900 flex items-start gap-2.5">
                 <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5 animate-spin-slow" />
                 <div className="leading-relaxed">
-                  <strong>In Compliance Queue:</strong> Your corporate application was submitted on Nov 18. Our compliance team is verifying your registry filings and beneficial ownership structure. Typical turnaround: <strong>24–48 business hours</strong>. Sandbox remains fully functional.
+                  <strong>In Review:</strong> Your application was submitted on Nov 18 and is being reviewed. Review times vary, and Sandbox remains available.
                 </div>
               </div>
             )}
@@ -224,9 +238,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, ini
 
             {kybApp.status === 'APPROVED' && (
               <div className="p-3.5 rounded-xl bg-emerald-50/90 border border-emerald-200/90 text-xs text-emerald-900 flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-[#00C076] shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-4 h-4 text-[#007F4E] shrink-0 mt-0.5" />
                 <div className="leading-relaxed">
-                  <strong>Corporate Verified:</strong> Your legal entity has been fully verified and approved. Top navigation Live toggle is enabled, Production API keys are active, and TRON / Ethereum / BSC sweep pipelines are operating normally.
+                  <strong>Verification Complete:</strong> Verification is complete for this workspace. Live mode and production keys are available where enabled.
                 </div>
               </div>
             )}
@@ -242,23 +256,23 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, ini
               </div>
               <div className="space-y-2">
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Legal Company Name</span>
+                  <span className="text-xs uppercase font-bold text-[#6B7280] block">Legal Company Name</span>
                   <span className="font-semibold text-gray-800">{kybApp.company.legalName}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Registration / Tax Number</span>
+                  <span className="text-xs uppercase font-bold text-[#6B7280] block">Registration / Tax Number</span>
                   <span className="font-mono text-gray-800">{kybApp.company.registrationNumber}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Jurisdiction</span>
+                  <span className="text-xs uppercase font-bold text-[#6B7280] block">Jurisdiction</span>
                   <span className="text-gray-800">{kybApp.company.jurisdiction}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Operating Address</span>
+                  <span className="text-xs uppercase font-bold text-[#6B7280] block">Operating Address</span>
                   <span className="text-gray-700 leading-tight block">{kybApp.company.operatingAddress}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Corporate URL</span>
+                  <span className="text-xs uppercase font-bold text-[#6B7280] block">Corporate URL</span>
                   <a href={kybApp.company.websiteUrl} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline flex items-center gap-1 font-medium">
                     <span>{kybApp.company.websiteUrl}</span>
                     <ExternalLink className="w-3 h-3" />
@@ -278,20 +292,20 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, ini
                   <div key={dir.id} className="p-2.5 rounded-xl bg-gray-50 border border-gray-100 space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-gray-900">{dir.fullName}</span>
-                      <span className="font-bold text-[10.5px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                      <span className="font-bold text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
                         {dir.ownershipPercentage}% Shares
                       </span>
                     </div>
-                    <div className="text-[11px] text-gray-500">
+                    <div className="text-xs text-gray-500">
                       DOB: {dir.dateOfBirth} · {dir.nationality}
                     </div>
                     <div className="flex items-center gap-2 pt-0.5">
-                      <span className="text-[9.5px] px-1.5 py-0.2 rounded bg-white border border-gray-200 text-gray-700 font-semibold">
+                      <span className="text-xs px-1.5 py-0.2 rounded bg-white border border-gray-200 text-gray-700 font-semibold">
                         {dir.isDirector ? 'Managing Director' : 'Beneficial Owner'}
                       </span>
-                      <span className="text-[9.5px] text-emerald-600 font-bold flex items-center gap-0.5">
+                      <span className="text-xs text-emerald-600 font-bold flex items-center gap-0.5">
                         <CheckCircle2 className="w-3 h-3" />
-                        PEP Clear
+                        Screening complete
                       </span>
                     </div>
                   </div>
@@ -319,7 +333,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, ini
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="text-gray-400 text-[10px] uppercase font-bold tracking-wider border-b border-gray-100 pb-2">
+                  <tr className="text-[#6B7280] text-xs uppercase font-bold tracking-wider border-b border-gray-100 pb-2">
                     <th className="py-2">Document Type</th>
                     <th className="py-2">File Name</th>
                     <th className="py-2">Size</th>
@@ -334,34 +348,34 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, ini
                       <td className="py-3 font-semibold text-gray-800">
                         <div>{doc.title}</div>
                         {doc.rejectionReason && (
-                          <div className="text-[10px] text-rose-600 font-medium mt-0.5">
+                          <div className="text-xs text-rose-600 font-medium mt-0.5">
                             {doc.rejectionReason}
                           </div>
                         )}
                       </td>
-                      <td className="py-3 font-mono text-[11px] text-gray-700">
+                      <td className="py-3 font-mono text-xs text-gray-700">
                         {doc.fileName || 'Not uploaded yet'}
                       </td>
                       <td className="py-3 text-gray-500">{doc.fileSize || '—'}</td>
                       <td className="py-3 text-gray-500">{doc.uploadDate || '—'}</td>
                       <td className="py-3">
                         {doc.status === 'VERIFIED' && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                             Verified
                           </span>
                         )}
                         {doc.status === 'UPLOADED' && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                          <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
                             In Review
                           </span>
                         )}
                         {doc.status === 'REJECTED' && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                          <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">
                             Rejected
                           </span>
                         )}
                         {doc.status === 'PENDING' && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-600 border border-gray-200">
+                          <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-600 border border-gray-200">
                             Pending
                           </span>
                         )}
@@ -369,7 +383,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, ini
                       <td className="py-3 text-right">
                         <button
                           onClick={() => onOpenKybWizard?.(3)}
-                          className="px-2.5 py-1 text-[11px] font-semibold text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition cursor-pointer"
+                          className="px-2.5 py-1 text-xs font-semibold text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition cursor-pointer"
                         >
                           {doc.status === 'REJECTED' ? 'Re-upload' : 'Replace'}
                         </button>
@@ -398,7 +412,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, ini
                   <h3 className="text-[15px] sm:text-[16px] font-bold text-[#14171A]">
                     Payout Authorization Policy (Maker-Checker Rules)
                   </h3>
-                  <p className="text-[11.5px] text-[#8E95A5] mt-0.5">
+                  <p className="text-xs text-[#6B7280] mt-0.5">
                     Define dual-control rules to help reduce the risk of unauthorized withdrawals.
                   </p>
                 </div>
@@ -410,28 +424,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, ini
                   <h4 className="text-[13px] font-bold text-[#14171A]">
                     Require Dual Approval for High-Value Payouts
                   </h4>
-                  <p className="text-[11.5px] text-[#8E95A5] mt-0.5">
-                    Payouts exceeding this threshold cannot be executed by the creator and require a 2nd checker.
+                  <p className="text-xs text-[#6B7280] mt-0.5">
+                    Payouts exceeding this threshold require a second checker.
                   </p>
                 </div>
 
-                {/* Signature Green Toggle Pill */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const nextVal = !makerCheckerEnabled;
-                    setMakerCheckerEnabled(nextVal);
-                    showToast(`Maker-Checker policy turned ${nextVal ? 'ON' : 'OFF'}`);
-                  }}
-                  className={`px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 transition select-none shadow-2xs ${
-                    makerCheckerEnabled
-                      ? 'bg-[#00C076] text-white hover:bg-[#00AA67]'
-                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                  }`}
-                >
-                  <div className={`w-2 h-2 rounded-full ${makerCheckerEnabled ? 'bg-white' : 'bg-gray-400'}`} />
-                  <span>{makerCheckerEnabled ? 'ON' : 'OFF'}</span>
-                </button>
+                <Toggle
+                  checked={settings.makerCheckerEnabled}
+                  onChange={(value) => updateSetting('makerCheckerEnabled', value)}
+                  label="Require dual approval for high-value payouts"
+                />
               </div>
 
               {/* Threshold Input Box matching screenshot */}
@@ -439,11 +441,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, ini
                 <div className="relative flex items-center">
                   <input
                     type="text"
-                    value={thresholdValue}
-                    onChange={(e) => setThresholdValue(e.target.value)}
-                    className="w-full pl-4 pr-24 py-2.5 bg-white border border-gray-200 rounded-xl text-[13px] font-semibold text-gray-900 focus:outline-none focus:border-[#00C076] transition shadow-2xs"
+                    value={settings.thresholdValue}
+                    onChange={(e) => updateSetting('thresholdValue', e.target.value)}
+                    className="w-full pl-4 pr-24 py-2.5 bg-white border border-gray-200 rounded-xl text-[13px] font-semibold text-gray-900 focus:outline-none focus:border-[#007F4E] transition shadow-2xs"
                   />
-                  <div className="absolute right-3.5 text-[11px] font-semibold text-gray-500 pointer-events-none tracking-tight">
+                  <div className="absolute right-3.5 text-xs font-semibold text-gray-500 pointer-events-none tracking-tight">
                     {selectedCurrency}
                   </div>
                 </div>
@@ -454,51 +456,34 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, ini
                 <div className="flex items-center justify-between">
                   <div>
                     <h5 className="text-[12.5px] font-semibold text-[#14171A]">Daily Aggregate Withdrawal Limit</h5>
-                    <p className="text-[11px] text-[#8E95A5]">Maximum automated payouts permitted in a 24h rolling window.</p>
+                    <p className="text-xs text-[#6B7280]">Maximum automated payouts permitted in a 24h rolling window.</p>
                   </div>
                   <input
                     type="text"
-                    value={dailyCap}
-                    onChange={(e) => setDailyCap(e.target.value)}
-                    className="w-32 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-right text-gray-800 focus:outline-none focus:border-[#00C076]"
+                    value={settings.dailyCap}
+                    onChange={(e) => updateSetting('dailyCap', e.target.value)}
+                    className="w-32 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-right text-gray-800 focus:outline-none focus:border-[#007F4E]"
                   />
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <h5 className="text-[12.5px] font-semibold text-[#14171A]">Automated High-Risk AML Freeze</h5>
-                    <p className="text-[11px] text-[#8E95A5]">Hold transactions with composite risk score &gt; 70 for manual review.</p>
+                    <h5 className="text-[12.5px] font-semibold text-[#14171A]">High-Risk Review Hold</h5>
+                    <p className="text-xs text-[#6B7280]">Hold transactions with composite risk score above 70 for manual review.</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setAutoAmlFreeze(!autoAmlFreeze)}
-                    className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors ${
-                      autoAmlFreeze ? 'bg-[#00C076]' : 'bg-gray-300'
-                    }`}
-                  >
-                    <div
-                      className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                        autoAmlFreeze ? 'translate-x-4' : ''
-                      }`}
-                    />
-                  </button>
+                  <Toggle
+                    checked={settings.autoAmlFreeze}
+                    onChange={(value) => updateSetting('autoAmlFreeze', value)}
+                    label="High-risk review hold"
+                  />
                 </div>
               </div>
             </div>
 
-            {/* Save Policy Button */}
-            <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
-              <span className="text-[11px] text-[#8E95A5]">
-                Changes take effect instantly across all connected API clients.
+            <div className="mt-6 pt-4 border-t border-gray-100">
+              <span className="text-xs text-[#6B7280]">
+                Changes are applied when you save your settings.
               </span>
-              <button
-                type="button"
-                onClick={handleSaveFinancialPolicy}
-                className="px-4 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11.5px] font-semibold shadow-xs transition select-none flex items-center gap-1.5"
-              >
-                <Save className="w-3.5 h-3.5" />
-                <span>Save policy</span>
-              </button>
             </div>
           </div>
 
@@ -510,44 +495,44 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, ini
                 <h3 className="text-[15px] sm:text-[16px] font-bold text-[#14171A]">
                   Governance summary
                 </h3>
-                <span className="px-2.5 py-0.5 bg-[#ECEEF2] text-gray-700 text-[10.5px] font-semibold rounded-full">
+                <span className="px-2.5 py-0.5 bg-[#ECEEF2] text-gray-700 text-xs font-semibold rounded-full">
                   Sandbox
                 </span>
               </div>
 
               {/* Subtext */}
-              <p className="text-[11.5px] text-[#8E95A5] mt-2 mb-4 leading-relaxed">
-                Review the current dual-control posture before publishing changes to production.
+              <p className="text-xs text-[#6B7280] mt-2 mb-4 leading-relaxed">
+                Review the current dual-control posture for this workspace.
               </p>
 
               {/* Three Dark Cards matching the exact screenshot */}
               <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
                 {/* Metric Box 1: Active policy */}
                 <div className="bg-[#0C0D10] text-white p-3 sm:p-3.5 rounded-xl border border-[#23262D] flex flex-col justify-between">
-                  <span className="text-[9.5px] sm:text-[10px] text-[#8E95A5] font-medium leading-tight">
+                  <span className="text-xs sm:text-xs text-[#6B7280] font-medium leading-tight">
                     Active policy
                   </span>
-                  <div className="text-[11px] sm:text-[12px] font-bold text-white mt-1.5 truncate">
-                    {makerCheckerEnabled ? 'Maker-Checker' : 'Disabled'}
+                  <div className="text-xs sm:text-[12px] font-bold text-white mt-1.5 truncate">
+                    {settings.makerCheckerEnabled ? 'Maker-Checker' : 'Disabled'}
                   </div>
                 </div>
 
                 {/* Metric Box 2: Threshold */}
                 <div className="bg-[#0C0D10] text-white p-3 sm:p-3.5 rounded-xl border border-[#23262D] flex flex-col justify-between">
-                  <span className="text-[9.5px] sm:text-[10px] text-[#8E95A5] font-medium leading-tight">
+                  <span className="text-xs sm:text-xs text-[#6B7280] font-medium leading-tight">
                     Threshold
                   </span>
-                  <div className="text-[11px] sm:text-[12px] font-bold text-white mt-1.5 truncate">
-                    {makerCheckerEnabled ? thresholdValue.replace(/\s+/g, '') : 'None'}
+                  <div className="text-xs sm:text-[12px] font-bold text-white mt-1.5 truncate">
+                    {settings.makerCheckerEnabled ? settings.thresholdValue.replace(/\s+/g, '') : 'None'}
                   </div>
                 </div>
 
                 {/* Metric Box 3: Currencies */}
                 <div className="bg-[#0C0D10] text-white p-3 sm:p-3.5 rounded-xl border border-[#23262D] flex flex-col justify-between">
-                  <span className="text-[9.5px] sm:text-[10px] text-[#8E95A5] font-medium leading-tight">
+                  <span className="text-xs sm:text-xs text-[#6B7280] font-medium leading-tight">
                     Currencies
                   </span>
-                  <div className="text-[11px] sm:text-[12px] font-bold text-white mt-1.5 truncate">
+                  <div className="text-xs sm:text-[12px] font-bold text-white mt-1.5 truncate">
                     {selectedCurrency}
                   </div>
                 </div>
@@ -556,54 +541,44 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, ini
               {/* Verification Checklist */}
               <div className="mt-5 space-y-2.5 text-xs">
                 <div className="flex items-center gap-2 text-gray-700">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#00C076] shrink-0" />
-                  <span className="text-[11px]">2nd checker required on payouts &gt; {thresholdValue}</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#007F4E] shrink-0" />
+                  <span className="text-xs">2nd checker required on payouts &gt; {settings.thresholdValue}</span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-700">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#00C076] shrink-0" />
-                  <span className="text-[11px]">Creators cannot self-approve batch payouts</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#007F4E] shrink-0" />
+                  <span className="text-xs">Creators cannot self-approve batch payouts</span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-700">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#00C076] shrink-0" />
-                  <span className="text-[11px]">All authorization actions logged to audit trail</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#007F4E] shrink-0" />
+                  <span className="text-xs">Authorization actions appear in the audit trail</span>
                 </div>
               </div>
             </div>
 
-            {/* Bottom Action: Publish to production */}
-            <div className="pt-6 mt-4 border-t border-gray-100 flex items-center justify-between">
-              <span className="text-[10.5px] text-[#8E95A5]">
+            <div className="pt-6 mt-4 border-t border-gray-100">
+              <span className="text-xs text-[#6B7280]">
                 Environment: Demo Sandbox (v2.4)
               </span>
-              <button
-                type="button"
-                onClick={handlePublishToProd}
-                className="px-3.5 py-1.5 bg-gray-900 hover:bg-black text-white rounded-full text-[11px] font-semibold transition select-none flex items-center gap-1.5"
-              >
-                <span>Publish to prod</span>
-                <ArrowRight className="w-3 h-3" />
-              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* TAB CONTENT: General */}
       {activeSubTab === 'general' && (
         <div className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-4 max-w-3xl">
           <h3 className="text-base font-bold text-[#14171A]">General Organization Settings</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <label className="text-[11px] font-semibold text-gray-700 block mb-1">Legal Entity / Organization</label>
+              <label className="text-xs font-semibold text-gray-700 block mb-1">Legal Entity / Organization</label>
               <input
                 type="text"
-                value={orgName}
-                onChange={(e) => setOrgName(e.target.value)}
-                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:border-[#00C076]"
+                value={settings.orgName}
+                onChange={(e) => updateSetting('orgName', e.target.value)}
+                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:border-[#007F4E]"
               />
             </div>
             <div>
-              <label className="text-[11px] font-semibold text-gray-700 block mb-1">Workspace ID</label>
+              <label className="text-xs font-semibold text-gray-700 block mb-1">Workspace ID</label>
               <input
                 type="text"
                 disabled
@@ -612,11 +587,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, ini
               />
             </div>
             <div>
-              <label className="text-[11px] font-semibold text-gray-700 block mb-1">Reporting Timezone</label>
+              <label className="text-xs font-semibold text-gray-700 block mb-1">Reporting Timezone</label>
               <select
-                value={timezone}
-                onChange={(e) => setTimezone(e.target.value)}
-                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:border-[#00C076]"
+                value={settings.timezone}
+                onChange={(e) => updateSetting('timezone', e.target.value)}
+                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:border-[#007F4E]"
               >
                 <option value="UTC (+00:00)">UTC (+00:00) — Greenwich Mean Time</option>
                 <option value="EST (-05:00)">EST (-05:00) — New York</option>
@@ -625,11 +600,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, ini
               </select>
             </div>
             <div>
-              <label className="text-[11px] font-semibold text-gray-700 block mb-1">Base Ledger Currency</label>
+              <label className="text-xs font-semibold text-gray-700 block mb-1">Base Ledger Currency</label>
               <select
-                value={baseCurrency}
-                onChange={(e) => setBaseCurrency(e.target.value)}
-                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:border-[#00C076]"
+                value={settings.baseCurrency}
+                onChange={(e) => updateSetting('baseCurrency', e.target.value)}
+                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:border-[#007F4E]"
               >
                 <option value="USD">USD ($)</option>
                 <option value="EUR">EUR (€)</option>
@@ -637,81 +612,33 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, ini
               </select>
             </div>
           </div>
-          <div className="pt-3 flex justify-end">
-            <button
-              onClick={() => showToast('General settings saved.')}
-              className="px-4 py-2 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-xs font-semibold shadow-xs"
-            >
-              Save General Settings
-            </button>
-          </div>
         </div>
       )}
 
-      {/* TAB CONTENT: Team & Access */}
-      {activeSubTab === 'team-access' && (
-        <div className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-4 max-w-3xl">
-          <h3 className="text-base font-bold text-[#14171A]">Team & Access Governance</h3>
-          <p className="text-xs text-gray-500">Configure default roles, invitation rules, and seat allocations.</p>
-          <div className="space-y-3 text-xs">
-            <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between">
-              <div>
-                <div className="font-semibold text-gray-800">Default Role for New Invites</div>
-                <div className="text-[11px] text-gray-500">New team members receive this role upon acceptance.</div>
-              </div>
-              <span className="font-semibold text-gray-700 bg-white px-2.5 py-1 rounded-lg border border-gray-200">
-                Operations analyst
-              </span>
-            </div>
-            <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between">
-              <div>
-                <div className="font-semibold text-gray-800">Invitation Link Expiry</div>
-                <div className="text-[11px] text-gray-500">Unaccepted invite tokens expire automatically.</div>
-              </div>
-              <span className="font-semibold text-gray-700 bg-white px-2.5 py-1 rounded-lg border border-gray-200">
-                7 days
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB CONTENT: Security & 2FA */}
       {activeSubTab === 'security-2fa' && (
         <div className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-4 max-w-3xl">
           <h3 className="text-base font-bold text-[#14171A]">Security & Authentication</h3>
           <div className="space-y-3 text-xs">
             <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between">
               <div>
-                <div className="font-semibold text-gray-800">Mandatory Multi-Factor Authentication</div>
-                <div className="text-[11px] text-gray-500">Requires FIDO2 WebAuthn or TOTP authenticator app.</div>
+                <div className="font-semibold text-gray-800">Multi-Factor Authentication</div>
+                <div className="text-xs text-gray-500">Requires an authenticator app or security key.</div>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setEnforce2fa(!enforce2fa);
-                  showToast(`2FA enforcement ${!enforce2fa ? 'enabled' : 'disabled'}`);
-                }}
-                className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors ${
-                  enforce2fa ? 'bg-[#00C076]' : 'bg-gray-300'
-                }`}
-              >
-                <div
-                  className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                    enforce2fa ? 'translate-x-4' : ''
-                  }`}
-                />
-              </button>
+              <Toggle
+                checked={settings.enforce2fa}
+                onChange={(value) => updateSetting('enforce2fa', value)}
+                label="Multi-factor authentication"
+              />
             </div>
 
             <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between">
               <div>
-                <div className="font-semibold text-gray-800">Session Idle Inactivity Timeout</div>
-                <div className="text-[11px] text-gray-500">Auto sign-out after duration of user inactivity.</div>
+                <div className="font-semibold text-gray-800">Session Inactivity Timeout</div>
+                <div className="text-xs text-gray-500">Auto sign-out after a period of inactivity.</div>
               </div>
               <select
-                value={sessionTimeout}
-                onChange={(e) => setSessionTimeout(e.target.value)}
+                value={settings.sessionTimeout}
+                onChange={(e) => updateSetting('sessionTimeout', e.target.value)}
                 className="p-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-800"
               >
                 <option value="15 minutes">15 minutes</option>
@@ -723,31 +650,45 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenKybWizard, ini
         </div>
       )}
 
-      {/* TAB CONTENT: Audit Log */}
       {activeSubTab === 'audit-log' && (
         <div className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-[#14171A]">Governance & Settings Audit Trail</h3>
-            <span className="text-[11px] text-gray-400">Showing recent 4 events</span>
+            <span className="text-xs text-[#6B7280]">Showing recent 2 events</span>
           </div>
           <div className="divide-y divide-gray-100 text-xs">
             <div className="py-2.5 flex items-center justify-between">
               <div>
                 <div className="font-semibold text-gray-900">Maker-Checker dual-control threshold updated to $5,000.00</div>
-                <div className="text-[10.5px] text-gray-500">By Nora Vale · 14:18 UTC</div>
+                <div className="text-xs text-gray-500">By Nora Vale · 14:18 UTC</div>
               </div>
-              <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-[10px] font-semibold">Config</span>
+              <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold">Config</span>
             </div>
             <div className="py-2.5 flex items-center justify-between">
               <div>
-                <div className="font-semibold text-gray-900">Sandbox environment refreshed with new TRM risk rules</div>
-                <div className="text-[10.5px] text-gray-500">By System Daemon · 13:45 UTC</div>
+                <div className="font-semibold text-gray-900">Sandbox environment refreshed with updated risk rules</div>
+                <div className="text-xs text-gray-500">By System Daemon · 13:45 UTC</div>
               </div>
-              <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-[10px] font-semibold">System</span>
+              <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold">System</span>
             </div>
           </div>
         </div>
       )}
+
+      <div className="flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
+        <span className="text-xs text-gray-500">
+          {hasUnsavedChanges ? 'You have unsaved changes.' : 'All changes are saved.'}
+        </span>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!hasUnsavedChanges}
+          className="px-4 py-1.5 bg-[#007F4E] hover:bg-[#00663E] disabled:opacity-50 text-white rounded-full text-xs font-semibold transition flex items-center gap-1.5"
+        >
+          <Save className="w-3.5 h-3.5" />
+          Save changes
+        </button>
+      </div>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ShieldCheck,
   Search,
@@ -17,21 +17,26 @@ import {
   Ban
 } from 'lucide-react';
 import { AdminWhitelistedAddress } from '../types';
-import { AdminComplianceConfirmModal } from '../components/AdminComplianceConfirmModal';
+import {
+  AdminComplianceConfirmModal,
+  AdminDialog,
+} from '../components/AdminComplianceConfirmModal';
+import { appendAuditEvent } from '../utils/auditLogStore';
+import { MERCHANT, PLATFORM } from '../utils/sharedMockStore';
 
 const INITIAL_ADMIN_WHITELIST: AdminWhitelistedAddress[] = [
   {
     id: 'awl_01',
     merchantId: 'mer_01',
-    merchantName: 'Eagle Vision Market Ltd',
-    beneficiaryName: 'Genesis Trading OTC Settlement',
+    merchantName: MERCHANT.name,
+    beneficiaryName: 'Meridian Settlement Services Ltd',
     category: 'OTC Liquidity Pool',
     network: 'USDC · ERC-20',
-    address: '0x4d8A..91eC',
-    fullAddress: '0x4d8A00912cb84910ef123491eC10293847561a',
+    address: '0x4d8A..71bE',
+    fullAddress: '0x4d8a9c71f03be58d26a4e7b91c0f3a8d65e2471b',
     status: 'Active',
-    addedBy: 'Harrison Sterling (Director)',
-    addedIp: '198.51.100.44 (SG-GovNet)',
+    addedBy: PLATFORM.reviewer,
+    addedIp: '198.51.100.44 (SG-Ops)',
     createdAt: '14 Oct 2026, 11:20 UTC',
     totalPaidOut: '$380,750.00',
     kytRiskScore: 6,
@@ -41,16 +46,16 @@ const INITIAL_ADMIN_WHITELIST: AdminWhitelistedAddress[] = [
   {
     id: 'awl_02',
     merchantId: 'mer_02',
-    merchantName: 'Apex Forex Global',
-    beneficiaryName: 'Apex Liquidity Services BVI',
+    merchantName: MERCHANT.name,
+    beneficiaryName: 'Northbridge Liquidity Services',
     category: 'First-Party Deposit',
     network: 'USDT · TRON',
-    address: 'TYK9A..8v2L',
-    fullAddress: 'TYK9A3XmUqZ9z8VnLw7h4Jb1k8Pq5D2gXy8v2L',
+    address: 'TNq7..QzT',
+    fullAddress: 'TNq7Vb2KpR9mDxW4sL6aHj8YuE3cF1nQzT',
     status: 'Cooling Period',
     coolingRemainingHours: 6,
     coolingEndsAt: 'Today at 07:45 UTC',
-    addedBy: 'Elena Rostova (VP Finance)',
+    addedBy: 'Nadia Okoro (Platform Compliance)',
     addedIp: '203.0.113.88 (EU-Zurich Ops)',
     createdAt: 'Yesterday, 07:45 UTC',
     totalPaidOut: '$0.00',
@@ -65,10 +70,10 @@ const INITIAL_ADMIN_WHITELIST: AdminWhitelistedAddress[] = [
     beneficiaryName: 'Prime Cold Vault Pool #02',
     category: 'First-Party Deposit',
     network: 'USDC · SOLANA',
-    address: '7XqP..2vNp',
-    fullAddress: '7XqP110293847aa1928374bb2vNp884912039485',
+    address: '7XqP..DjA',
+    fullAddress: '7XqP9b3Kf2Lm8Vc4Rn6Tq1Wz5Hy7DjA',
     status: 'Active',
-    addedBy: 'Devon Miller (Treasury Lead)',
+    addedBy: 'Tomas Lindqvist (Treasury Lead)',
     addedIp: '198.51.100.12 (UK-London)',
     createdAt: '26 Oct 2026, 16:15 UTC',
     totalPaidOut: '$1,250,000.00',
@@ -79,16 +84,16 @@ const INITIAL_ADMIN_WHITELIST: AdminWhitelistedAddress[] = [
   {
     id: 'awl_04',
     merchantId: 'mer_04',
-    merchantName: 'Vance Capital Markets',
+    merchantName: 'Meridian Trading Ltd',
     beneficiaryName: 'Alpha Cloud Infrastructure Ltd',
     category: 'Vendor Settlement',
     network: 'USDT · ERC-20',
-    address: '0x91F2..3cA8',
-    fullAddress: '0x91F20901abcf8912c7713cA8981240192837465',
+    address: '0x91F2..f28',
+    fullAddress: '0x91f2d48ae615b09c3f7a2e6d845c10b9a7e63f28',
     status: 'Cooling Period',
     coolingRemainingHours: 14,
     coolingEndsAt: 'Today at 15:30 UTC',
-    addedBy: 'Marcus Vance (Compliance Lead)',
+    addedBy: 'Leila Haddad (Compliance Lead)',
     addedIp: '198.51.100.90 (US-East)',
     createdAt: 'Yesterday, 15:30 UTC',
     totalPaidOut: '$0.00',
@@ -99,14 +104,14 @@ const INITIAL_ADMIN_WHITELIST: AdminWhitelistedAddress[] = [
   {
     id: 'awl_05',
     merchantId: 'mer_02',
-    merchantName: 'Apex Forex Global',
-    beneficiaryName: 'BVI Trader Direct Rebate Vault',
+    merchantName: MERCHANT.name,
+    beneficiaryName: 'Affiliate Rebate Settlement Vault',
     category: 'Affiliate Commission',
     network: 'USDT · BSC',
-    address: '0x55d3..7955',
-    fullAddress: '0x55d398326f99059fF775485246999027B3197955',
+    address: '0x6f3c..6a92',
+    fullAddress: '0x6f3c2b9a71d8e4f05c6b2a9d83e7f10c4b5d6a92',
     status: 'Frozen',
-    addedBy: 'Elena Rostova (VP Finance)',
+    addedBy: 'Nadia Okoro (Platform Compliance)',
     addedIp: '203.0.113.88 (EU-Zurich Ops)',
     createdAt: '02 Nov 2026, 09:12 UTC',
     totalPaidOut: '$42,500.00',
@@ -121,10 +126,10 @@ const INITIAL_ADMIN_WHITELIST: AdminWhitelistedAddress[] = [
     beneficiaryName: 'Quantex Prime Custody (MPC Vault)',
     category: 'First-Party Deposit',
     network: 'USDC · ERC-20',
-    address: '0x88fA..44e1',
-    fullAddress: '0x88fA112938475610bcde884910293844e19028',
+    address: '0x88fA..5d8',
+    fullAddress: '0x88fa6d37c0b9e4a15f2d7c83b60a9e4f21c7b5d8',
     status: 'Active',
-    addedBy: 'Dr. Stefan Huber (CFO)',
+    addedBy: PLATFORM.reviewer,
     addedIp: '194.209.14.2 (CH-Zurich)',
     createdAt: '08 Nov 2026, 14:00 UTC',
     totalPaidOut: '$2,480,000.00',
@@ -133,6 +138,11 @@ const INITIAL_ADMIN_WHITELIST: AdminWhitelistedAddress[] = [
     sanctionScreenStatus: 'Passed'
   }
 ];
+
+interface PendingAddressAction {
+  type: 'instant-approve' | 'freeze' | 'unfreeze' | 'revoke';
+  address: AdminWhitelistedAddress;
+}
 
 export const AdminWhitelistPage: React.FC = () => {
   const [whitelist, setWhitelist] = useState<AdminWhitelistedAddress[]>(() => {
@@ -158,7 +168,7 @@ export const AdminWhitelistPage: React.FC = () => {
           }) => ({
             id: m.id,
             merchantId: 'mer_02',
-            merchantName: 'Apex Forex Global',
+            merchantName: MERCHANT.name,
             beneficiaryName: m.beneficiaryName,
             category: m.category,
             network: m.network,
@@ -178,12 +188,19 @@ export const AdminWhitelistPage: React.FC = () => {
         return [...mappedMerchantAddrs, ...INITIAL_ADMIN_WHITELIST];
       }
     } catch {
-      // ignore
+      return INITIAL_ADMIN_WHITELIST;
     }
     return INITIAL_ADMIN_WHITELIST;
   });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedMerchant, setSelectedMerchant] = useState<string>('All');
+  const [selectedStatus, setSelectedStatus] = useState<string>('All');
+  const [selectedNetwork, setSelectedNetwork] = useState<string>('All');
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [notification, setNotification] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingAddressAction | null>(null);
 
-  // Sync admin updates back to merchant storage
   useEffect(() => {
     try {
       const savedMerchant = localStorage.getItem('copym_shared_merchant_addresses');
@@ -203,88 +220,70 @@ export const AdminWhitelistPage: React.FC = () => {
         localStorage.setItem('copym_shared_merchant_addresses', JSON.stringify(updated));
       }
     } catch {
-      // ignore
+      return;
     }
   }, [whitelist]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedMerchant, setSelectedMerchant] = useState<string>('All');
-  const [selectedStatus, setSelectedStatus] = useState<string>('All');
-  const [selectedNetwork, setSelectedNetwork] = useState<string>('All');
-  const [selectedAddress, setSelectedAddress] = useState<AdminWhitelistedAddress | null>(null);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [notification, setNotification] = useState<string | null>(null);
-  const [pendingInstantApprove, setPendingInstantApprove] = useState<AdminWhitelistedAddress | null>(null);
 
-  // Trigger feedback banner
   const showNotification = (msg: string) => {
     setNotification(msg);
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // Instant-Approve (Bypass 24h Timelock)
-  const handleInstantApprove = (id: string, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    setWhitelist((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              status: 'Active',
-              coolingRemainingHours: 0,
-              coolingEndsAt: 'Manually Fast-Tracked by SuperAdmin'
-            }
-          : item
-      )
-    );
-    if (selectedAddress?.id === id) {
-      setSelectedAddress((prev) => (prev ? { ...prev, status: 'Active', coolingRemainingHours: 0 } : null));
-    }
-    showNotification('Address 24h Timelock bypassed & status set to Active.');
+  const selectedAddress = whitelist.find((item) => item.id === selectedAddressId) ?? null;
+
+  const openAction = (type: PendingAddressAction['type'], address: AdminWhitelistedAddress) => {
+    setPendingAction({ type, address });
   };
 
-  // Freeze / Suspend Address
-  const handleToggleFreeze = (id: string, e?: React.MouseEvent) => {
-    e?.stopPropagation();
+  const handleConfirmAction = (reasonCode: string, note: string, approver: string) => {
+    if (!pendingAction) return;
+    const { type, address } = pendingAction;
+
     setWhitelist((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              status: item.status === 'Frozen' ? 'Active' : 'Frozen'
-            }
-          : item
-      )
+      prev.map((item) => {
+        if (item.id !== address.id) return item;
+        if (type === 'instant-approve') {
+          return {
+            ...item,
+            status: 'Active' as const,
+            coolingRemainingHours: 0,
+            coolingEndsAt: `Fast-tracked (${reasonCode}) · ${note.slice(0, 48)} · ${approver}`
+          };
+        }
+        if (type === 'freeze') {
+          return { ...item, status: 'Frozen' as const };
+        }
+        if (type === 'unfreeze') {
+          return { ...item, status: 'Active' as const };
+        }
+        return { ...item, status: 'Revoked' as const };
+      })
     );
-    if (selectedAddress?.id === id) {
-      setSelectedAddress((prev) =>
-        prev ? { ...prev, status: prev.status === 'Frozen' ? 'Active' : 'Frozen' } : null
-      );
-    }
-    showNotification('Address operational status updated successfully.');
+
+    const labels: Record<PendingAddressAction['type'], string> = {
+      'instant-approve': '24h timelock fast-tracked with documented approval',
+      freeze: 'Address frozen and recorded in the audit trail',
+      unfreeze: 'Address returned to Active status',
+      revoke: 'Address revoked and blacklisted'
+    };
+    showNotification(`${labels[type]}: ${address.address}`);
+    setPendingAction(null);
   };
 
-  // Force-Revoke / Blacklist Address
-  const handleRevokeAddress = (id: string, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    if (!window.confirm('Are you sure you want to permanently revoke & blacklist this destination address?')) return;
-    setWhitelist((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, status: 'Revoked' } : item))
-    );
-    if (selectedAddress?.id === id) {
-      setSelectedAddress((prev) => (prev ? { ...prev, status: 'Revoked' } : null));
-    }
-    showNotification('Address revoked and blacklisted from merchant payouts.');
-  };
-
-  // Copy full cryptographic address
   const handleCopy = (full: string, id: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
     navigator.clipboard?.writeText(full);
     setCopiedId(id);
+    appendAuditEvent({
+      action: 'Whitelist Address Copied',
+      target: `${id} · ${full.slice(0, 14)}`,
+      reasonCode: 'Manual Review Completed (Evidence Attached)',
+      note: 'Destination address copied for verification.',
+      severity: 'Info',
+    });
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  // Export Whitelist CSV
   const handleExportCsv = () => {
     const headers = ['Merchant', 'Beneficiary', 'Network', 'Address', 'Status', 'RiskScore', 'TotalPaidOut', 'AddedBy', 'CreatedAt'];
     const rows = whitelist.map((w) => [
@@ -299,17 +298,22 @@ export const AdminWhitelistPage: React.FC = () => {
       `"${w.createdAt}"`
     ]);
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
+    link.setAttribute('href', encodeURI(csvContent));
     link.setAttribute('download', `copym-address-whitelist-${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    appendAuditEvent({
+      action: 'Whitelist Registry Exported',
+      target: `${whitelist.length} whitelisted addresses`,
+      reasonCode: 'Manual Review Completed (Evidence Attached)',
+      note: 'Whitelist registry exported for audit review.',
+      severity: 'Info',
+    });
     showNotification('Whitelist registry exported to CSV.');
   };
 
-  // Filter computation
   const filteredList = whitelist.filter((item) => {
     const matchSearch =
       item.beneficiaryName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -324,102 +328,133 @@ export const AdminWhitelistPage: React.FC = () => {
     return matchSearch && matchMerchant && matchStatus && matchNetwork;
   });
 
-  // Unique lists for dropdowns
   const uniqueMerchants = ['All', ...Array.from(new Set(whitelist.map((w) => w.merchantName)))];
-
-  // Key KPI stats
   const totalWallets = whitelist.length;
   const coolingCount = whitelist.filter((w) => w.status === 'Cooling Period').length;
   const flaggedCount = whitelist.filter((w) => w.status === 'Frozen' || w.kytRiskLevel === 'Medium' || w.kytRiskLevel === 'Critical').length;
   const activeCount = whitelist.filter((w) => w.status === 'Active').length;
 
+  const actionConfig: Record<PendingAddressAction['type'], {
+    title: string;
+    description: string;
+    actionLabel: string;
+    severity: 'Critical' | 'Warning' | 'Info';
+    variant: 'primary' | 'destructive';
+    requireSecondApprover: boolean;
+  }> = {
+    'instant-approve': {
+      title: 'Fast-Track Whitelist Timelock',
+      description: 'Override the cooling period only with documented evidence and an independent checker. The action is written to the audit trail.',
+      actionLabel: 'Confirm Fast-Track',
+      severity: 'Critical',
+      variant: 'primary',
+      requireSecondApprover: true,
+    },
+    freeze: {
+      title: 'Freeze Whitelisted Address',
+      description: 'Suspend payouts to this destination while the compliance review is documented.',
+      actionLabel: 'Confirm Freeze',
+      severity: 'Warning',
+      variant: 'destructive',
+      requireSecondApprover: true,
+    },
+    unfreeze: {
+      title: 'Unfreeze Whitelisted Address',
+      description: 'Restore payout eligibility after a documented review of the freeze reason.',
+      actionLabel: 'Confirm Unfreeze',
+      severity: 'Warning',
+      variant: 'primary',
+      requireSecondApprover: true,
+    },
+    revoke: {
+      title: 'Revoke And Blacklist Address',
+      description: 'Permanently revoke this destination address from all merchant payouts.',
+      actionLabel: 'Confirm Revoke',
+      severity: 'Critical',
+      variant: 'destructive',
+      requireSecondApprover: true,
+    },
+  };
+
   return (
     <div className="space-y-4 font-sans text-slate-900 animate-fadeIn">
-      {/* Toast Notification */}
       {notification && (
-        <div className="fixed top-5 right-5 z-50 px-4 py-2.5 bg-slate-900 text-white text-xs font-semibold rounded-xl shadow-xl border border-slate-700 flex items-center gap-2 animate-fadeIn">
+        <div className="fixed top-5 right-5 z-[10000] px-4 py-2.5 bg-slate-900 text-white text-xs font-semibold rounded-xl shadow-xl border border-slate-700 flex items-center gap-2 animate-fadeIn">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           <span>{notification}</span>
         </div>
       )}
 
-      {/* Top Header Card: Summary & Executive Actions (Compact Spacing & SF Pro Hierarchy) */}
       <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase bg-blue-50 text-blue-700 border border-blue-200/60 rounded-md">
+            <span className="px-2 py-0.5 text-xs font-bold tracking-wider uppercase bg-slate-100 text-slate-700 border border-slate-200 rounded-md">
               Treasury Governance
             </span>
-            <span className="text-xs text-slate-400">· Multi-Tenant Registry</span>
+            <span className="text-xs text-[#6B7280]">· Multi-Tenant Registry</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
             Address Whitelist Management Hub
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+          <p className="text-xs text-[#6B7280] mt-0.5 leading-relaxed">
             Monitor, approve, and enforce 24-hour security timelocks across all payout destination wallets submitted by merchants.
           </p>
         </div>
 
-        {/* Global Operational Actions */}
         <div className="flex items-center gap-2 self-stretch sm:self-auto shrink-0">
           <button
             type="button"
             onClick={handleExportCsv}
             className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition cursor-pointer shadow-2xs"
           >
-            <Download className="w-3.5 h-3.5 text-slate-500" />
+            <Download className="w-3.5 h-3.5 text-[#6B7280]" />
             <span>Export Registry</span>
           </button>
-          <div className="px-3 py-2 rounded-xl bg-blue-50 border border-blue-200/70 text-blue-700 text-xs font-semibold flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+          <div className="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200/70 text-[#007F4E] text-xs font-semibold flex items-center gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5" />
             <span>24h Timelock Active</span>
           </div>
         </div>
       </div>
 
-      {/* KPI Metric Strip (High Density, Reduced Empty Space) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* Metric 1 */}
+      <div className="grid grid-cols-2 gap-3">
         <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs">
-          <span className="text-[11px] font-medium text-slate-500 block mb-0.5">Total Destination Wallets</span>
+          <span className="text-xs font-medium text-[#6B7280] block mb-0.5">Total Destination Wallets</span>
           <div className="flex items-baseline justify-between">
             <span className="text-xl font-bold text-slate-900">{totalWallets}</span>
-            <span className="text-[10.5px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
+            <span className="text-xs font-semibold text-[#6B7280] bg-slate-100 px-2 py-0.5 rounded-md">
               Multi-Chain
             </span>
           </div>
         </div>
 
-        {/* Metric 2 */}
         <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs">
-          <span className="text-[11px] font-medium text-slate-500 block mb-0.5">Active (Executable)</span>
+          <span className="text-xs font-medium text-[#6B7280] block mb-0.5">Active (Executable)</span>
           <div className="flex items-baseline justify-between">
-            <span className="text-xl font-bold text-emerald-700">{activeCount}</span>
-            <span className="text-[10.5px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-md flex items-center gap-1">
+            <span className="text-xl font-bold text-[#007F4E]">{activeCount}</span>
+            <span className="text-xs font-semibold text-[#007F4E] bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-md flex items-center gap-1">
               <Check className="w-3 h-3" />
               <span>Verified</span>
             </span>
           </div>
         </div>
 
-        {/* Metric 3: Restrained Amber Cooling State */}
         <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs">
-          <span className="text-[11px] font-medium text-slate-500 block mb-0.5">In 24h Cooling Timelock</span>
+          <span className="text-xs font-medium text-[#6B7280] block mb-0.5">In 24h Cooling Timelock</span>
           <div className="flex items-baseline justify-between">
             <span className="text-xl font-bold text-amber-700">{coolingCount}</span>
-            <span className="text-[10.5px] font-semibold text-amber-700 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md flex items-center gap-1">
+            <span className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md flex items-center gap-1">
               <Clock className="w-3 h-3" />
               <span>Pending</span>
             </span>
           </div>
         </div>
 
-        {/* Metric 4: Restrained Red Risk Alert */}
         <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs">
-          <span className="text-[11px] font-medium text-slate-500 block mb-0.5">Frozen / Flagged Risks</span>
+          <span className="text-xs font-medium text-[#6B7280] block mb-0.5">Frozen / Flagged Risks</span>
           <div className="flex items-baseline justify-between">
             <span className="text-xl font-bold text-rose-700">{flaggedCount}</span>
-            <span className="text-[10.5px] font-semibold text-rose-700 bg-rose-50 border border-rose-200/60 px-2 py-0.5 rounded-md flex items-center gap-1">
+            <span className="text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200/60 px-2 py-0.5 rounded-md flex items-center gap-1">
               <AlertTriangle className="w-3 h-3" />
               <span>Hold</span>
             </span>
@@ -427,38 +462,35 @@ export const AdminWhitelistPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Filter & Action Bar (Inter Hierarchy, Blue Accents) */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-        <div className="p-3 sm:p-4 border-b border-slate-100 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-slate-50/50">
-          {/* Search Input */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <div className="p-3 sm:p-4 border-b border-slate-100 flex flex-col gap-3 bg-slate-50/50">
+          <div className="relative w-full">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280]" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by beneficiary, merchant, address hash, or network..."
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition"
+              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-[#6B7280] focus:outline-none focus:border-[#007F4E] focus:ring-1 focus:ring-[#007F4E] transition"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-slate-600"
+                aria-label="Clear search"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
 
-          {/* Dropdown Filters */}
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Merchant Filter */}
-            <div className="flex items-center gap-1 text-xs text-slate-500">
-              <Building2 className="w-3.5 h-3.5 text-slate-400" />
+            <div className="flex items-center gap-1 text-xs text-[#6B7280]">
+              <Building2 className="w-3.5 h-3.5 text-[#6B7280]" />
               <select
                 value={selectedMerchant}
                 onChange={(e) => setSelectedMerchant(e.target.value)}
-                className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-600"
+                className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#007F4E]"
               >
                 {uniqueMerchants.map((m) => (
                   <option key={m} value={m}>
@@ -468,11 +500,10 @@ export const AdminWhitelistPage: React.FC = () => {
               </select>
             </div>
 
-            {/* Status Filter */}
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-600"
+              className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#007F4E]"
             >
               <option value="All">All Statuses</option>
               <option value="Active">Active (Executable)</option>
@@ -481,11 +512,10 @@ export const AdminWhitelistPage: React.FC = () => {
               <option value="Revoked">Revoked</option>
             </select>
 
-            {/* Network Filter */}
             <select
               value={selectedNetwork}
               onChange={(e) => setSelectedNetwork(e.target.value)}
-              className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-600"
+              className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#007F4E]"
             >
               <option value="All">All Chains</option>
               <option value="TRON">TRON (TRC-20)</option>
@@ -496,28 +526,27 @@ export const AdminWhitelistPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Dense Multi-Tenant Address Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+        <div className="table-scroll">
+          <table className="w-full text-left border-collapse text-xs min-w-[980px]">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+              <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
                 <th className="py-2.5 px-4">Merchant & Beneficiary</th>
                 <th className="py-2.5 px-3">Rail / Network</th>
                 <th className="py-2.5 px-3">Destination Address</th>
                 <th className="py-2.5 px-3">KYT Score</th>
                 <th className="py-2.5 px-3">Whitelist Timelock Status</th>
                 <th className="py-2.5 px-3 text-right">Settled Payouts</th>
-                <th className="py-2.5 px-4 text-center">Admin Controls</th>
+                <th className="py-2.5 px-4 text-center sticky right-0 bg-slate-50 z-10 shadow-[-4px_0_8px_rgba(0,0,0,0.03)]">Admin Controls</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-sans">
               {filteredList.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                  <td colSpan={7} className="py-12 text-center text-[#6B7280]">
                     <div className="flex flex-col items-center justify-center">
                       <ShieldCheck className="w-8 h-8 text-slate-300 mb-2" />
-                      <p className="font-semibold text-sm text-slate-600">No whitelisted addresses match filters</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Try selecting another merchant or chain filter.</p>
+                      <p className="font-semibold text-sm text-slate-700">No whitelisted addresses match filters</p>
+                      <p className="text-xs text-[#6B7280] mt-0.5">Try selecting another merchant or chain filter.</p>
                     </div>
                   </td>
                 </tr>
@@ -531,58 +560,54 @@ export const AdminWhitelistPage: React.FC = () => {
                   return (
                     <tr
                       key={item.id}
-                      onClick={() => setSelectedAddress(item)}
+                      onClick={() => setSelectedAddressId(item.id)}
                       className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
                     >
-                      {/* Merchant & Beneficiary */}
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs shrink-0">
+                          <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 font-bold text-xs shrink-0">
                             {item.merchantName.slice(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <div className="font-bold text-slate-900 group-hover:text-blue-600 transition flex items-center gap-1.5">
+                            <div className="font-bold text-slate-900 group-hover:text-[#007F4E] transition flex items-center gap-1.5">
                               <span>{item.beneficiaryName}</span>
                             </div>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="text-[11px] text-slate-500 font-medium">{item.merchantName}</span>
+                              <span className="text-xs text-[#6B7280] font-medium">{item.merchantName}</span>
                               <span className="text-slate-300">·</span>
-                              <span className="text-[10px] text-slate-400">{item.category}</span>
+                              <span className="text-xs text-[#6B7280]">{item.category}</span>
                             </div>
                           </div>
                         </div>
                       </td>
 
-                      {/* Rail / Network */}
                       <td className="py-3 px-3">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-700">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-700">
                           {item.network}
                         </span>
                       </td>
 
-                      {/* Destination Address (Highlighted First 6 & Last 6) */}
                       <td className="py-3 px-3">
                         <div className="flex items-center gap-1.5 font-mono text-xs">
                           <span className="font-bold text-slate-900">{item.address.slice(0, 6)}</span>
-                          <span className="text-slate-400">...</span>
+                          <span className="text-[#6B7280]">...</span>
                           <span className="font-bold text-slate-900">{item.address.slice(-6)}</span>
                           <button
                             type="button"
                             onClick={(e) => handleCopy(item.fullAddress, item.id, e)}
-                            className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-700 transition ml-0.5"
+                            className="p-1 hover:bg-slate-200 rounded text-[#6B7280] hover:text-slate-700 transition ml-0.5"
                             title="Copy full address"
                           >
                             {copiedId === item.id ? (
-                              <Check className="w-3 h-3 text-emerald-600" />
+                              <Check className="w-3 h-3 text-[#007F4E]" />
                             ) : (
                               <Copy className="w-3 h-3" />
                             )}
                           </button>
                         </div>
-                        <span className="text-[10px] text-slate-400 block mt-0.5">Added by {item.addedBy.split(' ')[0]}</span>
+                        <span className="text-xs text-[#6B7280] block mt-0.5">Added by {item.addedBy.split(' ')[0]}</span>
                       </td>
 
-                      {/* KYT Score */}
                       <td className="py-3 px-3">
                         <div className="flex items-center gap-1.5">
                           <span
@@ -590,90 +615,90 @@ export const AdminWhitelistPage: React.FC = () => {
                               item.kytRiskLevel === 'Clean'
                                 ? 'bg-emerald-500'
                                 : item.kytRiskLevel === 'Low'
-                                ? 'bg-blue-500'
-                                : 'bg-rose-500'
+                                  ? 'bg-amber-500'
+                                  : 'bg-rose-500'
                             }`}
                           />
                           <span className="font-bold text-slate-800">{item.kytRiskScore}/100</span>
-                          <span className="text-[10px] text-slate-400">({item.kytRiskLevel})</span>
+                          <span className="text-xs text-[#6B7280]">({item.kytRiskLevel})</span>
                         </div>
                       </td>
 
-                      {/* Timelock Status Badge */}
                       <td className="py-3 px-3">
                         {isCooling && (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200/70">
-                            <Clock className="w-3.5 h-3.5 text-amber-600 animate-spin" />
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200/70">
+                            <Clock className="w-3.5 h-3.5 text-amber-600" />
                             <span>{item.coolingRemainingHours}h Timelock Left</span>
                           </div>
                         )}
                         {isActive && (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/70">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-[#007F4E] border border-emerald-200/70">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
                             <span>Active (Executable)</span>
                           </div>
                         )}
                         {isFrozen && (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/70">
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200/70">
                             <AlertOctagon className="w-3.5 h-3.5 text-rose-600" />
                             <span>Frozen (Compliance Hold)</span>
                           </div>
                         )}
                         {isRevoked && (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
                             <Ban className="w-3.5 h-3.5 text-slate-500" />
                             <span>Revoked & Blacklisted</span>
                           </div>
                         )}
                       </td>
 
-                      {/* Settled Volume */}
                       <td className="py-3 px-3 text-right font-mono font-bold text-slate-800">
                         {item.totalPaidOut}
                       </td>
 
-                      {/* Admin Controls */}
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-3 px-4 text-center sticky right-0 bg-white z-10 shadow-[-4px_0_8px_rgba(0,0,0,0.03)]">
                         <div className="flex items-center justify-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                          {/* Fast-Track Bypass Button for Cooling Period */}
                           {isCooling && (
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setPendingInstantApprove(item);
+                                openAction('instant-approve', item);
                               }}
-                              className="px-2.5 py-1 bg-[#007F4E] hover:bg-[#00663E] text-white rounded-lg text-[11px] font-semibold flex items-center gap-1 transition shadow-xs cursor-pointer"
-                              title="Bypass 24h timelock with compliance justification"
+                              className="px-2.5 py-1 bg-[#007F4E] hover:bg-[#00663E] text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition shadow-xs cursor-pointer"
+                              title="Fast-track timelock with documented approval"
                             >
                               <Unlock className="w-3 h-3" />
-                              <span>Instant Approve</span>
+                              <span>Fast-Track</span>
                             </button>
                           )}
 
-                          {/* Freeze / Unfreeze Toggle */}
                           {!isRevoked && (
                             <button
                               type="button"
-                              onClick={(e) => handleToggleFreeze(item.id, e)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openAction(isFrozen ? 'unfreeze' : 'freeze', item);
+                              }}
                               className={`p-1.5 rounded-lg border text-xs transition cursor-pointer ${
                                 isFrozen
-                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                                  ? 'bg-emerald-50 text-[#007F4E] border-emerald-200 hover:bg-emerald-100'
                                   : 'bg-white text-slate-600 border-slate-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200'
                               }`}
-                              title={isFrozen ? 'Unfreeze Address' : 'Freeze Address'}
+                              title={isFrozen ? 'Unfreeze address with sign-off' : 'Freeze address with sign-off'}
                             >
                               {isFrozen ? <Check className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
                             </button>
                           )}
 
-                          {/* Revoke / Blacklist */}
                           {!isRevoked && (
                             <button
                               type="button"
-                              onClick={(e) => handleRevokeAddress(item.id, e)}
-                              className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-400 hover:text-rose-600 hover:border-rose-200 transition cursor-pointer"
-                              title="Revoke & Blacklist"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openAction('revoke', item);
+                              }}
+                              className="p-1.5 rounded-lg border border-slate-200 bg-white text-[#6B7280] hover:text-rose-700 hover:border-rose-200 transition cursor-pointer"
+                              title="Revoke & blacklist with sign-off"
                             >
                               <Ban className="w-3.5 h-3.5" />
                             </button>
@@ -681,9 +706,12 @@ export const AdminWhitelistPage: React.FC = () => {
 
                           <button
                             type="button"
-                            onClick={() => setSelectedAddress(item)}
-                            className="p-1.5 text-slate-400 hover:text-blue-600 transition"
-                            title="View Full Audit Drawer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedAddressId(item.id);
+                            }}
+                            className="p-1.5 text-[#6B7280] hover:text-[#007F4E] transition cursor-pointer"
+                            title="View full audit drawer"
                           >
                             <ChevronRight className="w-4 h-4" />
                           </button>
@@ -698,32 +726,35 @@ export const AdminWhitelistPage: React.FC = () => {
         </div>
       </div>
 
-      {/* DETAILED INSPECTION DRAWER / MODAL */}
-      {selectedAddress && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-2xs flex items-center justify-end animate-fadeIn">
+      <AdminDialog
+        isOpen={!!selectedAddress}
+        onClose={() => setSelectedAddressId(null)}
+        className="flex items-center justify-end bg-black/50 backdrop-blur-sm"
+        ariaLabel="Whitelist address audit drawer"
+      >
+        {selectedAddress && (
           <div className="bg-white w-full max-w-lg h-full p-6 shadow-2xl flex flex-col justify-between overflow-y-auto animate-slideInRight">
             <div>
-              {/* Drawer Header */}
               <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-xs">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs">
                     {selectedAddress.merchantName.slice(0, 2).toUpperCase()}
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-slate-900">{selectedAddress.beneficiaryName}</h3>
-                    <p className="text-xs text-slate-500">{selectedAddress.merchantName} ({selectedAddress.merchantId})</p>
+                    <p className="text-xs text-[#6B7280]">{selectedAddress.merchantName} ({selectedAddress.merchantId})</p>
                   </div>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setSelectedAddress(null)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                  onClick={() => setSelectedAddressId(null)}
+                  className="p-1.5 rounded-lg text-[#6B7280] hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                  aria-label="Close drawer"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Status Notice Banner */}
               <div className="mt-4">
                 {selectedAddress.status === 'Cooling Period' && (
                   <div className="p-3.5 bg-amber-50 border border-amber-200/80 rounded-xl text-xs text-amber-800 space-y-1">
@@ -731,16 +762,15 @@ export const AdminWhitelistPage: React.FC = () => {
                       <Clock className="w-4 h-4 text-amber-600" />
                       <span>24-Hour Security Hold Cooling Period</span>
                     </div>
-                    <p className="text-[11.5px] text-amber-700 leading-relaxed">
-                      This destination address cannot receive payouts until {selectedAddress.coolingEndsAt} ({selectedAddress.coolingRemainingHours} hours remaining).
-                      As SuperAdmin, you can review origin credentials and fast-track approval immediately.
+                    <p className="text-xs text-amber-700 leading-relaxed">
+                      This destination address cannot receive payouts until {selectedAddress.coolingEndsAt} ({selectedAddress.coolingRemainingHours} hours remaining). Fast-track requires documented approval and an audit entry.
                     </p>
                   </div>
                 )}
                 {selectedAddress.status === 'Active' && (
                   <div className="p-3.5 bg-emerald-50 border border-emerald-200/80 rounded-xl text-xs text-emerald-800 flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>Address verified and fully cleared for automated disbursement.</span>
+                    <CheckCircle2 className="w-4 h-4 text-[#007F4E] shrink-0" />
+                    <span>Address verified and cleared for automated disbursement.</span>
                   </div>
                 )}
                 {selectedAddress.status === 'Frozen' && (
@@ -751,29 +781,28 @@ export const AdminWhitelistPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Technical Specifications */}
               <div className="mt-5 space-y-3.5 text-xs">
-                <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] text-slate-400">
+                <h4 className="font-bold text-slate-900 uppercase tracking-wider text-xs text-[#6B7280]">
                   Address Parameters
                 </h4>
 
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between text-slate-500">
+                  <div className="flex items-center justify-between text-[#6B7280]">
                     <span>Network & Rail</span>
                     <span className="font-semibold text-slate-800">{selectedAddress.network}</span>
                   </div>
-                  <div className="flex items-center justify-between text-slate-500">
+                  <div className="flex items-center justify-between text-[#6B7280]">
                     <span>Beneficiary Category</span>
                     <span className="font-semibold text-slate-800">{selectedAddress.category}</span>
                   </div>
-                  <div className="flex items-center justify-between text-slate-500">
+                  <div className="flex items-center justify-between text-[#6B7280]">
                     <span>Cumulative Payouts</span>
                     <span className="font-mono font-bold text-slate-900">{selectedAddress.totalPaidOut}</span>
                   </div>
                 </div>
 
-                <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] text-slate-400 pt-2">
-                  Cryptographic Destination Hash
+                <h4 className="font-bold text-slate-900 uppercase tracking-wider text-xs text-[#6B7280] pt-2">
+                  Destination Address
                 </h4>
 
                 <div className="p-3 bg-slate-900 text-white rounded-xl font-mono text-xs break-all relative group">
@@ -783,99 +812,101 @@ export const AdminWhitelistPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleCopy(selectedAddress.fullAddress, selectedAddress.id)}
-                    className="absolute right-2 top-2 p-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-md transition"
-                    title="Copy full hash"
+                    className="absolute right-2 top-2 p-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-md transition cursor-pointer"
+                    title="Copy full address"
                   >
                     {copiedId === selectedAddress.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                 </div>
 
-                <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] text-slate-400 pt-2">
+                <h4 className="font-bold text-slate-900 uppercase tracking-wider text-xs text-[#6B7280] pt-2">
                   Audit Trail & Operator Origin
                 </h4>
 
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-[11.5px]">
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs">
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Added by Operator:</span>
+                    <span className="text-[#6B7280]">Added by Operator:</span>
                     <span className="font-semibold text-slate-800">{selectedAddress.addedBy}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Origin IP:</span>
+                    <span className="text-[#6B7280]">Origin IP:</span>
                     <span className="font-mono text-slate-700">{selectedAddress.addedIp}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Timestamp:</span>
+                    <span className="text-[#6B7280]">Timestamp:</span>
                     <span className="text-slate-700">{selectedAddress.createdAt}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Sanctions Screening:</span>
-                    <span className="font-semibold text-emerald-600">Passed (OFAC/EU Clean)</span>
+                    <span className="text-[#6B7280]">Sanctions Screening:</span>
+                    <span className="font-semibold text-[#007F4E]">{selectedAddress.sanctionScreenStatus} (OFAC/EU)</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Drawer Bottom Actions */}
             <div className="pt-6 border-t border-slate-100 flex items-center gap-2">
               {selectedAddress.status === 'Cooling Period' && (
                 <button
                   type="button"
-                  onClick={() => handleInstantApprove(selectedAddress.id)}
+                  onClick={() => openAction('instant-approve', selectedAddress)}
                   className="flex-1 py-2.5 bg-[#007F4E] hover:bg-[#00663E] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition shadow-sm cursor-pointer"
                 >
                   <Unlock className="w-3.5 h-3.5" />
-                  <span>Instant-Approve (Bypass 24h)</span>
+                  <span>Fast-Track With Sign-Off</span>
                 </button>
               )}
 
-              <button
-                type="button"
-                onClick={() => handleToggleFreeze(selectedAddress.id)}
-                className={`py-2.5 px-4 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 border transition cursor-pointer ${
-                  selectedAddress.status === 'Frozen'
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                    : 'bg-white text-slate-700 border-slate-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200'
-                }`}
-              >
-                {selectedAddress.status === 'Frozen' ? (
-                  <>
-                    <Check className="w-3.5 h-3.5" />
-                    <span>Unfreeze</span>
-                  </>
-                ) : (
-                  <>
-                    <Lock className="w-3.5 h-3.5" />
-                    <span>Freeze Address</span>
-                  </>
-                )}
-              </button>
+              {selectedAddress.status !== 'Revoked' && (
+                <button
+                  type="button"
+                  onClick={() => openAction(selectedAddress.status === 'Frozen' ? 'unfreeze' : 'freeze', selectedAddress)}
+                  className={`py-2.5 px-4 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 border transition cursor-pointer ${
+                    selectedAddress.status === 'Frozen'
+                      ? 'bg-emerald-50 text-[#007F4E] border-emerald-200 hover:bg-emerald-100'
+                      : 'bg-white text-slate-700 border-slate-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200'
+                  }`}
+                >
+                  {selectedAddress.status === 'Frozen' ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Unfreeze</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>Freeze Address</span>
+                    </>
+                  )}
+                </button>
+              )}
 
-              <button
-                type="button"
-                onClick={() => handleRevokeAddress(selectedAddress.id)}
-                className="py-2.5 px-3 bg-white hover:bg-rose-50 text-slate-500 hover:text-rose-700 border border-slate-200 hover:border-rose-200 rounded-xl text-xs font-semibold transition cursor-pointer"
-                title="Revoke and blacklist"
-              >
-                <Ban className="w-4 h-4" />
-              </button>
+              {selectedAddress.status !== 'Revoked' && (
+                <button
+                  type="button"
+                  onClick={() => openAction('revoke', selectedAddress)}
+                  className="py-2.5 px-3 bg-white hover:bg-rose-50 text-[#6B7280] hover:text-rose-700 border border-slate-200 hover:border-rose-200 rounded-xl text-xs font-semibold transition cursor-pointer"
+                  title="Revoke and blacklist with sign-off"
+                >
+                  <Ban className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </AdminDialog>
 
-      {pendingInstantApprove && (
+      {pendingAction && (
         <AdminComplianceConfirmModal
           isOpen={true}
-          title="Bypass 24h Cooling Timelock (Instant Approve)"
-          description={`Override the mandatory 24-hour security hold for ${pendingInstantApprove.merchantName} address ${pendingInstantApprove.address}.`}
-          actionLabel="Confirm Bypass"
-          targetEntity={`${pendingInstantApprove.merchantName} · ${pendingInstantApprove.address}`}
-          severity="Critical"
-          onClose={() => setPendingInstantApprove(null)}
-          onConfirm={() => {
-            handleInstantApprove(pendingInstantApprove.id);
-            setPendingInstantApprove(null);
-          }}
+          title={actionConfig[pendingAction.type].title}
+          description={actionConfig[pendingAction.type].description}
+          actionLabel={actionConfig[pendingAction.type].actionLabel}
+          targetEntity={`${pendingAction.address.merchantName} · ${pendingAction.address.address}`}
+          severity={actionConfig[pendingAction.type].severity}
+          variant={actionConfig[pendingAction.type].variant}
+          requireSecondApprover={actionConfig[pendingAction.type].requireSecondApprover}
+          onClose={() => setPendingAction(null)}
+          onConfirm={handleConfirmAction}
         />
       )}
     </div>

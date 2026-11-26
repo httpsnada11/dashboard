@@ -1,6 +1,8 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X, ExternalLink, Clock, ArrowUpRight, ArrowDownLeft, QrCode } from 'lucide-react';
 import { Transaction } from '../types';
+import { useDialogBehavior } from '../hooks/useDialogBehavior';
 
 export interface TransactionModalProps {
   transaction: Transaction | null;
@@ -13,17 +15,27 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   onClose,
   onOpenDepositCheckout
 }) => {
+  const dialogRef = useDialogBehavior(!!transaction, onClose);
+
   if (!transaction) return null;
 
   const isDeposit = transaction.type === 'Deposit';
+  const status = String(transaction.status ?? '');
+  const isSettled = ['Credited', 'Settled', 'Completed', 'Confirmed'].some((term) => status.includes(term));
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+  return createPortal(
+    <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
+    >
       <div className="bg-white rounded-[24px] max-w-lg w-full p-6 shadow-2xl border border-gray-100">
         <div className="flex items-center justify-between pb-4 border-b border-gray-100">
           <div className="flex items-center gap-2.5">
             <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-              isDeposit ? 'bg-emerald-50 text-[#00C076]' : 'bg-gray-100 text-gray-800'
+              isDeposit ? 'bg-emerald-50 text-[#007F4E]' : 'bg-gray-100 text-gray-800'
             }`}>
               {isDeposit ? <ArrowDownLeft className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
             </div>
@@ -40,8 +52,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
         <div className="py-5 space-y-4 text-xs">
           <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex items-center justify-between">
             <div>
-              <span className="text-[11px] text-gray-400">Total Transaction Amount</span>
-              <p className={`text-xl font-bold ${isDeposit ? 'text-[#00C076]' : 'text-gray-900'}`}>
+              <span className="text-xs text-[#6B7280]">Total Transaction Amount</span>
+              <p className={`text-xl font-bold ${isDeposit ? 'text-[#007F4E]' : 'text-gray-900'}`}>
                 {transaction.amount} {transaction.network.split(' · ')[0]}
               </p>
             </div>
@@ -52,23 +64,23 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-              <span className="text-gray-400 block mb-0.5">Network</span>
+              <span className="text-[#6B7280] block mb-0.5">Network</span>
               <span className="font-semibold text-gray-800">{transaction.network}</span>
             </div>
             <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-              <span className="text-gray-400 block mb-0.5">Merchant Order ID</span>
+              <span className="text-[#6B7280] block mb-0.5">Merchant Order ID</span>
               <span className="font-semibold text-gray-800">{transaction.customer}</span>
             </div>
           </div>
 
           <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-            <div className="flex items-center justify-between text-gray-400 mb-1">
+            <div className="flex items-center justify-between text-[#6B7280] mb-1">
               <span>Blockchain Transaction Hash (TxID)</span>
               <a
                 href="https://sepolia.etherscan.io/tx/0x8f4c28a9b1c900e231d77a83d47012bc09ef78923a104c83d6a908be140f892a"
                 target="_blank"
                 rel="noreferrer"
-                className="text-[#00C076] font-medium flex items-center gap-1 hover:underline"
+                className="text-[#007F4E] font-medium flex items-center gap-1 hover:underline"
               >
                 Explorer <ExternalLink className="w-3 h-3" />
               </a>
@@ -79,19 +91,19 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2 text-gray-500 pt-1">
-            <Clock className="w-3.5 h-3.5 text-gray-400" />
-            <span>Timestamp: {transaction.time} (Confirmed via On-Chain Node)</span>
+            <Clock className="w-3.5 h-3.5 text-[#6B7280]" />
+            <span>Timestamp: {transaction.time}</span>
           </div>
         </div>
 
         <div className="pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
-          {isDeposit ? (
+          {isDeposit && !isSettled ? (
             <button
               onClick={() => {
                 onClose();
                 onOpenDepositCheckout?.(transaction);
               }}
-              className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#00C076] rounded-xl text-xs font-bold flex items-center gap-1.5 transition border border-emerald-200"
+              className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#007F4E] rounded-xl text-xs font-bold flex items-center gap-1.5 transition border border-emerald-200"
             >
               <QrCode className="w-3.5 h-3.5" />
               <span>Open Deposit Checkout & QR</span>
@@ -108,6 +120,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

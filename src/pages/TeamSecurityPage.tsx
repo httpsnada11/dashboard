@@ -11,13 +11,14 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { TeamMember, ActiveSession, AuditLogItem } from '../types';
+import { Toggle } from '../components/Toggle';
 
 const INITIAL_MEMBERS: TeamMember[] = [
   {
     id: 'mem_1',
     name: 'Nora Vale',
     isYou: true,
-    email: 'nora@copym.com',
+    email: 'nora@apexforex.example.com',
     role: 'Owner',
     roleDescription: 'Team & policies; approve only',
     status: 'Active',
@@ -29,7 +30,7 @@ const INITIAL_MEMBERS: TeamMember[] = [
     id: 'mem_2',
     name: 'Elias Rowan',
     isYou: false,
-    email: 'elias@copym.com',
+    email: 'elias@apexforex.example.com',
     role: 'Payout creator',
     roleDescription: 'Create payouts; cannot approve',
     status: 'Active',
@@ -41,7 +42,7 @@ const INITIAL_MEMBERS: TeamMember[] = [
     id: 'mem_3',
     name: 'Mira Arden',
     isYou: false,
-    email: 'mira@copym.com',
+    email: 'mira@apexforex.example.com',
     role: 'Payout approver',
     roleDescription: 'Approve payouts; cannot create',
     status: 'Active',
@@ -53,7 +54,7 @@ const INITIAL_MEMBERS: TeamMember[] = [
     id: 'mem_4',
     name: 'Theo Linden',
     isYou: false,
-    email: 'theo@copym.com',
+    email: 'theo@apexforex.example.com',
     role: 'Finance viewer',
     roleDescription: 'View balances & statements',
     status: 'Active',
@@ -65,7 +66,7 @@ const INITIAL_MEMBERS: TeamMember[] = [
     id: 'mem_5',
     name: 'Ada Marlow',
     isYou: false,
-    email: 'ada@copym.com',
+    email: 'ada@apexforex.example.com',
     role: 'Operations analyst',
     roleDescription: 'Deposits & exception review',
     status: 'Invited',
@@ -364,24 +365,24 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
       {/* Toast Feedback */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-gray-900 text-white px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 text-xs font-semibold animate-fadeIn border border-white/10">
-          <CheckCircle2 className="w-4 h-4 text-[#00C076]" />
+          <CheckCircle2 className="w-4 h-4 text-[#007F4E]" />
           <span>{toastMessage}</span>
         </div>
       )}
 
       {/* TOP SECTION: Team Members Table */}
       <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
+        <div className="table-scroll">
           <table className="w-full text-left border-collapse min-w-[780px]">
             {/* Dark Sleek Header Bar */}
             <thead>
-              <tr className="bg-[#18191B] text-white text-[11.5px] sm:text-[12px] font-medium tracking-normal select-none">
+              <tr className="table-header-row select-none">
                 <th className="py-2.5 px-4 sm:px-5 rounded-tl-2xl">MEMBER</th>
                 <th className="py-2.5 px-3">ROLE / ACCESS</th>
                 <th className="py-2.5 px-3">STATUS</th>
                 <th className="py-2.5 px-3">TWO-FACTOR AUTH</th>
                 <th className="py-2.5 px-3">LAST ACCESS</th>
-                <th className="py-2.5 px-4 sm:px-5 text-center rounded-tr-2xl">ACTIONS</th>
+                <th className="table-action-header py-2.5 px-4 sm:px-5 text-center rounded-tr-2xl">ACTIONS</th>
               </tr>
             </thead>
 
@@ -394,21 +395,21 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
                     <div className="font-bold text-[#14171A] text-[13px] flex items-center gap-1.5">
                       <span>{m.name}</span>
                       {m.isYou && (
-                        <span className="font-normal text-gray-400">· You</span>
+                        <span className="font-normal text-[#6B7280]">· You</span>
                       )}
                     </div>
-                    <div className="text-[11px] text-[#8E95A5] mt-0.5">{m.email}</div>
+                    <div className="text-xs text-[#6B7280] mt-0.5">{m.email}</div>
                   </td>
 
                   {/* Role / Access */}
                   <td className="py-3 px-3">
                     <div className="font-bold text-[#14171A] text-[12.5px]">{m.role}</div>
-                    <div className="text-[11px] text-[#8E95A5] mt-0.5">{m.roleDescription}</div>
+                    <div className="text-xs text-[#6B7280] mt-0.5">{m.roleDescription}</div>
                   </td>
 
                   {/* Status Badge */}
                   <td className="py-3 px-3">
-                    <span className="inline-block px-2.5 py-0.5 bg-[#ECEEF2] text-gray-700 font-semibold text-[10.5px] rounded-full tracking-wide">
+                    <span className="inline-block px-2.5 py-0.5 bg-[#ECEEF2] text-gray-700 font-semibold text-xs rounded-full tracking-wide">
                       {m.status}
                     </span>
                   </td>
@@ -421,7 +422,7 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
                   {/* Last Access */}
                   <td className="py-3 px-3">
                     <div className="font-medium text-[#14171A] text-[12px]">{m.lastAccessDate}</div>
-                    <div className="text-[10.5px] text-[#8E95A5] mt-0.5">{m.lastAccessSub}</div>
+                    <div className="text-xs text-[#6B7280] mt-0.5">{m.lastAccessSub}</div>
                   </td>
 
                   {/* Actions Column */}
@@ -430,13 +431,13 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
                       <div className="flex items-center justify-center gap-1.5">
                         <button
                           onClick={() => handleResendInvite(m)}
-                          className="px-3 py-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-[11px] font-medium rounded-full shadow-2xs transition"
+                          className="px-3 py-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-xs font-medium rounded-full shadow-2xs transition"
                         >
                           Resend
                         </button>
                         <button
                           onClick={() => handleRevokeInvite(m)}
-                          className="px-3 py-1 bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 text-gray-700 hover:text-red-600 text-[11px] font-medium rounded-full shadow-2xs transition"
+                          className="px-3 py-1 bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 text-gray-700 hover:text-red-600 text-xs font-medium rounded-full shadow-2xs transition"
                         >
                           Revoke
                         </button>
@@ -444,7 +445,7 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
                     ) : (
                       <button
                         onClick={() => setManageMember(m)}
-                        className="px-3.5 py-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-[11.5px] font-medium rounded-full shadow-2xs transition"
+                        className="px-3.5 py-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-xs font-medium rounded-full shadow-2xs transition"
                       >
                         Manage
                       </button>
@@ -463,22 +464,22 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
           {/* Top Row: Title + Badges */}
           <div className="flex items-center flex-wrap gap-2">
             <h3 className="text-[15px] font-bold text-[#14171A]">Two-factor authentication</h3>
-            <span className="px-2.5 py-0.5 bg-[#ECEEF2] text-gray-700 text-[10.5px] rounded-full font-medium">
+            <span className="px-2.5 py-0.5 bg-[#ECEEF2] text-gray-700 text-xs rounded-full font-medium">
               Authenticator app required
             </span>
-            <span className="px-2.5 py-0.5 bg-[#ECEEF2] text-gray-700 text-[10.5px] rounded-full font-medium">
+            <span className="px-2.5 py-0.5 bg-[#ECEEF2] text-gray-700 text-xs rounded-full font-medium">
               {members.filter(m => m.status === 'Active').length} of {members.filter(m => m.status === 'Active').length} enrolled
             </span>
-            <span className="px-2.5 py-0.5 bg-[#18191B] text-white text-[10.5px] rounded-full font-medium">
+            <span className="px-2.5 py-0.5 bg-[#18191B] text-white text-xs rounded-full font-medium">
               {twoFactorEnforced ? 'Enforced' : 'Optional'}
             </span>
           </div>
 
           {/* Description */}
-          <p className="text-[11.5px] text-gray-600 mt-1.5 leading-relaxed">
+          <p className="text-xs text-gray-600 mt-1.5 leading-relaxed">
             Required at every sign-in. All {members.filter(m => m.status === 'Active').length} active members are enrolled; pending invitations must complete setup before access is granted.
           </p>
-          <p className="text-[10px] text-[#8E95A5] mt-1 font-normal">
+          <p className="text-xs text-[#6B7280] mt-1 font-normal">
             Applies to all team members
           </p>
         </div>
@@ -486,7 +487,7 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
         {/* Right Button: Edit Policy */}
         <button
           onClick={() => setIsEditPolicyOpen(true)}
-          className="flex-shrink-0 px-4 py-1.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 rounded-full text-[11.5px] sm:text-[12px] font-medium shadow-2xs transition-all select-none"
+          className="flex-shrink-0 px-4 py-1.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 rounded-full text-xs sm:text-[12px] font-medium shadow-2xs transition-all select-none"
         >
           Edit policy
         </button>
@@ -501,14 +502,14 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2">
                 <h3 className="text-[15px] font-bold text-[#14171A]">Active sessions</h3>
-                <span className="inline-flex items-center justify-center px-2 py-0.5 bg-[#ECEEF2] text-gray-700 rounded-full text-[10px] font-bold">
+                <span className="inline-flex items-center justify-center px-2 py-0.5 bg-[#ECEEF2] text-gray-700 rounded-full text-xs font-bold">
                   {sessions.length}
                 </span>
               </div>
               {sessions.length > 1 && (
                 <button
                   onClick={handleEndOtherSessions}
-                  className="px-3 py-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-[10.5px] sm:text-[11px] font-medium rounded-full shadow-2xs transition"
+                  className="px-3 py-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-xs sm:text-xs font-medium rounded-full shadow-2xs transition"
                 >
                   End other sessions
                 </button>
@@ -521,23 +522,23 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
                 <div key={sess.id} className="py-2.5 flex items-center justify-between gap-2">
                   <div>
                     <div className="font-bold text-[#14171A] text-[12px]">{sess.name}</div>
-                    <div className="text-[10.5px] text-[#8E95A5]">{sess.device}</div>
+                    <div className="text-xs text-[#6B7280]">{sess.device}</div>
                   </div>
 
                   <div className="text-right">
-                    <div className="text-[11px] text-gray-800 font-medium">{sess.time}</div>
-                    <div className="text-[10px] text-[#8E95A5]">{sess.ip}</div>
+                    <div className="text-xs text-gray-800 font-medium">{sess.time}</div>
+                    <div className="text-xs text-[#6B7280]">{sess.ip}</div>
                   </div>
 
                   <div>
                     {sess.isCurrent ? (
-                      <span className="inline-block px-3 py-0.5 bg-[#ECEEF2] text-gray-700 text-[10.5px] font-semibold rounded-full select-none">
+                      <span className="inline-block px-3 py-0.5 bg-[#ECEEF2] text-gray-700 text-xs font-semibold rounded-full select-none">
                         You
                       </span>
                     ) : (
                       <button
                         onClick={() => handleEndSession(sess)}
-                        className="px-3 py-0.5 bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 text-gray-700 hover:text-red-600 text-[11px] font-medium rounded-full transition shadow-2xs"
+                        className="px-3 py-0.5 bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 text-gray-700 hover:text-red-600 text-xs font-medium rounded-full transition shadow-2xs"
                       >
                         End
                       </button>
@@ -550,7 +551,7 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
 
           {/* Footer Timeout Note */}
           <div className="pt-3 border-t border-gray-100 mt-2">
-            <p className="text-[10px] text-[#8E95A5] font-normal tracking-tight">
+            <p className="text-xs text-[#6B7280] font-normal tracking-tight">
               30-minute idle timeout · 12-hour maximum session · All times UTC
             </p>
           </div>
@@ -564,7 +565,7 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
               <h3 className="text-[15px] font-bold text-[#14171A]">Recent access & audit activity</h3>
               <button
                 onClick={handleExportAudit}
-                className="px-3.5 py-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-[10.5px] sm:text-[11px] font-medium rounded-full shadow-2xs transition"
+                className="px-3.5 py-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-xs sm:text-xs font-medium rounded-full shadow-2xs transition"
               >
                 Export audit log
               </button>
@@ -575,21 +576,21 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
               {auditLogs.slice(0, 4).map((log) => (
                 <div key={log.id} className="py-2.5 flex items-center justify-between gap-3">
                   <div className="flex items-start gap-3">
-                    <span className="font-mono text-[11px] text-[#8E95A5] pt-0.5 w-10 shrink-0">
+                    <span className="font-mono text-xs text-[#6B7280] pt-0.5 w-10 shrink-0">
                       {log.time}
                     </span>
                     <div>
                       <div className="font-bold text-[#14171A] text-[12px] leading-tight">
                         {log.title}
                       </div>
-                      <div className="text-[10.5px] text-[#8E95A5] mt-0.5">
+                      <div className="text-xs text-[#6B7280] mt-0.5">
                         {log.subtext}
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                       log.statusBadge === 'Blocked'
                         ? 'bg-[#18191B] text-white'
                         : log.statusBadge === 'Success'
@@ -606,12 +607,12 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
 
           {/* Footer */}
           <div className="pt-3 border-t border-gray-100 mt-2 flex items-center justify-between">
-            <span className="text-[10.5px] text-[#8E95A5]">
+            <span className="text-xs text-[#6B7280]">
               29 Oct 2026 · Demo events
             </span>
             <button
               onClick={() => setIsFullActivityOpen(true)}
-              className="text-[11px] font-semibold text-gray-700 hover:text-black transition flex items-center gap-1 select-none"
+              className="text-xs font-semibold text-gray-700 hover:text-black transition flex items-center gap-1 select-none"
             >
               <span>View full activity</span>
               <ArrowRight className="w-3 h-3" />
@@ -626,47 +627,47 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
           <div className="bg-white rounded-[24px] max-w-md w-full p-6 shadow-2xl border border-gray-100">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-[#E6F9F1] flex items-center justify-center text-[#00C076]">
+                <div className="w-8 h-8 rounded-full bg-[#E6F9F1] flex items-center justify-center text-[#007F4E]">
                   <Users className="w-4 h-4" />
                 </div>
                 <h3 className="text-base font-bold text-gray-900">Invite Team Member</h3>
               </div>
-              <button onClick={() => setIsInviteOpen(false)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setIsInviteOpen(false)} className="text-[#6B7280] hover:text-gray-600">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleInviteSubmit} className="py-4 space-y-3.5 text-xs">
               <div>
-                <label className="text-[11px] font-semibold text-gray-700 block mb-1">Full Name</label>
+                <label className="text-xs font-semibold text-gray-700 block mb-1">Full Name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Jordan Price"
                   value={inviteName}
                   onChange={(e) => setInviteName(e.target.value)}
-                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#00C076]"
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#007F4E]"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold text-gray-700 block mb-1">Work Email</label>
+                <label className="text-xs font-semibold text-gray-700 block mb-1">Work Email</label>
                 <input
                   type="email"
                   required
                   placeholder="jordan@company.com"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
-                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#00C076]"
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#007F4E]"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold text-gray-700 block mb-1">Role / Permissions</label>
+                <label className="text-xs font-semibold text-gray-700 block mb-1">Role / Permissions</label>
                 <select
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value)}
-                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#00C076]"
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#007F4E]"
                 >
                   {ROLE_DEFINITIONS.map(r => (
                     <option key={r.role} value={r.role}>
@@ -676,7 +677,7 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
                 </select>
               </div>
 
-              <div className="p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl text-[11px] text-[#00683e]">
+              <div className="p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl text-xs text-[#00683e]">
                 An invitation email will be dispatched with instructions to register a hardware security key or TOTP authenticator app.
               </div>
 
@@ -690,7 +691,7 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl font-semibold shadow-xs"
+                  className="px-4 py-2 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-xl font-semibold shadow-xs"
                 >
                   Send Invitation
                 </button>
@@ -707,14 +708,14 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-800">
-                  <ShieldCheck className="w-4 h-4 text-[#00C076]" />
+                  <ShieldCheck className="w-4 h-4 text-[#007F4E]" />
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-gray-900">Roles & Governance Matrix</h3>
-                  <p className="text-[11px] text-gray-500">Maker-Checker dual control policies</p>
+                  <p className="text-xs text-gray-500">Maker-Checker dual control policies</p>
                 </div>
               </div>
-              <button onClick={() => setIsRolesOpen(false)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setIsRolesOpen(false)} className="text-[#6B7280] hover:text-gray-600">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -725,20 +726,20 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-bold text-gray-900 text-xs">{r.role}</span>
                     {r.role.includes('Payout') && (
-                      <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200">
+                      <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200">
                         Maker-Checker Enforced
                       </span>
                     )}
                   </div>
-                  <p className="text-[11.5px] text-gray-600 mb-1">{r.description}</p>
-                  <p className="text-[10.5px] text-gray-500 font-mono">Scope: {r.permissions}</p>
+                  <p className="text-xs text-gray-600 mb-1">{r.description}</p>
+                  <p className="text-xs text-gray-500 font-mono">Scope: {r.permissions}</p>
                 </div>
               ))}
             </div>
 
             <div className="p-3 bg-gray-100 rounded-xl text-xs text-gray-600 flex items-center justify-between">
               <span>Dual-Control Rule: Payout creators cannot approve their own payouts.</span>
-              <span className="text-[#00C076] font-semibold">Active</span>
+              <span className="text-[#007F4E] font-semibold">Active</span>
             </div>
 
             <div className="pt-4 flex justify-end">
@@ -760,21 +761,21 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-800">
-                  <UserCheck className="w-4 h-4 text-[#00C076]" />
+                  <UserCheck className="w-4 h-4 text-[#007F4E]" />
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-gray-900">Manage Member</h3>
-                  <p className="text-[11px] text-gray-500">{manageMember.name} ({manageMember.email})</p>
+                  <p className="text-xs text-gray-500">{manageMember.name} ({manageMember.email})</p>
                 </div>
               </div>
-              <button onClick={() => setManageMember(null)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setManageMember(null)} className="text-[#6B7280] hover:text-gray-600">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="py-4 space-y-3.5 text-xs">
               <div>
-                <label className="text-[11px] font-semibold text-gray-700 block mb-1">Assigned Role</label>
+                <label className="text-xs font-semibold text-gray-700 block mb-1">Assigned Role</label>
                 <select
                   value={manageMember.role}
                   onChange={(e) => {
@@ -785,7 +786,7 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
                       roleDescription: selected?.description.split('.')[0] || manageMember.roleDescription
                     });
                   }}
-                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#00C076]"
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#007F4E]"
                 >
                   {ROLE_DEFINITIONS.map(r => (
                     <option key={r.role} value={r.role}>{r.role}</option>
@@ -794,14 +795,14 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold text-gray-700 block mb-1">Status</label>
+                <label className="text-xs font-semibold text-gray-700 block mb-1">Status</label>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setManageMember({ ...manageMember, status: 'Active' })}
                     className={`flex-1 py-2 text-xs font-semibold rounded-xl border ${
                       manageMember.status === 'Active'
-                        ? 'bg-emerald-50 border-[#00C076] text-emerald-800'
+                        ? 'bg-emerald-50 border-[#007F4E] text-emerald-800'
                         : 'bg-gray-50 border-gray-200 text-gray-600'
                     }`}
                   >
@@ -824,14 +825,14 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
               <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between">
                 <div>
                   <div className="font-semibold text-gray-800">Two-Factor Authentication</div>
-                  <div className="text-[10.5px] text-gray-500">Hardware token / TOTP app</div>
+                  <div className="text-xs text-gray-500">Hardware token / TOTP app</div>
                 </div>
                 <button
                   type="button"
                   onClick={() => {
                     showToast(`2FA reset token sent to ${manageMember.email}`);
                   }}
-                  className="px-2.5 py-1 text-[11px] font-medium border border-gray-200 rounded-lg hover:bg-white text-gray-700"
+                  className="px-2.5 py-1 text-xs font-medium border border-gray-200 rounded-lg hover:bg-white text-gray-700"
                 >
                   Reset 2FA
                 </button>
@@ -848,7 +849,7 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
                 <button
                   type="button"
                   onClick={() => handleSaveMemberChanges(manageMember)}
-                  className="px-4 py-2 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl font-semibold shadow-xs"
+                  className="px-4 py-2 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-xl font-semibold shadow-xs"
                 >
                   Save Changes
                 </button>
@@ -865,11 +866,11 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-800">
-                  <Sliders className="w-4 h-4 text-[#00C076]" />
+                  <Sliders className="w-4 h-4 text-[#007F4E]" />
                 </div>
                 <h3 className="text-base font-bold text-gray-900">Edit Security Policy</h3>
               </div>
-              <button onClick={() => setIsEditPolicyOpen(false)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setIsEditPolicyOpen(false)} className="text-[#6B7280] hover:text-gray-600">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -878,29 +879,21 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
                 <div>
                   <div className="font-semibold text-gray-800">Enforce 2FA on all members</div>
-                  <div className="text-[10.5px] text-gray-500">Require TOTP at every sign-in</div>
+                  <div className="text-xs text-gray-500">Require TOTP at every sign-in</div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setTwoFactorEnforced(!twoFactorEnforced)}
-                  className={`w-10 h-5 flex items-center rounded-full p-0.5 transition-colors ${
-                    twoFactorEnforced ? 'bg-[#00C076]' : 'bg-gray-300'
-                  }`}
-                >
-                  <div
-                    className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                      twoFactorEnforced ? 'translate-x-5' : ''
-                    }`}
-                  />
-                </button>
+                <Toggle
+                  checked={twoFactorEnforced}
+                  onChange={setTwoFactorEnforced}
+                  label="Enforce 2FA on all members"
+                />
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold text-gray-700 block mb-1">Session Idle Timeout</label>
+                <label className="text-xs font-semibold text-gray-700 block mb-1">Session Idle Timeout</label>
                 <select
                   value={sessionTimeout}
                   onChange={(e) => setSessionTimeout(e.target.value)}
-                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#00C076]"
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#007F4E]"
                 >
                   <option value="15 minutes">15 minutes</option>
                   <option value="30 minutes">30 minutes (Standard)</option>
@@ -912,21 +905,13 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
                 <div>
                   <div className="font-semibold text-gray-800">Maker-Checker Dual Control</div>
-                  <div className="text-[10.5px] text-gray-500">Blocks self-approval on payouts</div>
+                  <div className="text-xs text-gray-500">Blocks self-approval on payouts</div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setMakerCheckerEnforced(!makerCheckerEnforced)}
-                  className={`w-10 h-5 flex items-center rounded-full p-0.5 transition-colors ${
-                    makerCheckerEnforced ? 'bg-[#00C076]' : 'bg-gray-300'
-                  }`}
-                >
-                  <div
-                    className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                      makerCheckerEnforced ? 'translate-x-5' : ''
-                    }`}
-                  />
-                </button>
+                <Toggle
+                  checked={makerCheckerEnforced}
+                  onChange={setMakerCheckerEnforced}
+                  label="Maker-Checker Dual Control"
+                />
               </div>
 
               <div className="pt-2 flex justify-end gap-2">
@@ -939,7 +924,7 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl font-semibold shadow-xs"
+                  className="px-4 py-2 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-xl font-semibold shadow-xs"
                 >
                   Save Policy
                 </button>
@@ -956,14 +941,14 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-800">
-                  <Clock className="w-4 h-4 text-[#00C076]" />
+                  <Clock className="w-4 h-4 text-[#007F4E]" />
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-gray-900">Full Audit Ledger</h3>
-                  <p className="text-[11px] text-gray-500">Immutable governance access logs</p>
+                  <p className="text-xs text-gray-500">Immutable governance access logs</p>
                 </div>
               </div>
-              <button onClick={() => setIsFullActivityOpen(false)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setIsFullActivityOpen(false)} className="text-[#6B7280] hover:text-gray-600">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -990,13 +975,13 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
               {filteredLogs.map(log => (
                 <div key={log.id} className="py-2.5 flex items-center justify-between gap-3 text-xs">
                   <div className="flex items-start gap-3">
-                    <span className="font-mono text-gray-400 w-12 shrink-0">{log.time}</span>
+                    <span className="font-mono text-[#6B7280] w-12 shrink-0">{log.time}</span>
                     <div>
                       <div className="font-semibold text-gray-900">{log.title}</div>
-                      <div className="text-[11px] text-gray-500">{log.subtext}</div>
+                      <div className="text-xs text-gray-500">{log.subtext}</div>
                     </div>
                   </div>
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                     log.statusBadge === 'Blocked'
                       ? 'bg-red-50 text-red-600 border border-red-200'
                       : 'bg-gray-100 text-gray-700'

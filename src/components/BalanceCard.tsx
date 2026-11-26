@@ -29,14 +29,9 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
   const [showDropdown, setShowDropdown] = useState(false);
 
   // Dynamic projection details matching task FE-02 & COPYm Pay ledger
-  const formattedAvailable =
-    typeof balance === 'number'
-      ? balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-      : balance.toString();
-  const formattedAvailableUsdt =
-    typeof usdtBalance === 'number'
-      ? `${usdtBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT`
-      : `${usdtBalance} USDT`;
+  const availNum = typeof balance === 'number' ? balance : parseFloat(String(balance).replace(/,/g, '')) || 0;
+  const usdtNum = typeof usdtBalance === 'number' ? usdtBalance : parseFloat(String(usdtBalance).replace(/,/g, '')) || 0;
+  const formattedUsdSecondary = `≈ $${availNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
 
   const balanceOptions: Record<
     BalanceCategory,
@@ -44,36 +39,41 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
       label: BalanceCategory;
       sub: string;
       amount: string;
-      usdt: string;
+      unit: string;
+      secondary: string;
       dotColor: string;
     }
   > = {
     Available: {
       label: 'Available',
       sub: 'Instant liquidity',
-      amount: formattedAvailable,
-      usdt: formattedAvailableUsdt,
-      dotColor: 'bg-[#00C076]'
+      amount: usdtNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      unit: 'USDT',
+      secondary: formattedUsdSecondary,
+      dotColor: 'bg-[#007F4E]'
     },
     Confirming: {
       label: 'Confirming',
       sub: 'Incoming block confirmations',
-      amount: '12,950',
-      usdt: '12,950.00 USDT · 7/12 blocks',
+      amount: '12,950.00',
+      unit: 'USDT',
+      secondary: '≈ $12,950.00 USD · 7/12 blocks',
       dotColor: 'bg-amber-400'
     },
     Reserved: {
       label: 'Reserved',
       sub: 'In-flight payout queue',
-      amount: '4,200',
-      usdt: '4,200.00 USDT · In-flight payouts',
+      amount: '4,200.00',
+      unit: 'USDT',
+      secondary: '≈ $4,200.00 USD · In-flight payouts',
       dotColor: 'bg-blue-400'
     },
     Held: {
       label: 'Held',
       sub: 'Rolling reserve & risk hold',
-      amount: '8,500',
-      usdt: '8,500.00 USDT · Escrow protected',
+      amount: '8,500.00',
+      unit: 'USDT',
+      secondary: '≈ $8,500.00 USD · Escrow protected',
       dotColor: 'bg-purple-400'
     }
   };
@@ -96,7 +96,7 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
       {/* Top Header Row inside the card - Higher z-index so dropdown floats over action buttons */}
       <div className="relative z-30 flex items-center justify-between mb-1.5">
         {/* Dynamic Label changing with selected category */}
-        <span className="text-[13px] sm:text-[15px] font-medium text-[#9FA6B2] tracking-wide animate-fadeIn">
+        <span className="text-[13px] sm:text-[15px] font-medium text-[#6B7280] tracking-wide animate-fadeIn">
           {currentProjection.label}
         </span>
 
@@ -104,7 +104,7 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
         <div className="relative">
           <button
             onClick={() => setShowDropdown(!showDropdown)}
-            className="flex items-center gap-1.5 sm:gap-2 bg-[#00C076] hover:bg-[#00B16D] text-white text-[11px] sm:text-xs font-semibold pl-3 sm:pl-3.5 pr-2 sm:pr-2.5 py-1 sm:py-1.5 rounded-full shadow-sm transition-all select-none cursor-pointer"
+            className="flex items-center gap-1.5 sm:gap-2 bg-[#007F4E] hover:bg-[#00663F] text-white text-xs sm:text-xs font-semibold pl-3 sm:pl-3.5 pr-2 sm:pr-2.5 py-1 sm:py-1.5 rounded-full shadow-sm transition-all select-none cursor-pointer"
           >
             <span>{currentProjection.label}</span>
             <div className="w-3.5 h-3.5 rounded-full bg-white/20 flex items-center justify-center">
@@ -139,18 +139,18 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
                       <div className="min-w-0 pr-2">
                         <div className="flex items-center gap-1.5">
                           <span className={`w-1.5 h-1.5 rounded-full ${opt.dotColor}`} />
-                          <p className={`font-bold ${isSelected ? 'text-[#00C076]' : 'text-white'}`}>
+                          <p className={`font-bold ${isSelected ? 'text-[#007F4E]' : 'text-white'}`}>
                             {opt.label}
                           </p>
                         </div>
-                        <p className="text-[10px] text-gray-400 truncate mt-0.5">{opt.sub}</p>
+                        <p className="text-xs text-gray-500 truncate mt-0.5">{opt.sub}</p>
                       </div>
 
                       <div className="flex items-center gap-1.5 flex-shrink-0">
-                        <span className="text-[11px] font-mono font-semibold text-gray-300">
+                        <span className="text-xs font-mono font-semibold text-gray-300">
                           ${opt.amount}
                         </span>
-                        {isSelected && <Check className="w-3.5 h-3.5 text-[#00C076]" />}
+                        {isSelected && <Check className="w-3.5 h-3.5 text-[#007F4E]" />}
                       </div>
                     </button>
                   );
@@ -171,7 +171,7 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
             {currentProjection.amount}
           </span>
           <span className="text-[22px] xs:text-[28px] sm:text-[34px] font-bold text-white tracking-normal font-sans ml-0.5 sm:ml-1">
-            US$
+            {currentProjection.unit}
           </span>
         </div>
 
@@ -184,21 +184,21 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
           />
           <span
             key={`usdt_${selectedCategory}`}
-            className="text-xs sm:text-[13px] text-[#9FA6B2] font-medium tracking-wide animate-fadeIn"
+            className="text-xs sm:text-[13px] text-[#6B7280] font-medium tracking-wide animate-fadeIn"
           >
-            {currentProjection.usdt}
+            {currentProjection.secondary}
           </span>
         </div>
       </div>
 
       {/* 3 Quick Action Cards inside the Black Card (Fitted & Responsive) */}
-      <div className="relative z-10 grid grid-cols-3 gap-2 xs:gap-3 sm:gap-3.5 pt-3 sm:pt-4">
+      <div className="relative z-10 grid grid-cols-1 xs:grid-cols-3 gap-2 xs:gap-3 sm:gap-3.5 pt-3 sm:pt-4">
         {/* Card 1: Deposits */}
         <div
           onClick={onOpenDeposit}
-          className="glass-emboss rounded-xl sm:rounded-2xl px-2.5 py-2.5 xs:px-3.5 xs:py-3 sm:px-4 sm:py-3.5 flex items-center justify-between cursor-pointer transition-all duration-200 group hover:shadow-emerald-500/10 min-w-0"
+          className="glass-emboss rounded-xl sm:rounded-2xl px-2.5 py-2.5 xs:px-3.5 xs:py-3 sm:px-4 sm:py-3.5 flex flex-col-reverse items-center justify-center gap-1.5 text-center cursor-pointer transition-all duration-200 group hover:shadow-emerald-500/10 min-w-0"
         >
-          <span className="text-xs xs:text-sm sm:text-[15px] font-bold text-white tracking-tight group-hover:text-[#00C076] transition-colors truncate">
+          <span className="text-xs xs:text-sm sm:text-[15px] font-bold text-white tracking-tight group-hover:text-[#007F4E] transition-colors whitespace-normal break-words">
             Deposits
           </span>
           <div className="transform group-hover:scale-105 transition-transform duration-200 flex-shrink-0 ml-1">
@@ -213,9 +213,9 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
         {/* Card 2: Payout */}
         <div
           onClick={onOpenPayout}
-          className="glass-emboss rounded-xl sm:rounded-2xl px-2.5 py-2.5 xs:px-3.5 xs:py-3 sm:px-4 sm:py-3.5 flex items-center justify-between cursor-pointer transition-all duration-200 group hover:shadow-emerald-500/10 min-w-0"
+          className="glass-emboss rounded-xl sm:rounded-2xl px-2.5 py-2.5 xs:px-3.5 xs:py-3 sm:px-4 sm:py-3.5 flex flex-col-reverse items-center justify-center gap-1.5 text-center cursor-pointer transition-all duration-200 group hover:shadow-emerald-500/10 min-w-0"
         >
-          <span className="text-xs xs:text-sm sm:text-[15px] font-bold text-white tracking-tight group-hover:text-[#00C076] transition-colors truncate">
+          <span className="text-xs xs:text-sm sm:text-[15px] font-bold text-white tracking-tight group-hover:text-[#007F4E] transition-colors whitespace-normal break-words">
             Payout
           </span>
           <div className="transform group-hover:scale-105 transition-transform duration-200 flex-shrink-0 ml-1">
@@ -230,9 +230,9 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
         {/* Card 3: Convert */}
         <div
           onClick={onOpenSwap}
-          className="glass-emboss rounded-xl sm:rounded-2xl px-2.5 py-2.5 xs:px-3.5 xs:py-3 sm:px-4 sm:py-3.5 flex items-center justify-between cursor-pointer transition-all duration-200 group hover:shadow-emerald-500/10 min-w-0"
+          className="glass-emboss rounded-xl sm:rounded-2xl px-2.5 py-2.5 xs:px-3.5 xs:py-3 sm:px-4 sm:py-3.5 flex flex-col-reverse items-center justify-center gap-1.5 text-center cursor-pointer transition-all duration-200 group hover:shadow-emerald-500/10 min-w-0"
         >
-          <span className="text-xs xs:text-sm sm:text-[15px] font-bold text-white tracking-tight group-hover:text-[#00C076] transition-colors truncate">
+          <span className="text-xs xs:text-sm sm:text-[15px] font-bold text-white tracking-tight group-hover:text-[#007F4E] transition-colors whitespace-normal break-words">
             Convert
           </span>
           <div className="transform group-hover:scale-105 transition-transform duration-200 flex-shrink-0 ml-1">

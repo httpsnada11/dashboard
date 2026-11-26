@@ -20,6 +20,7 @@ import {
   getKybStatusColor
 } from '../utils/kybStorage';
 import { KybApplicationData, MerchantKybLifecycleStatus } from '../types';
+import { useDialogBehavior } from '../hooks/useDialogBehavior';
 
 export interface LiveModeGateProps {
   isOpen: boolean;
@@ -35,6 +36,7 @@ export const LiveModeGate: React.FC<LiveModeGateProps> = ({
   targetActionName = 'Live Mode & Production Keys'
 }) => {
   const [kybApp, setKybApp] = useState<KybApplicationData>(getKybApplication());
+  const dialogRef = useDialogBehavior(isOpen, onClose);
 
   useEffect(() => {
     const unsub = subscribeKybStatus((updated) => {
@@ -46,15 +48,15 @@ export const LiveModeGate: React.FC<LiveModeGateProps> = ({
   if (!isOpen) return null;
 
   const { status, currentStep, complianceFeedback } = kybApp;
+  const showDemoControls = import.meta.env.DEV && import.meta.env.VITE_DEMO_CONTROLS !== 'false';
 
-  // Demo status switcher helper
   const handleDemoSwitch = (newStatus: MerchantKybLifecycleStatus) => {
     const updated = setKybStatus(newStatus);
     setKybApp(updated);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/65 backdrop-blur-xs animate-fadeIn">
+    <div ref={dialogRef} role="dialog" aria-modal="true" tabIndex={-1} className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5 bg-black/65 backdrop-blur-xs animate-fadeIn">
       <div className="bg-white rounded-3xl max-w-xl w-full shadow-2xl border border-gray-100/90 overflow-hidden flex flex-col max-h-[92vh]">
         {/* Top Header Strip with Ambient Security Gradient */}
         <div className="relative px-6 py-5 bg-gradient-to-r from-slate-900 via-gray-900 to-slate-800 text-white flex items-start justify-between border-b border-gray-800 select-none">
@@ -64,10 +66,10 @@ export const LiveModeGate: React.FC<LiveModeGateProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[10.5px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-slate-300 border border-white/10">
+                <span className="text-xs uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-slate-300 border border-white/10">
                   Compliance Gate
                 </span>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${getKybStatusColor(status)}`}>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${getKybStatusColor(status)}`}>
                   {getKybStatusLabel(status)}
                 </span>
               </div>
@@ -102,7 +104,7 @@ export const LiveModeGate: React.FC<LiveModeGateProps> = ({
                   <span className="font-bold text-blue-900 text-[13px]">
                     Verification Incomplete (Step {currentStep} of 4)
                   </span>
-                  <span className="text-[11px] font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
+                  <span className="text-xs font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
                     Draft Saved
                   </span>
                 </div>
@@ -135,7 +137,7 @@ export const LiveModeGate: React.FC<LiveModeGateProps> = ({
                   <span className="font-bold text-amber-900 text-[13px]">
                     Application Under Compliance Review
                   </span>
-                  <span className="text-[11px] font-semibold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">
+                  <span className="text-xs font-semibold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">
                     Queue Position #4
                   </span>
                 </div>
@@ -169,7 +171,7 @@ export const LiveModeGate: React.FC<LiveModeGateProps> = ({
                   <span className="font-bold text-rose-900 text-[13px]">
                     Action Required: Document Update Needed
                   </span>
-                  <span className="text-[11px] font-semibold text-rose-800 bg-rose-100 px-2 py-0.5 rounded-full">
+                  <span className="text-xs font-semibold text-rose-800 bg-rose-100 px-2 py-0.5 rounded-full">
                     Direct Fix Available
                   </span>
                 </div>
@@ -194,7 +196,7 @@ export const LiveModeGate: React.FC<LiveModeGateProps> = ({
 
           {status === 'APPROVED' && (
             <div className="p-4 rounded-2xl bg-emerald-50/90 border border-emerald-200/90 flex items-start gap-3.5">
-              <div className="w-8 h-8 rounded-xl bg-[#00C076] text-white flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+              <div className="w-8 h-8 rounded-xl bg-[#007F4E] text-white flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
                 <CheckCircle2 className="w-4 h-4" />
               </div>
               <div className="flex-1 text-xs">
@@ -223,7 +225,7 @@ export const LiveModeGate: React.FC<LiveModeGateProps> = ({
                 </li>
                 <li className="flex items-start gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 flex-shrink-0" />
-                  <span>Production API Keys (<code className="font-mono text-[10.5px] text-gray-800">live_•••</code>)</span>
+                  <span>Production API Keys (<code className="font-mono text-xs text-gray-800">live_•••</code>)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 flex-shrink-0" />
@@ -231,7 +233,7 @@ export const LiveModeGate: React.FC<LiveModeGateProps> = ({
                 </li>
                 <li className="flex items-start gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 flex-shrink-0" />
-                  <span>Unlimited daily transaction limits</span>
+                  <span>Standard daily transaction limits</span>
                 </li>
               </ul>
             </div>
@@ -239,24 +241,24 @@ export const LiveModeGate: React.FC<LiveModeGateProps> = ({
             {/* Always Free Sandbox Capabilities */}
             <div className="p-3.5 rounded-2xl bg-emerald-50/50 border border-emerald-200/60">
               <div className="flex items-center gap-2 font-bold text-emerald-900 text-[12.5px] pb-2 border-b border-emerald-200/60">
-                <Sparkles className="w-3.5 h-3.5 text-[#00C076]" />
+                <Sparkles className="w-3.5 h-3.5 text-[#007F4E]" />
                 <span>Available Now (Sandbox)</span>
               </div>
               <ul className="mt-2.5 space-y-2 text-emerald-800/90">
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#00C076] mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#007F4E] mt-0.5 flex-shrink-0" />
                   <span>Public Cashier Simulator (HPP & H2H)</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#00C076] mt-0.5 flex-shrink-0" />
-                  <span>Test API Keys (<code className="font-mono text-[10.5px] text-emerald-900 font-bold">test_•••</code>)</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#007F4E] mt-0.5 flex-shrink-0" />
+                  <span>Test API Keys (<code className="font-mono text-xs text-emerald-900 font-bold">test_•••</code>)</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#00C076] mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#007F4E] mt-0.5 flex-shrink-0" />
                   <span>Webhook dispatch & replay testing</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#00C076] mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#007F4E] mt-0.5 flex-shrink-0" />
                   <span>Address Book & 24h security hold</span>
                 </li>
               </ul>
@@ -264,10 +266,10 @@ export const LiveModeGate: React.FC<LiveModeGateProps> = ({
           </div>
 
           {/* Quick Explainer on Compliance Standard */}
-          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70 text-[11px] text-slate-600 flex items-center justify-between">
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70 text-xs text-slate-600 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Cpu className="w-4 h-4 text-slate-500" />
-              <span>Aligned with global AML and travel rule compliance standards</span>
+              <span>Review the required checks before enabling Live mode</span>
             </div>
             <a
               href="https://fatf-gafi.org"
@@ -283,15 +285,14 @@ export const LiveModeGate: React.FC<LiveModeGateProps> = ({
 
         {/* Modal Action Bar */}
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-          {/* Demo Lifecycle Switcher for Reviewers */}
-          <div className="flex items-center gap-1.5 self-start sm:self-center">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Demo State:</span>
+          <div className="flex items-center gap-1.5 self-start sm:self-center" style={{ display: showDemoControls ? undefined : 'none' }}>
+            <span className="text-xs font-bold uppercase tracking-wider text-[#6B7280]">Review state:</span>
             <div className="inline-flex rounded-lg border border-gray-200 bg-white p-0.5 shadow-2xs">
               {(['DRAFT', 'UNDER_REVIEW', 'ACTION_REQUIRED', 'APPROVED'] as MerchantKybLifecycleStatus[]).map((st) => (
                 <button
                   key={st}
                   onClick={() => handleDemoSwitch(st)}
-                  className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
+                  className={`px-2 py-0.5 text-xs font-bold rounded-md transition-all cursor-pointer ${
                     status === st
                       ? 'bg-gray-900 text-white shadow-xs'
                       : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
@@ -318,14 +319,14 @@ export const LiveModeGate: React.FC<LiveModeGateProps> = ({
                   onClose();
                   onOpenKyb(status === 'ACTION_REQUIRED' ? 2 : (currentStep || 1));
                 }}
-                className="flex items-center gap-1.5 px-5 py-2 bg-[#2563EB] hover:bg-blue-700 text-white rounded-full text-xs font-semibold shadow-sm transition cursor-pointer"
+                className="flex items-center gap-1.5 px-5 py-2 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-full text-xs font-semibold shadow-sm transition cursor-pointer"
               >
                 <span>{status === 'DRAFT' ? 'Start Verification →' : status === 'ACTION_REQUIRED' ? 'Fix Rejected Docs →' : 'Review Application'}</span>
               </button>
             ) : (
               <button
                 onClick={onClose}
-                className="flex items-center gap-1.5 px-5 py-2 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-xs font-semibold shadow-sm transition cursor-pointer"
+                className="flex items-center gap-1.5 px-5 py-2 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-full text-xs font-semibold shadow-sm transition cursor-pointer"
               >
                 <span>Live Mode Unlocked</span>
               </button>

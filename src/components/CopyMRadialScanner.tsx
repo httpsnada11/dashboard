@@ -163,7 +163,7 @@ export const CopyMRadialScanner: React.FC<CopyMRadialScannerProps> = ({
           >
             <Disc3 className={`w-3.5 h-3.5 ${viewMode === 'radial' ? 'text-black animate-[spin_10s_linear_infinite]' : ''}`} />
             <span>CopyM Radial</span>
-            <span className="text-[9px] px-1.5 py-0.2 bg-slate-900 text-white font-bold rounded-full"> Style</span>
+            <span className="text-xs px-1.5 py-0.2 bg-slate-900 text-white font-bold rounded-full"> Style</span>
           </button>
           <button
             type="button"
@@ -201,7 +201,7 @@ export const CopyMRadialScanner: React.FC<CopyMRadialScannerProps> = ({
             isDark
               ? 'bg-slate-900 border border-slate-800 shadow-2xl'
               : 'bg-white border border-gray-100 shadow-[0_18px_45px_-12px_rgba(0,0,0,0.14)]'
-          } ${scanSuccess ? 'ring-4 ring-[#00C076] ring-offset-2' : 'hover:scale-[1.015]'}`}
+          } ${scanSuccess ? 'ring-4 ring-[#007F4E] ring-offset-2' : 'hover:scale-[1.015]'}`}
         >
           {viewMode === 'radial' ? (
             /* ========================================================= */
@@ -318,7 +318,7 @@ export const CopyMRadialScanner: React.FC<CopyMRadialScannerProps> = ({
                   <div className="w-10 h-10 rounded-full bg-white text-slate-900 flex items-center justify-center shadow-lg animate-bounce">
                     <RefreshCw className="w-5 h-5 animate-spin" />
                   </div>
-                  <span className="text-[11px] font-bold text-white bg-black/80 px-2.5 py-0.5 rounded-full mt-2 shadow-xs">
+                  <span className="text-xs font-bold text-white bg-black/80 px-2.5 py-0.5 rounded-full mt-2 shadow-xs">
                     Verifying Deposit...
                   </span>
                 </div>
@@ -370,7 +370,7 @@ export const CopyMRadialScanner: React.FC<CopyMRadialScannerProps> = ({
                 </svg>
 
                 {/* Center Badge in QR */}
-                <div className="absolute inset-0 m-auto w-8 h-8 rounded-lg bg-black flex items-center justify-center font-bold text-white text-[11px] shadow-md border-2 border-white">
+                <div className="absolute inset-0 m-auto w-8 h-8 rounded-lg bg-black flex items-center justify-center font-bold text-white text-xs shadow-md border-2 border-white">
                   CM
                 </div>
               </div>
@@ -388,20 +388,20 @@ export const CopyMRadialScanner: React.FC<CopyMRadialScannerProps> = ({
           className="w-full flex items-center justify-between px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200/90 rounded-xl cursor-pointer transition shadow-2xs group"
         >
           <div className="flex items-center gap-1 font-mono text-xs">
-            <span className="font-extrabold text-slate-900 bg-slate-200/80 px-1.5 py-0.5 rounded text-[11px]">
+            <span className="font-extrabold text-slate-900 bg-slate-200/80 px-1.5 py-0.5 rounded text-xs">
               {first6}
             </span>
-            <span className="text-slate-400 text-[10px] tracking-wider select-none px-0.5">
+            <span className="text-slate-400 text-xs tracking-wider select-none px-0.5">
               ...{middle.slice(0, 4)}...
             </span>
-            <span className="font-extrabold text-slate-900 bg-slate-200/80 px-1.5 py-0.5 rounded text-[11px]">
+            <span className="font-extrabold text-slate-900 bg-slate-200/80 px-1.5 py-0.5 rounded text-xs">
               {last6}
             </span>
           </div>
 
           <button
             type="button"
-            className="flex items-center gap-1 text-[11px] font-bold text-slate-600 group-hover:text-black transition ml-2"
+            className="flex items-center gap-1 text-xs font-bold text-slate-600 group-hover:text-black transition ml-2"
           >
             {copied ? (
               <span className="flex items-center gap-1 text-[#00875A]">
@@ -418,9 +418,9 @@ export const CopyMRadialScanner: React.FC<CopyMRadialScannerProps> = ({
         </div>
 
         {/* Verification Subtext & Badges */}
-        <div className="w-full flex items-center justify-between text-[10.5px] mt-2 px-1 text-slate-400 font-medium">
+        <div className="w-full flex items-center justify-between text-xs mt-2 px-1 text-slate-400 font-medium">
           <span className="flex items-center gap-1 text-slate-500">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#00C076]" />
+            <ShieldCheck className="w-3.5 h-3.5 text-[#007F4E]" />
             <span>Anti-Poisoning Verified</span>
           </span>
           <span className="font-semibold text-slate-700">{network}</span>
@@ -429,8 +429,8 @@ export const CopyMRadialScanner: React.FC<CopyMRadialScannerProps> = ({
         {/* Amount & Currency Badge */}
         {amount && (
           <div className="mt-2 text-center">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-800 text-[11px] font-bold">
-              <Zap className="w-3 h-3 text-[#00C076]" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-800 text-xs font-bold">
+              <Zap className="w-3 h-3 text-[#007F4E]" />
               <span>Exact Amount: {amount} {currency}</span>
             </span>
           </div>

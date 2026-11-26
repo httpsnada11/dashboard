@@ -84,7 +84,7 @@ export interface ExceptionRecord {
   actionType: string;
 }
 
-export type Environment = 'LIVE - DEMO' | 'SANDBOX';
+export type Environment = 'LIVE' | 'SANDBOX';
 
 export interface ApiKey {
   id: string;

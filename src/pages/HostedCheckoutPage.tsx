@@ -217,7 +217,7 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
         <div className="p-4 pb-2 bg-[#F8FAFC] border-b border-slate-100">
           <div className="bg-white rounded-2xl p-3 px-4 shadow-2xs border border-slate-200/80 flex items-center justify-between">
             <div>
-              <div className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">
+              <div className="text-xs font-bold text-slate-400 tracking-wider uppercase">
                 {paymentState === 'detected' || paymentState === 'confirming'
                   ? 'Session Rate Frozen'
                   : 'Session Rate Lock'}
@@ -267,12 +267,12 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
                 <div className="text-sm font-extrabold text-white tracking-tight leading-none">
                   CopyM <span className="text-emerald-200 font-medium text-xs">Pay</span>
                 </div>
-                <div className="text-[10px] text-emerald-100/80 font-medium">B2B Crypto Gateway</div>
+                <div className="text-xs text-emerald-100/80 font-medium">B2B Crypto Gateway</div>
               </div>
             </div>
 
             {/* Network Badge */}
-            <div className="bg-black/25 backdrop-blur-xs border border-white/20 text-white text-[10.5px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5 shadow-inner">
+            <div className="bg-black/25 backdrop-blur-xs border border-white/20 text-white text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5 shadow-inner">
               <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
               <span>{selectedNetwork.chainBadge}</span>
             </div>
@@ -287,7 +287,7 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
             <div className="flex items-center justify-center gap-2 mt-1.5 flex-wrap">
               <div
                 onClick={() => handleCopy(invoiceId, 'txid')}
-                className="inline-flex items-center gap-1 bg-white/15 px-2.5 py-0.5 rounded-md text-[11px] font-mono font-semibold text-emerald-100 border border-white/10 cursor-pointer hover:bg-white/25 transition select-none"
+                className="inline-flex items-center gap-1 bg-white/15 px-2.5 py-0.5 rounded-md text-xs font-mono font-semibold text-emerald-100 border border-white/10 cursor-pointer hover:bg-white/25 transition select-none"
                 title="Click to copy Invoice Reference"
               >
                 <span className="text-emerald-300">INV:</span>
@@ -299,7 +299,7 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
                 )}
               </div>
 
-              <div className="inline-flex items-center gap-1 bg-black/20 px-2 py-0.5 rounded-md text-[11px] font-mono text-emerald-200 border border-white/10">
+              <div className="inline-flex items-center gap-1 bg-black/20 px-2 py-0.5 rounded-md text-xs font-mono text-emerald-200 border border-white/10">
                 <span className="text-white/60">ORDER:</span>
                 <span>#{orderReference}</span>
               </div>
@@ -357,7 +357,7 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
                   <rect x="62" y="82" width="6" height="6" rx="1" fill="#0f172a" />
                   <rect x="74" y="86" width="6" height="6" rx="1" fill="#0f172a" />
                 </svg>
-                <div className="mt-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                <div className="mt-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
                   Scan via Any Crypto Wallet
                 </div>
               </div>
@@ -370,10 +370,10 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
                   <Clock className="w-6 h-6" />
                 </div>
                 <div className="text-xs font-black text-amber-900">Deposit Detected!</div>
-                <div className="text-[11px] text-amber-700 mt-0.5 font-medium leading-tight">
+                <div className="text-xs text-amber-700 mt-0.5 font-medium leading-tight">
                   Transaction entered mempool
                 </div>
-                <div className="mt-2 px-2.5 py-1 bg-amber-50 rounded-lg border border-amber-200 text-[10px] font-mono text-amber-800">
+                <div className="mt-2 px-2.5 py-1 bg-amber-50 rounded-lg border border-amber-200 text-xs font-mono text-amber-800">
                   0 / 12 Confirmations · Tx Pending
                 </div>
               </div>
@@ -384,7 +384,7 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
               <div className="flex flex-col items-center justify-center w-full h-full text-center animate-fadeIn p-2">
                 <div className="w-12 h-12 rounded-full border-4 border-sky-200 border-t-sky-600 animate-spin mb-2" />
                 <div className="text-xs font-black text-sky-900">Confirming on Blockchain</div>
-                <div className="text-[11px] font-mono text-sky-600 font-bold mt-0.5">
+                <div className="text-xs font-mono text-sky-600 font-bold mt-0.5">
                   {confirmingBlocks} / 12 Block Confirmations
                 </div>
                 <div className="w-full bg-sky-100 rounded-full h-1.5 mt-2 overflow-hidden">
@@ -393,7 +393,7 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
                     style={{ width: `${(confirmingBlocks / 12) * 100}%` }}
                   />
                 </div>
-                <div className="text-[9.5px] text-slate-400 font-mono mt-1.5 truncate max-w-[190px]">
+                <div className="text-xs text-slate-400 font-mono mt-1.5 truncate max-w-[190px]">
                   Tx: 0x884a9128...0c1b
                 </div>
               </div>
@@ -402,14 +402,14 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
             {/* Stage 3 & 4: Paid / Credited State */}
             {paymentState === 'paid' && (
               <div className="flex flex-col items-center justify-center w-full h-full text-center animate-fadeIn p-2">
-                <div className="w-14 h-14 rounded-full bg-emerald-100 text-[#00C076] flex items-center justify-center mb-1.5 animate-bounce">
+                <div className="w-14 h-14 rounded-full bg-emerald-100 text-[#007F4E] flex items-center justify-center mb-1.5 animate-bounce">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
                 <div className="text-sm font-black text-emerald-900">Payment Successful!</div>
                 <div className="text-[12px] font-bold text-emerald-700 mt-0.5 font-mono">
                   ${amount} {selectedNetwork.asset} Received
                 </div>
-                <div className="text-[10px] text-slate-400 mt-1">
+                <div className="text-xs text-slate-400 mt-1">
                   Target confirmations & AML verified
                 </div>
               </div>
@@ -422,7 +422,7 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
                   <AlertCircle className="w-6 h-6" />
                 </div>
                 <div className="text-xs font-bold text-red-800">Session Expired</div>
-                <p className="text-[10px] text-slate-500 mt-1 px-2">
+                <p className="text-xs text-slate-500 mt-1 px-2">
                   Rate lock expired. Please refresh to generate a new deposit window.
                 </p>
                 <button
@@ -442,13 +442,13 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
           {/* Amount Due Box */}
           <div className="w-full mt-4 p-3 bg-white/10 backdrop-blur-xs rounded-2xl border border-white/20 flex items-center justify-between z-10">
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-100 block">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-100 block">
                 Total Amount Due
               </span>
               <div className="text-xl font-black text-white font-mono leading-tight">
                 {amount} <span className="text-emerald-200 text-sm font-bold">{selectedNetwork.asset}</span>
               </div>
-              <span className="text-[10.5px] text-emerald-100/80 font-medium">
+              <span className="text-xs text-emerald-100/80 font-medium">
                 ≈ ${amount} USD Estimated
               </span>
             </div>
@@ -459,7 +459,7 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
             >
               {copiedField === 'amount' ? (
                 <>
-                  <Check className="w-3.5 h-3.5 text-[#00C076]" />
+                  <Check className="w-3.5 h-3.5 text-[#007F4E]" />
                   <span>Copied</span>
                 </>
               ) : (
@@ -476,7 +476,7 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
         <div className="px-5 pt-4 space-y-3.5 text-xs text-slate-700">
           {/* Network Switcher Dropdown */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
               Select Settlement Network
             </label>
             <div className="relative">
@@ -487,7 +487,7 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
                   if (net) setSelectedNetwork(net);
                 }}
                 disabled={paymentState !== 'awaiting'}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 appearance-none focus:outline-none focus:border-[#00C076] transition cursor-pointer disabled:opacity-60"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 appearance-none focus:outline-none focus:border-[#007F4E] transition cursor-pointer disabled:opacity-60"
               >
                 {NETWORKS.map((n) => (
                   <option key={n.id} value={n.id}>
@@ -502,21 +502,21 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
           {/* Destination Address Field with 1-Click Copy */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                 Deposit Destination Address
               </label>
               <a
                 href={selectedNetwork.explorerUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="text-[10.5px] text-emerald-600 hover:underline flex items-center gap-0.5 font-semibold"
+                className="text-xs text-emerald-600 hover:underline flex items-center gap-0.5 font-semibold"
               >
                 <span>Explorer</span>
                 <ExternalLink className="w-3 h-3" />
               </a>
             </div>
             <div className="flex items-center gap-1.5 p-2 bg-slate-50 border border-slate-200 rounded-xl">
-              <span className="font-mono text-[11px] text-slate-800 break-all px-1 flex-1 select-all">
+              <span className="font-mono text-xs text-slate-800 break-all px-1 flex-1 select-all">
                 {selectedNetwork.address}
               </span>
               <button
@@ -525,7 +525,7 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
                 title="Copy Destination Address"
               >
                 {copiedField === 'address' ? (
-                  <Check className="w-4 h-4 text-[#00C076]" />
+                  <Check className="w-4 h-4 text-[#007F4E]" />
                 ) : (
                   <Copy className="w-4 h-4" />
                 )}
@@ -539,7 +539,7 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
               <button
                 onClick={handleConnectAndPay}
                 disabled={isProcessingWeb3}
-                className="w-full py-3 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl font-bold text-xs shadow-md transition flex items-center justify-center gap-2 select-none"
+                className="w-full py-3 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-xl font-bold text-xs shadow-md transition flex items-center justify-center gap-2 select-none"
               >
                 <Wallet className="w-4 h-4" />
                 <span>
@@ -551,7 +551,7 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
                 </span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
-              <p className="text-[10px] text-slate-400 text-center mt-1.5">
+              <p className="text-xs text-slate-400 text-center mt-1.5">
                 Instant zero-fee routing via smart escrow contract
               </p>
             </div>
@@ -562,10 +562,10 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
             <div className="pt-1 space-y-2">
               <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-emerald-900 text-xs text-center space-y-1">
                 <div className="font-extrabold flex items-center justify-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-[#00C076]" />
+                  <CheckCircle2 className="w-4 h-4 text-[#007F4E]" />
                   <span>Double-Entry Ledger Posted (+$ {amount})</span>
                 </div>
-                <p className="text-[11px] text-emerald-700">
+                <p className="text-xs text-emerald-700">
                   Merchant available balance updated. Redirecting in{' '}
                   <span className="font-bold font-mono text-emerald-900">{redirectCountdown}s</span>...
                 </p>
@@ -576,7 +576,7 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
                   onClick={handleDownloadReceipt}
                   className="flex-1 py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl font-bold text-xs shadow-md transition flex items-center justify-center gap-2 select-none"
                 >
-                  <Download className="w-4 h-4 text-[#00C076]" />
+                  <Download className="w-4 h-4 text-[#007F4E]" />
                   <span>Download Receipt</span>
                 </button>
                 <button
@@ -593,7 +593,7 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
           )}
 
           {/* Security Assurance Footer */}
-          <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px] text-slate-400">
+          <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
             <div className="flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               <span>CopyM Pay Escrow Vault</span>

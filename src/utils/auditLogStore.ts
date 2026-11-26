@@ -1,100 +1,95 @@
 import { AdminAuditEntry } from '../types';
+import { createStoredState, IDS, MERCHANT, PLATFORM } from './sharedMockStore';
 
-const AUDIT_STORAGE_KEY = 'copym_admin_audit_logs';
+const auditStore = createStoredState<AdminAuditEntry[]>(
+  'copym_admin_audit_logs',
+  [],
+  'copym_audit_updated'
+);
 
 export const DEFAULT_AUDIT_LOGS: AdminAuditEntry[] = [
   {
     id: 'aud_9801',
-    operator: 'Sarah Chen (Platform SuperAdmin)',
+    operator: PLATFORM.superAdmin,
     operatorRole: 'SuperAdmin',
     action: 'Hot-to-Cold Vault Sweep Executed',
     target: 'Vault Pool #03 (1,250,000 USDT -> Multi-Sig Cold)',
-    timestamp: '2026-11-24 17:42:10 UTC',
-    ip: '198.51.100.44 (SG-GovNet)',
-    hash: '0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1',
+    timestamp: '2026-11-26 10:42:10 UTC',
+    ip: '198.51.100.44 (SG-Ops)',
+    hash: '0x7c1e9a4f82b06d35e7a91c4d8f2b6039ae51d7c40b98f3a26e5d1c8b9047f2a6',
     severity: 'Critical',
   },
   {
     id: 'aud_9802',
-    operator: 'Marcus Vance (Compliance Lead)',
+    operator: PLATFORM.reviewer,
     operatorRole: 'Compliance Lead',
     action: 'SAR Filed & Address frozen',
-    target: 'cust_84019 / tx_94f82810a9bC5109 (OFAC Mixer)',
-    timestamp: '2026-11-24 17:28:44 UTC',
-    ip: '198.51.100.12 (SG-GovNet)',
-    hash: '0x3a91b2c45e89df00142837bcde209481aa520934ec765103498bfe1928374a56',
+    target: 'cust_84019 / tx_94f8..11e2 (Sanctioned mixer cluster)',
+    timestamp: '2026-11-26 10:28:44 UTC',
+    ip: '198.51.100.12 (SG-Ops)',
+    hash: '0x3d92b7c05fa184e6a9c24fd718be5036c0a7f9d28e41b635a8d0c7f19b4e6a25',
     severity: 'Critical',
   },
   {
     id: 'aud_9803',
-    operator: 'Elena Rostova (Senior Risk Analyst)',
+    operator: PLATFORM.checker,
     operatorRole: 'Risk Analyst',
     action: 'Merchant KYB Adjudication Approved',
-    target: 'Quantex Asset Management AG (Tier 1 Upgrade)',
-    timestamp: '2026-11-24 16:55:02 UTC',
-    ip: '203.0.113.88 (EU-Zurich Ops)',
-    hash: '0x55b1e90a44f387c6530182fe9104cbde44890312fa8901235678bcda09182736',
+    target: 'Meridian Clearing Corp (Tier 1 Upgrade)',
+    timestamp: '2026-11-26 09:55:02 UTC',
+    ip: '203.0.113.88 (EU-Ops)',
+    hash: '0xa61f0d93c7b482e15d0af7396b28c41e5d90f7a3b64c1e028f9d5a7c13be6048',
     severity: 'Info',
   },
   {
     id: 'aud_9804',
-    operator: 'Marcus Vance (Compliance Lead)',
+    operator: PLATFORM.reviewer,
     operatorRole: 'Compliance Lead',
     action: 'Daily Volume Limit Modified',
-    target: 'Apex Forex Global ($1,000,000 -> $2,500,000)',
-    timestamp: '2026-11-24 16:10:19 UTC',
-    ip: '198.51.100.12 (SG-GovNet)',
-    hash: '0x992381fbcda01827463510293847561029384756abcdef102938475610293847',
+    target: `${MERCHANT.name} ($150,000 -> $250,000)`,
+    timestamp: '2026-11-26 09:10:19 UTC',
+    ip: '198.51.100.12 (SG-Ops)',
+    hash: '0xb48e31a709f6dc25813ae7b490fc265d8e0173a9c64bfde52108c7a3f9e64b12',
     severity: 'Warning',
   },
   {
     id: 'aud_9805',
-    operator: 'David Zhang (Treasury Checker)',
+    operator: PLATFORM.checker,
     operatorRole: 'Checker',
     action: 'Maker-Checker High Value Payout Dual-Authorized',
-    target: 'Batch #PO-9844 ($750,000 USDC -> Enterprise MPC Custody)',
-    timestamp: '2026-11-24 15:40:33 UTC',
-    ip: '198.51.100.19 (SG-GovNet)',
-    hash: '0x4102938475610293847561029384756abcdef9876543210fedcba9876543210f',
+    target: 'Batch #PO-9844 ($750,000 USDC -> Cold Consolidation)',
+    timestamp: '2026-11-26 08:40:33 UTC',
+    ip: '198.51.100.19 (SG-Ops)',
+    hash: '0x14eac7093b8fd5261a0e7c934fd8b26a5071e9c3b84ad6f02c5e971a8d40b3f6',
     severity: 'Critical',
   },
   {
     id: 'aud_9806',
-    operator: 'Sarah Chen (Platform SuperAdmin)',
+    operator: PLATFORM.superAdmin,
     operatorRole: 'SuperAdmin',
     action: 'Payment Exception Resolved (Manual Credit)',
-    target: 'exc_8491_late (2,500 USDT -> Eagle Vision Market)',
-    timestamp: '2026-11-24 14:15:22 UTC',
-    ip: '198.51.100.44 (SG-GovNet)',
-    hash: '0x6291038475610293847561029384756abcdef0918273645fe98102394857610a',
+    target: `${IDS.exceptions[0]} (2,500 USDT -> ${MERCHANT.name})`,
+    timestamp: '2026-11-26 07:15:22 UTC',
+    ip: '198.51.100.44 (SG-Ops)',
+    hash: '0x9f02c7b45ae18d3690c27fb8e14a53d60b7c9f2a481de035a6c8b7190f4d2e83',
     severity: 'Info',
   },
   {
     id: 'aud_9807',
-    operator: 'System Daemon (Automated KYT Monitor)',
+    operator: 'Automated KYT Monitor (System)',
     operatorRole: 'Automated Agent',
     action: 'High Risk KYT Flag Triggered',
-    target: '0x94f8..11e2 (Score: 92/100, Tornado Cash hop)',
-    timestamp: '2026-11-24 13:02:11 UTC',
-    ip: '127.0.0.1 (Internal Cluster)',
-    hash: '0x7182938475610293847561029384756abcdef99887766554433221100aabbccd',
+    target: '0x94f8..11e2 (Score: 92/100, Sanctioned mixer hop)',
+    timestamp: '2026-11-26 06:02:11 UTC',
+    ip: '127.0.0.1 (Internal Monitor)',
+    hash: '0x2b7ad4e0819c3f65a2d0be9471c58e36f0a9d724b8c1ef350a64d98f7e2b510c',
     severity: 'Warning',
   },
 ];
 
 export function getAuditLogs(): AdminAuditEntry[] {
-  try {
-    const raw = localStorage.getItem(AUDIT_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
-      }
-    }
-  } catch {
-    // ignore
-  }
-  return DEFAULT_AUDIT_LOGS;
+  const stored = auditStore.read();
+  return stored.length > 0 ? stored : DEFAULT_AUDIT_LOGS;
 }
 
 export function appendAuditEvent(params: {
@@ -115,22 +110,16 @@ export function appendAuditEvent(params: {
 
   const entry: AdminAuditEntry = {
     id: `aud_${Date.now().toString().slice(-6)}`,
-    operator: params.operator || 'Sarah Chen (Platform SuperAdmin)',
+    operator: params.operator || PLATFORM.superAdmin,
     operatorRole: params.operatorRole || 'SuperAdmin',
     action: `${params.action} [${params.reasonCode}]`,
     target: `${params.target} — Note: ${params.note}`,
     timestamp,
-    ip: '198.51.100.44 (SG-GovNet)',
+    ip: '198.51.100.44 (SG-Ops)',
     hash: `0x${randHex}`,
     severity: params.severity || 'Warning',
   };
 
-  const updated = [entry, ...existing];
-  try {
-    localStorage.setItem(AUDIT_STORAGE_KEY, JSON.stringify(updated));
-    window.dispatchEvent(new CustomEvent('copym_audit_updated', { detail: updated }));
-  } catch {
-    // ignore
-  }
+  auditStore.write([entry, ...existing]);
   return entry;
 }

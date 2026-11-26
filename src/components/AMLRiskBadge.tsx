@@ -34,13 +34,13 @@ export const AMLRiskBadge: React.FC<AMLRiskBadgeProps> = ({ level = "Low", score
             strokeLinecap="round"
           />
         </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-[8px] font-semibold text-gray-800 leading-none">
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-xs font-semibold text-gray-800 leading-none">
           <span className="text-[7px] text-gray-700 font-bold">AML</span>
         </div>
       </div>
       <div className="flex flex-col text-left leading-tight">
-        <span className="text-[11px] font-medium text-gray-700">AML Risk</span>
-        <span className="text-[10px] text-gray-400 font-medium">{level}</span>
+        <span className="text-xs font-medium text-gray-700">AML Risk</span>
+        <span className="text-xs text-[#6B7280] font-medium">{level}</span>
       </div>
     </div>
   );
