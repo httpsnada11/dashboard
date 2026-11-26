@@ -6,6 +6,7 @@ import {
   Search,
   Archive
 } from 'lucide-react';
+import { AdminComplianceConfirmModal } from '../components/AdminComplianceConfirmModal';
 
 interface PlatformException {
   id: string;
@@ -81,6 +82,15 @@ export const AdminExceptionsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSweeping, setIsSweeping] = useState(false);
   const [sweepSuccess, setSweepSuccess] = useState(false);
+  const [pendingAction, setPendingAction] = useState<{
+    type: 'resolve' | 'sweep';
+    exc?: PlatformException;
+    newStatus?: PlatformException['status'];
+    title: string;
+    description: string;
+    actionLabel: string;
+    targetEntity: string;
+  } | null>(null);
 
   const handleResolve = (id: string, newStatus: PlatformException['status']) => {
     setExceptions((prev) =>
@@ -136,9 +146,17 @@ export const AdminExceptionsPage: React.FC = () => {
             </span>
           )}
           <button
-            onClick={handleTriggerSweep}
+            onClick={() =>
+              setPendingAction({
+                type: 'sweep',
+                title: 'Trigger Cold Storage Sweep',
+                description: 'Execute automated hot-to-cold multi-sig sweep ($92,100 excess buffer) to Cold Vault.',
+                actionLabel: 'Execute Sweep',
+                targetEntity: 'Hot Operational Buffer ($342,100 -> $250,000 target)',
+              })
+            }
             disabled={isSweeping}
-            className="w-full md:w-auto px-4 py-2.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 cursor-pointer"
+            className="w-full md:w-auto px-4 py-2.5 bg-[#007F4E] hover:bg-[#00663E] text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isSweeping ? 'animate-spin' : ''}`} />
             <span>{isSweeping ? 'Executing Sweep...' : 'Trigger Cold Storage Sweep'}</span>
@@ -171,7 +189,6 @@ export const AdminExceptionsPage: React.FC = () => {
         {/* Mobile Swipe Hint */}
         <div className="lg:hidden flex items-center justify-between text-[11px] text-gray-400 mt-3 pt-2 border-t border-gray-100">
           <span>↔ Swipe horizontally to view full exception resolution queue</span>
-          <span className="text-[#00C076] font-semibold text-[10.5px]">Touch scroll active</span>
         </div>
 
         {/* Exceptions Table */}
@@ -253,14 +270,34 @@ export const AdminExceptionsPage: React.FC = () => {
                     {exc.status === 'Pending Resolution' ? (
                       <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                         <button
-                          onClick={() => handleResolve(exc.id, 'Manually Credited')}
-                          className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#00C076] border border-emerald-200 rounded-lg font-bold text-[11px] transition"
+                          onClick={() =>
+                            setPendingAction({
+                              type: 'resolve',
+                              exc,
+                              newStatus: 'Manually Credited',
+                              title: 'Manual Ledger Credit Override',
+                              description: `Manually credit ${exc.receivedAmount} to ${exc.merchant} for ${exc.type}.`,
+                              actionLabel: 'Confirm Credit',
+                              targetEntity: `${exc.excRef} · ${exc.merchant} (${exc.receivedAmount})`,
+                            })
+                          }
+                          className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#007F4E] border border-emerald-200 rounded-lg font-bold text-[11px] transition cursor-pointer"
                         >
                           Credit Ledger
                         </button>
                         <button
-                          onClick={() => handleResolve(exc.id, 'Refunded')}
-                          className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-bold text-[11px] transition"
+                          onClick={() =>
+                            setPendingAction({
+                              type: 'resolve',
+                              exc,
+                              newStatus: 'Refunded',
+                              title: 'Approve Exception Refund',
+                              description: `Authorize return/refund of ${exc.receivedAmount} for ${exc.excRef} (${exc.merchant}).`,
+                              actionLabel: 'Confirm Refund',
+                              targetEntity: `${exc.excRef} · ${exc.merchant} (${exc.receivedAmount})`,
+                            })
+                          }
+                          className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-bold text-[11px] transition cursor-pointer"
                         >
                           Refund
                         </button>
@@ -275,6 +312,26 @@ export const AdminExceptionsPage: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {pendingAction && (
+        <AdminComplianceConfirmModal
+          isOpen={true}
+          title={pendingAction.title}
+          description={pendingAction.description}
+          actionLabel={pendingAction.actionLabel}
+          targetEntity={pendingAction.targetEntity}
+          severity={pendingAction.type === 'sweep' ? 'Critical' : 'Warning'}
+          onClose={() => setPendingAction(null)}
+          onConfirm={() => {
+            if (pendingAction.type === 'sweep') {
+              handleTriggerSweep();
+            } else if (pendingAction.exc && pendingAction.newStatus) {
+              handleResolve(pendingAction.exc.id, pendingAction.newStatus);
+            }
+            setPendingAction(null);
+          }}
+        />
+      )}
     </div>
   );
 };

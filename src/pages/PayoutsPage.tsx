@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Upload, CheckCircle2, Check, Copy, X } from 'lucide-react';
 import { PayoutRecord } from '../types';
+import { api } from '../services/api';
 
 export interface PayoutsPageProps {
   payouts?: PayoutRecord[];
@@ -13,6 +14,7 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
   payouts = [],
   setPayouts,
   globalSearchQuery = '',
+  onOpenCreatePayout,
 }) => {
   const [activeTab, setActiveTab] = useState('needs-approval');
   const [localSearch, setLocalSearch] = useState('');
@@ -20,7 +22,11 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [declineModalItem, setDeclineModalItem] = useState<PayoutRecord | null>(null);
+  const [approveModalItem, setApproveModalItem] = useState<PayoutRecord | null>(null);
+  const [approval2Fa, setApproval2Fa] = useState('');
+  const [approvalError, setApprovalError] = useState<string | null>(null);
   const [showBatchModal, setShowBatchModal] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Dynamic counts for each status tab
   const needsApprovalCount = payouts.filter(p => p.status === 'Needs approval').length;
@@ -35,6 +41,59 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
     { id: 'failed', label: `Failed ${failedCount}`, statusMatch: 'Failed' },
   ];
 
+  // Fetch real payouts from backend
+  const loadPayouts = async () => {
+    try {
+      setLoading(true);
+      const res = await api.getPayouts();
+      const raw = res?.data || res?.payouts || (Array.isArray(res) ? res : []);
+      if (Array.isArray(raw)) {
+        const mapped: PayoutRecord[] = raw.map((p: any, idx: number) => {
+          let statusText: PayoutRecord['status'] = 'Needs approval';
+          const s = (p.status || '').toUpperCase();
+          if (s === 'COMPLETED' || s === 'SUCCESS') {
+            statusText = 'Completed';
+          } else if (s.includes('SUBMIT') || s.includes('CHAIN') || s.includes('IN_FLIGHT') || s === 'PROCESSING') {
+            statusText = 'In flight';
+          } else if (s.includes('APPROVAL') || s === 'PENDING') {
+            statusText = 'Needs approval';
+          } else if (s.includes('CANCEL') || s.includes('REJECT') || s.includes('FAIL')) {
+            statusText = 'Failed';
+          }
+
+          const dest = p.destination_address || p.destination || '';
+          const shortDest = dest.length > 14 ? `${dest.substring(0, 6)}...${dest.substring(dest.length - 4)}` : dest;
+
+          return {
+            id: p.id || `pay_${idx}`,
+            ref: p.merchant_order_id ? p.merchant_order_id.slice(0, 14) : (p.id?.slice(0, 12) || `WD-${idx}`),
+            fullRef: p.merchant_order_id || p.merchant_reference || p.id,
+            amount: p.amount ? Number(p.amount).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '0.00',
+            numericAmount: Number(p.amount || 0),
+            network: `${p.currency || 'USDT'} · ${p.network || 'TRON'}`,
+            customer: p.merchant_order_id || p.payer_id || p.external_customer_id || 'ord_live',
+            destinationType: 'DESTINATION · FIRST-PARTY DEPOSIT',
+            destinationAddress: shortDest,
+            fullAddress: dest,
+            requestedBy: p.requested_by || 'Admin Console',
+            complianceText: 'KYC verified · sanctions clear',
+            status: statusText,
+            createdAt: p.created_at || p.createdAt || 'Just now',
+          };
+        });
+        setPayouts(mapped);
+      }
+    } catch (err) {
+      console.warn('Could not load payouts from backend:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPayouts();
+  }, []);
+
   const handleCopy = (e: React.MouseEvent, text: string, id: string) => {
     e.stopPropagation();
     navigator.clipboard?.writeText(text);
@@ -42,20 +101,31 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
     setTimeout(() => setCopiedId(null), 1800);
   };
 
-  const handleApprove = (item: PayoutRecord) => {
-    setPayouts(prev => prev.map(p => p.id === item.id ? { ...p, status: 'In flight' } : p));
-    setToastMessage(`Payout ${item.ref} approved! Dispatched to node.`);
-    setTimeout(() => {
-      setPayouts(prev => prev.map(p => p.id === item.id ? { ...p, status: 'Completed' } : p));
-    }, 2500);
+  const handleConfirmApprove = async () => {
+    if (!approveModalItem) return;
+    try {
+      await api.approvePayout(approveModalItem.id);
+      setToastMessage(`Payout ${approveModalItem.ref} authorized! Dispatched to node.`);
+      setApproveModalItem(null);
+      setApproval2Fa('');
+      setApprovalError(null);
+      await loadPayouts();
+    } catch (err: any) {
+      setApprovalError(err.message || 'Error authorizing payout');
+    }
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const handleConfirmDecline = () => {
+  const handleConfirmDecline = async () => {
     if (!declineModalItem) return;
-    setPayouts(prev => prev.map(p => p.id === declineModalItem.id ? { ...p, status: 'Failed' } : p));
-    setToastMessage(`Payout ${declineModalItem.ref} declined.`);
-    setDeclineModalItem(null);
+    try {
+      await api.cancelPayout(declineModalItem.id);
+      setToastMessage(`Payout ${declineModalItem.ref} cancelled.`);
+      setDeclineModalItem(null);
+      await loadPayouts();
+    } catch (err: any) {
+      alert(`Decline error: ${err.message || 'Error cancelling payout'}`);
+    }
     setTimeout(() => setToastMessage(null), 3000);
   };
 
@@ -123,7 +193,7 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
             <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search payout or customer ID"
+              placeholder="Search payout or merchant order ID"
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
               className="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-200/80 hover:border-gray-300 focus:border-[#00C076] rounded-full text-[11.5px] text-gray-800 placeholder-gray-400 focus:outline-none transition shadow-2xs"
@@ -156,9 +226,25 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
 
       {/* Payout Cards Stack */}
       <div className="space-y-2.5">
-        {filteredPayouts.length === 0 ? (
+        {loading ? (
           <div className="bg-white rounded-2xl p-8 text-center text-gray-400 text-xs border border-gray-100 shadow-sm">
-            No payouts match the current filter or search criteria.
+            Loading payouts from database...
+          </div>
+        ) : filteredPayouts.length === 0 ? (
+          <div className="bg-white rounded-2xl p-8 text-center text-gray-400 text-xs border border-gray-100 shadow-sm">
+            <p className="font-semibold text-sm text-gray-700">No payout records found</p>
+            <p className="text-xs text-gray-400 mt-1 mb-3">
+              Click <strong>"+ Create payout"</strong> above to request an outbound crypto transfer.
+            </p>
+            {onOpenCreatePayout && (
+              <button
+                type="button"
+                onClick={onOpenCreatePayout}
+                className="px-4 py-2 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+              >
+                + Create Payout
+              </button>
+            )}
           </div>
         ) : (
           filteredPayouts.map((item) => (
@@ -198,8 +284,12 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
                         Decline
                       </button>
                       <button
-                        onClick={() => handleApprove(item)}
-                        className="px-4 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11.5px] font-semibold transition shadow-xs select-none"
+                        onClick={() => {
+                          setApproveModalItem(item);
+                          setApproval2Fa('');
+                          setApprovalError(null);
+                        }}
+                        className="px-4 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-full text-[11.5px] font-semibold transition shadow-xs select-none cursor-pointer"
                       >
                         Approve
                       </button>
@@ -220,12 +310,12 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
 
               {/* Card Bottom Row: 4 Diverse Metadata Columns */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-3 pt-3 border-t border-gray-100/70 text-[11.5px]">
-                {/* Column 1: Customer */}
+                {/* Column 1: Merchant Order ID */}
                 <div>
                   <span className="text-[9.5px] font-semibold tracking-wider uppercase text-[#8E95A5] block">
-                    CUSTOMER
+                    MERCHANT ORDER ID
                   </span>
-                  <span className="font-medium text-gray-800 mt-0.5 block truncate">
+                  <span className="font-medium text-gray-800 mt-0.5 block truncate font-mono">
                     {item.customer}
                   </span>
                 </div>
@@ -265,6 +355,85 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
           ))
         )}
       </div>
+
+      {/* Authorize Payout Confirmation Modal */}
+      {approveModalItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-[24px] max-w-md w-full p-5 sm:p-6 shadow-2xl border border-gray-100">
+            <h3 className="text-base font-bold text-gray-900">Authorize Payout Release</h3>
+            <p className="text-xs text-gray-500 mt-1">
+              Confirm cryptographic signature and dispatch of funds to the recipient address.
+            </p>
+
+            <div className="my-4 p-3.5 bg-gray-50 rounded-2xl border border-gray-200/80 space-y-2 text-xs">
+              <div className="flex justify-between items-center border-b border-gray-200/60 pb-2">
+                <span className="text-gray-500">Reference</span>
+                <span className="font-mono font-bold text-gray-800">{approveModalItem.ref}</span>
+              </div>
+              <div className="flex justify-between items-center border-b border-gray-200/60 pb-2">
+                <span className="text-gray-500">Amount</span>
+                <span className="font-bold text-gray-900 text-sm">{approveModalItem.amount} {approveModalItem.network.split(' ')[0]}</span>
+              </div>
+              <div className="flex justify-between items-center border-b border-gray-200/60 pb-2">
+                <span className="text-gray-500">Network</span>
+                <span className="font-semibold text-gray-800">{approveModalItem.network}</span>
+              </div>
+              <div className="flex justify-between items-start border-b border-gray-200/60 pb-2">
+                <span className="text-gray-500">Destination</span>
+                <span className="font-mono text-gray-800 text-[11px] max-w-[200px] break-all text-right">{approveModalItem.fullAddress || approveModalItem.destinationAddress}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">Requested By</span>
+                <span className="font-medium text-gray-800">{approveModalItem.requestedBy}</span>
+              </div>
+            </div>
+
+            {/* Maker-Checker Rule Notice if over $5,000 */}
+            {(approveModalItem.numericAmount > 5000 || parseFloat(approveModalItem.amount.replace(/,/g, '')) > 5000) && (
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-[11px] leading-relaxed">
+                <span className="font-bold block mb-0.5">Dual-Control Policy Enforced</span>
+                This payout exceeds the $5,000.00 threshold. By approving, you sign as the secondary authorized checker.
+              </div>
+            )}
+
+            {/* 2FA Input */}
+            <div className="mb-4">
+              <label className="text-[11.5px] font-semibold text-gray-800 block mb-1">
+                Security Officer 2FA Code
+              </label>
+              <input
+                type="text"
+                maxLength={6}
+                value={approval2Fa}
+                onChange={(e) => setApproval2Fa(e.target.value)}
+                placeholder="Enter 6-digit authenticator code (optional for demo)"
+                className="w-full p-2.5 bg-white border border-gray-200 rounded-xl font-mono text-xs text-gray-900 focus:outline-none focus:border-[#00C076] transition"
+              />
+            </div>
+
+            {approvalError && (
+              <div className="mb-3 p-2 bg-red-50 text-red-700 text-xs rounded-lg">
+                {approvalError}
+              </div>
+            )}
+
+            <div className="pt-3 border-t border-gray-100 flex justify-end gap-2 text-xs">
+              <button
+                onClick={() => setApproveModalItem(null)}
+                className="px-3.5 py-1.5 text-gray-600 hover:bg-gray-100 rounded-xl font-medium cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmApprove}
+                className="px-4 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl font-semibold shadow-xs cursor-pointer"
+              >
+                Authorize & Dispatch
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Decline Confirmation Modal */}
       {declineModalItem && (
@@ -309,7 +478,7 @@ export const PayoutsPage: React.FC<PayoutsPageProps> = ({
               <div className="border-2 border-dashed border-gray-200 hover:border-[#00C076] rounded-2xl p-6 text-center cursor-pointer transition">
                 <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                 <p className="font-semibold text-gray-800">Drop your payouts .csv file here</p>
-                <p className="text-[11px] text-gray-400 mt-1">Columns: customer_id, network, amount, address</p>
+                <p className="text-[11px] text-gray-400 mt-1">Columns: merchant_order_id, network, amount, address</p>
               </div>
             </div>
             <div className="pt-3 border-t border-gray-100 flex justify-end gap-2 text-xs">

@@ -184,6 +184,7 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
   const showCreateKeyModal = openCreateKey !== undefined ? openCreateKey : internalCreateKey;
   const setShowCreateKeyModal = setOpenCreateKey !== undefined ? setOpenCreateKey : setInternalCreateKey;
   const [showSendTestEventModal, setShowSendTestEventModal] = useState(false);
+  const [revokeModalKey, setRevokeModalKey] = useState<ApiKey | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
 
@@ -419,8 +420,8 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
                         Rotate
                       </button>
                       <button
-                        onClick={() => handleRevokeKey(k)}
-                        className="px-3 py-1 bg-white hover:bg-red-50 border border-gray-200 text-gray-700 hover:text-red-600 rounded-full text-[11px] font-semibold transition shadow-2xs select-none"
+                        onClick={() => setRevokeModalKey(k)}
+                        className="px-3 py-1 bg-white hover:bg-red-50 border border-gray-200 text-gray-700 hover:text-red-600 rounded-full text-[11px] font-semibold transition shadow-2xs select-none cursor-pointer"
                       >
                         Revoke
                       </button>
@@ -778,6 +779,41 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Revoke API Key Confirmation Modal */}
+      {revokeModalKey && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-[24px] max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-gray-100">
+            <h3 className="text-base font-bold text-gray-900">Revoke API Key?</h3>
+            <p className="text-xs text-gray-500 mt-2 leading-relaxed">
+              Are you sure you want to permanently revoke <strong className="text-gray-800">{revokeModalKey.name}</strong> ({revokeModalKey.maskedKey})?
+            </p>
+            <div className="my-3 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-[11px] leading-tight">
+              <strong>Warning:</strong> Any active server integrations or e-commerce cashiers using this key will immediately fail authentication.
+            </div>
+            <div className="pt-3 border-t border-gray-100 flex justify-end gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => setRevokeModalKey(null)}
+                className="px-3.5 py-1.5 text-gray-600 hover:bg-gray-100 rounded-xl font-medium cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const keyToRevoke = revokeModalKey;
+                  setRevokeModalKey(null);
+                  handleRevokeKey(keyToRevoke);
+                }}
+                className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold shadow-xs cursor-pointer"
+              >
+                Confirm Revoke
+              </button>
+            </div>
           </div>
         </div>
       )}

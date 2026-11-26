@@ -52,7 +52,7 @@ const DEFAULT_WITHDRAWALS: PastWithdrawalItem[] = [
       createdTime: '25.08.2026, 8:10 pm',
       createdDesc: 'Payout requested · Ledger reserved',
       signedTime: '25.08.2026, 8:12 pm',
-      signedDesc: 'Fireblocks MPC Quorum signed',
+      signedDesc: 'Multi-Party Computation (MPC) signed',
       completedTime: '25.08.2026, 8:15 pm',
       completedDesc: 'Mined & confirmed on blockchain'
     }
@@ -79,7 +79,7 @@ const DEFAULT_WITHDRAWALS: PastWithdrawalItem[] = [
       createdTime: '24.08.2026, 4:15 pm',
       createdDesc: 'Payout requested · Ledger reserved',
       signedTime: '24.08.2026, 4:22 pm',
-      signedDesc: 'Fireblocks MPC Quorum signed',
+      signedDesc: 'Multi-Party Computation (MPC) signed',
       completedTime: '24.08.2026, 4:30 pm',
       completedDesc: 'Mined & confirmed on blockchain'
     }
@@ -106,7 +106,7 @@ const DEFAULT_WITHDRAWALS: PastWithdrawalItem[] = [
       createdTime: '24.08.2026, 11:05 am',
       createdDesc: 'Payout requested · Ledger reserved',
       signedTime: '24.08.2026, 11:12 am',
-      signedDesc: 'Fireblocks MPC Quorum signed',
+      signedDesc: 'Multi-Party Computation (MPC) signed',
       completedTime: '24.08.2026, 11:20 am',
       completedDesc: 'Mined & confirmed on blockchain'
     }
@@ -137,14 +137,17 @@ const CryptoAssetIcon: React.FC<{ asset: 'USDT' | 'USDC' }> = ({ asset }) => {
 };
 
 export interface PastWithdrawalsCardProps {
+  items?: PastWithdrawalItem[];
   onOpenPayout?: () => void;
   className?: string;
 }
 
 export const PastWithdrawalsCard: React.FC<PastWithdrawalsCardProps> = ({
+  items,
   onOpenPayout,
   className = ''
 }) => {
+  const displayItems = items !== undefined ? items : [];
   const [expandedId, setExpandedId] = useState<string>('pw_1');
   const [showAllModal, setShowAllModal] = useState<boolean>(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -174,27 +177,45 @@ export const PastWithdrawalsCard: React.FC<PastWithdrawalsCardProps> = ({
             Past Payouts
           </h3>
           <span className="w-5 h-5 rounded-full bg-[#ECEEF2] text-[#6B7280] font-bold text-[11px] flex items-center justify-center">
-            16
+            {displayItems.length}
           </span>
         </div>
 
-        <button
-          onClick={() => setShowAllModal(true)}
-          className="text-xs text-[#00C076] hover:text-[#00A868] font-semibold hover:underline flex items-center gap-1 transition select-none cursor-pointer"
-        >
-          <span>View all 16</span>
-          <ArrowUpRight className="w-3 h-3" />
-        </button>
+        {displayItems.length > 0 && (
+          <button
+            onClick={() => setShowAllModal(true)}
+            className="text-xs text-[#00C076] hover:text-[#00A868] font-semibold hover:underline flex items-center gap-1 transition select-none cursor-pointer"
+          >
+            <span>View all {displayItems.length}</span>
+            <ArrowUpRight className="w-3 h-3" />
+          </button>
+        )}
       </div>
 
-      {/* Date Marker: 25 Aug */}
-      <div className="text-[11.5px] font-medium text-[#8E95A5] mb-2 px-1">
-        25 Aug
-      </div>
+      {displayItems.length > 0 && (
+        <div className="text-[11.5px] font-medium text-[#8E95A5] mb-2 px-1">
+          Latest Payouts
+        </div>
+      )}
 
       {/* Primary Container: Crypto-Native Past Withdrawal Cards */}
       <div className="space-y-2.5">
-        {DEFAULT_WITHDRAWALS.slice(0, 2).map((item) => {
+        {displayItems.length === 0 ? (
+          <div className="bg-white rounded-2xl sm:rounded-[22px] p-6 text-center border border-gray-100 shadow-2xs">
+            <p className="text-sm font-bold text-slate-700">No past payouts recorded</p>
+            <p className="text-xs text-slate-400 mt-1">Outbound payouts from merchant treasury will appear here.</p>
+            {onOpenPayout && (
+              <button
+                type="button"
+                onClick={onOpenPayout}
+                className="mt-3.5 px-3.5 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+              >
+                + Create First Payout
+              </button>
+            )}
+          </div>
+        ) : (
+          displayItems.slice(0, 2).map((item) => {
           const isExpanded = expandedId === item.id;
 
           return (
@@ -369,7 +390,7 @@ export const PastWithdrawalsCard: React.FC<PastWithdrawalsCardProps> = ({
               )}
             </div>
           );
-        })}
+        }))}
       </div>
 
       {/* Modal: View All 16 Past Withdrawals */}

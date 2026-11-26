@@ -2,7 +2,6 @@ import React from 'react';
 import {
   Box,
   Code2,
-  ChevronDown,
   ArrowDownToLine,
   AlertCircle,
   ArrowUpFromLine,
@@ -78,9 +77,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isRefreshing,
   isLiveSimulating,
   setIsLiveSimulating,
-  userName = 'Daniel Vance'
+  userName = 'Nora Vale'
 }) => {
-  const firstName = (userName || 'Daniel').trim().split(' ')[0] || 'Daniel';
+  const firstName = (userName || 'Nora').trim().split(' ')[0] || 'Nora';
 
   // Standard Merchant Portal Navigation Sections
   const merchantNavSections: NavSection[] = [
@@ -281,7 +280,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <span className="font-bold">Back, {firstName}!</span>
                 </h2>
                 <p className="text-[11px] text-[#8E95A5] mt-1 font-normal tracking-tight">
-                  checkout your recent financial activity
+                  Check out your recent financial activity
                 </p>
               </div>
             )}
@@ -321,9 +320,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <span className="text-[12.5px] font-semibold tracking-tight leading-none truncate">
                           {item.label}
                         </span>
-                      </div>
-                      <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shrink-0 ml-1">
-                        <ChevronDown className="w-3 h-3 text-white stroke-[2.5]" />
                       </div>
                     </button>
                   );

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   X,
   Check,
+  CheckCircle2,
   Copy,
   ExternalLink,
   Clock,
@@ -384,10 +385,10 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
                 </div>
               </div>
 
-              {/* Customer / Trader ID */}
+              {/* Merchant Order ID */}
               <div className="bg-gray-50/90 p-3 rounded-xl border border-gray-200">
                 <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-0.5">
-                  Customer / Trader ID
+                  Merchant Order ID
                 </span>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-mono font-bold text-gray-900 select-all">
@@ -396,7 +397,7 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
                   <button
                     onClick={() => handleCopy(customerId, 'customerId')}
                     className="p-1 hover:bg-gray-200 rounded text-gray-500 transition"
-                    title="Copy Customer ID"
+                    title="Copy Merchant Order ID"
                   >
                     {copiedField === 'customerId' ? (
                       <Check className="w-3.5 h-3.5 text-[#00C076]" />
@@ -490,8 +491,19 @@ export const DepositCheckoutModal: React.FC<DepositCheckoutModalProps> = ({
               </div>
             </div>
 
-            {/* Dynamic Integration Area: HPP Hosted URL vs H2H Server API Payload */}
-            {integrationMode === 'HPP' ? (
+            {/* Dynamic Integration Area: Settled Notice vs HPP Hosted URL vs H2H Server API Payload */}
+            {currentState === 'Credited' ? (
+              /* Settled State: Checkout completed */
+              <div className="bg-emerald-50/90 p-4 rounded-xl border border-emerald-200/80 text-emerald-900 animate-fadeIn">
+                <div className="flex items-center gap-2 font-bold text-xs text-emerald-800 mb-1">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Deposit Settled & Credited to Treasury</span>
+                </div>
+                <p className="text-[11px] text-emerald-700 leading-relaxed">
+                  This transaction has finalized on-chain and settled to your corporate vault balance. The payer checkout session is closed.
+                </p>
+              </div>
+            ) : integrationMode === 'HPP' ? (
               /* Payer Hosted Checkout URL (HPP) */
               <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-200 animate-fadeIn">
                 <div className="flex items-center justify-between mb-1">

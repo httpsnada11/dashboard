@@ -16,6 +16,7 @@ import {
   X
 } from 'lucide-react';
 import { AllowlistedAddress } from '../types';
+import { api } from '../services/api';
 
 export interface CustomersPageProps {
   onOpenPayoutWithDestination?: (dest: AllowlistedAddress) => void;
@@ -24,7 +25,7 @@ export interface CustomersPageProps {
 const INITIAL_ADDRESSES: AllowlistedAddress[] = [
   {
     id: 'addr_01',
-    customerId: 'cust_29371',
+    customerId: 'ref_otc_29371',
     beneficiaryName: 'Owen Shah (Genesis OTC)',
     category: 'First-Party Deposit',
     network: 'USDC · ERC-20',
@@ -37,7 +38,7 @@ const INITIAL_ADDRESSES: AllowlistedAddress[] = [
   },
   {
     id: 'addr_02',
-    customerId: 'cust_84019',
+    customerId: 'ref_vnd_84019',
     beneficiaryName: 'Apex Liquidity Services Ltd',
     category: 'Vendor Settlement',
     network: 'USDT · TRON',
@@ -50,8 +51,8 @@ const INITIAL_ADDRESSES: AllowlistedAddress[] = [
   },
   {
     id: 'addr_03',
-    customerId: 'cust_99214',
-    beneficiaryName: 'Cold Vault Pool (BitGo)',
+    customerId: 'ref_vlt_99214',
+    beneficiaryName: 'Institutional Cold Vault Pool',
     category: 'First-Party Deposit',
     network: 'USDC · SOLANA',
     address: '7XqP..2vNp',
@@ -63,7 +64,7 @@ const INITIAL_ADDRESSES: AllowlistedAddress[] = [
   },
   {
     id: 'addr_04',
-    customerId: 'cust_15492',
+    customerId: 'ref_vnd_15492',
     beneficiaryName: 'Alpha Cloud Infrastructure Ltd',
     category: 'Vendor Settlement',
     network: 'USDT · ERC-20',
@@ -78,7 +79,7 @@ const INITIAL_ADDRESSES: AllowlistedAddress[] = [
   },
   {
     id: 'addr_05',
-    customerId: 'cust_47219',
+    customerId: 'ref_aff_47219',
     beneficiaryName: 'Global Affiliate Partners HK',
     category: 'Affiliate Commission',
     network: 'USDT · TRON',
@@ -93,7 +94,7 @@ const INITIAL_ADDRESSES: AllowlistedAddress[] = [
   },
   {
     id: 'addr_06',
-    customerId: 'cust_30017',
+    customerId: 'ref_otc_30017',
     beneficiaryName: 'Eagle Vision Prime Liquidity',
     category: 'OTC Liquidity Pool',
     network: 'USDT · BSC (BEP-20)',
@@ -147,12 +148,12 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleAddAddress = (e: React.FormEvent) => {
+  const handleAddAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
 
     if (!newCustId.trim()) {
-      setFormError('Please enter a Customer ID or Account reference.');
+      setFormError('Please enter a Client Ref or Account reference.');
       return;
     }
     if (!newBeneficiary.trim()) {
@@ -173,6 +174,27 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
         ? `${newAddress.slice(0, 6)}..${newAddress.slice(-4)}`
         : newAddress;
 
+    let coolingEndsAt = 'In 24 hours';
+    const cleanNet = newNetwork.includes('TRON')
+      ? 'TRON'
+      : newNetwork.includes('SOL')
+      ? 'SOLANA'
+      : newNetwork.includes('BSC')
+      ? 'BSC'
+      : 'ETHEREUM';
+
+    try {
+      const res = await api.allowlistDestination(newCustId.trim(), {
+        address: newAddress.trim(),
+        network: cleanNet,
+      });
+      if (res?.eligible_at) {
+        coolingEndsAt = new Date(res.eligible_at).toLocaleString();
+      }
+    } catch (err: any) {
+      console.warn('Backend screening notice:', err?.message || err);
+    }
+
     const newRecord: AllowlistedAddress = {
       id: `addr_${Date.now()}`,
       customerId: newCustId.trim(),
@@ -183,7 +205,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
       fullAddress: newAddress.trim(),
       status: 'Cooling Period',
       coolingRemainingHours: 24,
-      coolingEndsAt: 'In 24 hours',
+      coolingEndsAt: coolingEndsAt,
       addedBy: 'Daniel Vance (You)',
       createdAt: 'Just now',
       totalPaidOut: '$0.00'
@@ -230,7 +252,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-base sm:text-lg font-bold tracking-tight">
-                Mandatory 24h Anti-Theft Address Whitelist (FE-07)
+                Payout addresses · 24h security hold
               </h2>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#00C076] text-white">
                 Cooling Period Enforced
@@ -285,7 +307,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
             <span className="text-2xl font-black text-amber-700 font-sans">{coolingCount}</span>
             <span className="text-xs font-bold text-amber-600">Locked</span>
           </div>
-          <p className="text-[11px] text-gray-500 mt-1">Pending anti-hijack countdown</p>
+          <p className="text-[11px] text-gray-500 mt-1">Pending security cooling countdown</p>
         </div>
 
         <div className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-2xs">
@@ -310,7 +332,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search customer ID, name, or wallet address..."
+              placeholder="Search merchant ref, beneficiary, or wallet address..."
               className="w-full pl-9 pr-3 py-1.5 bg-[#EAEBEF] hover:bg-[#E4E6EA] focus:bg-white border border-transparent focus:border-[#00C076] rounded-full text-xs text-gray-800 placeholder-gray-400 focus:outline-none transition-all"
             />
           </div>
@@ -339,7 +361,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
           <table className="w-full text-left text-xs">
             <thead className="bg-gray-50/70 text-gray-400 uppercase tracking-wider text-[11px] border-b border-gray-100">
               <tr>
-                <th className="py-3.5 px-4 font-semibold">Customer / Counterparty</th>
+                <th className="py-3.5 px-4 font-semibold">Beneficiary / Merchant Ref</th>
                 <th className="py-3.5 px-4 font-semibold">Purpose & Category</th>
                 <th className="py-3.5 px-4 font-semibold">Network</th>
                 <th className="py-3.5 px-4 font-semibold">Destination Address</th>
@@ -419,7 +441,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
                       ) : (
                         <span
                           className="px-2.5 py-1 bg-gray-100 text-gray-400 rounded-lg font-semibold text-[11px] cursor-not-allowed"
-                          title="Locked under 24-hour cooling anti-theft rule"
+                          title="Locked under 24-hour security hold rule"
                         >
                           Locked
                         </span>
@@ -478,12 +500,12 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
             <form onSubmit={handleAddAddress} className="space-y-3.5 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1">Customer / Reference ID</label>
+                  <label className="block font-bold text-gray-700 mb-1">Merchant Client / Account Ref</label>
                   <input
                     type="text"
                     value={newCustId}
                     onChange={(e) => setNewCustId(e.target.value)}
-                    placeholder="e.g. cust_88192"
+                    placeholder="e.g. ref_otc_88192"
                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#00C076] focus:outline-none"
                   />
                 </div>
@@ -542,7 +564,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
 
               <div className="p-3 bg-gray-50 rounded-2xl border border-gray-200">
                 <label className="block font-bold text-gray-800 mb-1">Hardware / Authenticator 2FA Code</label>
-                <p className="text-[11px] text-gray-500 mb-2">Authorize this security change using your registered YubiKey or Google Authenticator.</p>
+                <p className="text-[11px] text-gray-500 mb-2">Authorize this security change using your registered YubiKey or authenticator app.</p>
                 <input
                   type="text"
                   maxLength={6}
@@ -590,11 +612,11 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
             <div className="p-3 bg-gray-50 rounded-xl space-y-1 text-xs">
               <div className="font-bold text-gray-900">{removingAddress.beneficiaryName}</div>
               <div className="text-gray-500 font-mono text-[11px]">{removingAddress.fullAddress}</div>
-              <div className="text-gray-400 text-[10px]">{removingAddress.network} • {removingAddress.customerId}</div>
+              <div className="text-gray-400 text-[10px]">{removingAddress.network} • Ref: {removingAddress.customerId}</div>
             </div>
 
             <p className="text-xs text-gray-500">
-              Are you sure you want to revoke this address? If you re-add it later, it will be subject to a fresh 24-hour anti-theft cooling period.
+              Are you sure you want to revoke this address? If you re-add it later, it will be subject to a fresh 24-hour security cooling period.
             </p>
 
             <div className="flex items-center justify-end gap-2 pt-2">

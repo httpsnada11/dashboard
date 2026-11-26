@@ -75,7 +75,7 @@ export const LiveModeGate: React.FC<LiveModeGateProps> = ({
                 Corporate Verification Required
               </h2>
               <p className="text-xs text-slate-300/90 mt-0.5 leading-relaxed">
-                {targetActionName} requires an approved business entity under international AML & FATF standards.
+                {targetActionName} requires an approved business entity under global compliance and AML standards.
               </p>
             </div>
           </div>
@@ -100,7 +100,7 @@ export const LiveModeGate: React.FC<LiveModeGateProps> = ({
               <div className="flex-1 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-blue-900 text-[13px]">
-                    Verification Incomplete (Step {currentStep} of 5)
+                    Verification Incomplete (Step {currentStep} of 4)
                   </span>
                   <span className="text-[11px] font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
                     Draft Saved
@@ -180,11 +180,11 @@ export const LiveModeGate: React.FC<LiveModeGateProps> = ({
                   <button
                     onClick={() => {
                       onClose();
-                      onOpenKyb(4); // Open directly to Document Vault
+                      onOpenKyb(2); // Open directly to Document Vault
                     }}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-semibold text-xs transition shadow-sm cursor-pointer"
                   >
-                    <span>Fix Rejected Documents in Vault (Step 4)</span>
+                    <span>Fix Rejected Documents in Vault (Step 2)</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -257,7 +257,7 @@ export const LiveModeGate: React.FC<LiveModeGateProps> = ({
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#00C076] mt-0.5 flex-shrink-0" />
-                  <span>Address Book & 24h anti-theft timelocks</span>
+                  <span>Address Book & 24h security hold</span>
                 </li>
               </ul>
             </div>
@@ -267,7 +267,7 @@ export const LiveModeGate: React.FC<LiveModeGateProps> = ({
           <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70 text-[11px] text-slate-600 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Cpu className="w-4 h-4 text-slate-500" />
-              <span>Compliant with FATF Recommendation 16 & EU AML5 Directive</span>
+              <span>Aligned with global AML and travel rule compliance standards</span>
             </div>
             <a
               href="https://fatf-gafi.org"
@@ -316,7 +316,7 @@ export const LiveModeGate: React.FC<LiveModeGateProps> = ({
               <button
                 onClick={() => {
                   onClose();
-                  onOpenKyb(status === 'ACTION_REQUIRED' ? 4 : (currentStep || 1));
+                  onOpenKyb(status === 'ACTION_REQUIRED' ? 2 : (currentStep || 1));
                 }}
                 className="flex items-center gap-1.5 px-5 py-2 bg-[#2563EB] hover:bg-blue-700 text-white rounded-full text-xs font-semibold shadow-sm transition cursor-pointer"
               >

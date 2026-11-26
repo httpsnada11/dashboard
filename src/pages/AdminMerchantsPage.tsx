@@ -10,6 +10,7 @@ import {
   Check
 } from 'lucide-react';
 import { MerchantKYBRecord } from '../types';
+import { AdminComplianceConfirmModal } from '../components/AdminComplianceConfirmModal';
 
 const INITIAL_MERCHANTS: MerchantKYBRecord[] = [
   {
@@ -90,15 +91,15 @@ const INITIAL_MERCHANTS: MerchantKYBRecord[] = [
       { name: 'Audited Financial Statements 2025.pdf', type: 'FIN', verified: true },
       { name: 'Sanctions Clearance Audit.pdf', type: 'AML', verified: true }
     ],
-    whitelistedAssets: ['USDT (TRC-20)', 'USDC (ERC-20)', 'USDT (BEP-20)', 'USDC (SOL)', 'BTC (Native)']
+    whitelistedAssets: ['USDT (TRC-20)', 'USDC (ERC-20)', 'USDT (BEP-20)', 'USDC (SOL)']
   },
   {
     id: 'mer_05',
-    businessName: 'Shadow OTC Trading Group',
-    legalEntity: 'Shadow Global Offshore Ltd',
-    jurisdiction: 'Panama (Unregulated)',
+    businessName: 'Meridian FX Clearing',
+    legalEntity: 'Meridian Clearing Corp',
+    jurisdiction: 'Panama (Pending License)',
     registrationNo: 'PAN-99102-X',
-    directorName: 'Anonymous Nominee',
+    directorName: 'Rafael Morales',
     kybStatus: 'Rejected',
     riskTier: 'Tier 3 (Restricted)',
     dailyLimit: '$0 / day (Suspended)',
@@ -106,10 +107,10 @@ const INITIAL_MERCHANTS: MerchantKYBRecord[] = [
     appliedDate: '15 Oct 2026',
     amlScore: 32,
     documents: [
-      { name: 'Unverified Shell Extract.pdf', type: 'COI', verified: false }
+      { name: 'Corporate Registry Extract.pdf', type: 'COI', verified: false }
     ],
     whitelistedAssets: [],
-    rejectionReason: 'Anonymous nominee director in non-cooperative FATF jurisdiction; failed UBO verification.'
+    rejectionReason: 'Incomplete UBO verification in pending-license jurisdiction.'
   }
 ];
 
@@ -120,8 +121,11 @@ export const AdminMerchantsPage: React.FC = () => {
   const [selectedMerchant, setSelectedMerchant] = useState<MerchantKYBRecord | null>(null);
   const [editingLimitMerchant, setEditingLimitMerchant] = useState<MerchantKYBRecord | null>(null);
   const [newLimitValue, setNewLimitValue] = useState<string>('250,000');
+  const [pendingKybApprove, setPendingKybApprove] = useState<MerchantKYBRecord | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectBox, setShowRejectBox] = useState(false);
+  const [viewingDoc, setViewingDoc] = useState<{ name: string; type: string; verified: boolean } | null>(null);
+  const [reviewerNotes, setReviewerNotes] = useState<Record<string, string>>({});
 
   const handleToggleAsset = (merchantId: string, asset: string) => {
     setMerchants((prev) =>
@@ -467,7 +471,7 @@ export const AdminMerchantsPage: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {doc.verified ? (
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-[#00C076] text-[10px] font-bold">
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-[#007F4E] text-[10px] font-bold">
                         Verified
                       </span>
                     ) : (
@@ -475,9 +479,87 @@ export const AdminMerchantsPage: React.FC = () => {
                         Pending OCR
                       </span>
                     )}
+                    <button
+                      type="button"
+                      onClick={() => setViewingDoc(viewingDoc?.name === doc.name ? null : doc)}
+                      className="px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold transition cursor-pointer"
+                    >
+                      {viewingDoc?.name === doc.name ? 'Hide' : 'View'}
+                    </button>
                   </div>
                 </div>
               ))}
+
+              {viewingDoc && (
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs animate-fadeIn">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-800">Document Preview · {viewingDoc.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => setViewingDoc(null)}
+                      className="text-slate-500 hover:text-slate-800 font-semibold text-[11px] cursor-pointer"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[11px] bg-white p-2.5 rounded-lg border border-slate-100">
+                    <div>
+                      <span className="text-slate-500 block">Document Type</span>
+                      <span className="font-semibold text-slate-800">{viewingDoc.type}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block">OCR Extraction</span>
+                      <span className={`font-semibold ${viewingDoc.verified ? 'text-[#007F4E]' : 'text-amber-700'}`}>
+                        {viewingDoc.verified ? 'Completed · Confidence 99.1%' : 'Pending OCR Scan'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block">Entity Match</span>
+                      <span className="font-semibold text-slate-800">{selectedMerchant.legalEntity}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block">Registration Ref</span>
+                      <span className="font-mono font-semibold text-slate-800">{selectedMerchant.registrationNo}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* UBO & Sanctions Screening Sections (A13) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-gray-100 text-xs">
+              <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-1">
+                <span className="text-[11px] uppercase font-bold text-gray-500 tracking-wider block">
+                  Beneficial Ownership (UBO)
+                </span>
+                <p className="font-semibold text-gray-900">{selectedMerchant.directorName}</p>
+                <p className="text-[11px] text-gray-500">100% Direct Ownership · Verified ID</p>
+              </div>
+              <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-1">
+                <span className="text-[11px] uppercase font-bold text-gray-500 tracking-wider block">
+                  Sanctions & Adverse Media
+                </span>
+                <p className="font-semibold text-[#007F4E]">
+                  {selectedMerchant.amlScore >= 70 ? 'Cleared (OFAC / EU / UN)' : 'Flagged for Enhanced Review'}
+                </p>
+                <p className="text-[11px] text-gray-500">PEP & Sanctions Score: {selectedMerchant.amlScore}/100</p>
+              </div>
+            </div>
+
+            {/* Compliance Reviewer Notes (A13) */}
+            <div className="space-y-1.5 pt-2 border-t border-gray-100">
+              <label className="text-[11px] uppercase font-bold text-gray-500 tracking-wider block">
+                Compliance Reviewer Notes
+              </label>
+              <textarea
+                rows={2}
+                value={reviewerNotes[selectedMerchant.id] || ''}
+                onChange={(e) =>
+                  setReviewerNotes((prev) => ({ ...prev, [selectedMerchant.id]: e.target.value }))
+                }
+                placeholder="Add internal KYB review observations, UBO clarifications, or escalation notes..."
+                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:border-[#007F4E] resize-none"
+              />
             </div>
 
             {/* Whitelisted Settlement Rails & Assets (Pillar 2) */}
@@ -489,7 +571,7 @@ export const AdminMerchantsPage: React.FC = () => {
                 <span className="text-[10px] text-gray-400">Click to toggle whitelist</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {['USDT (TRC-20)', 'USDC (ERC-20)', 'USDT (BEP-20)', 'USDC (SOL)', 'BTC (Native)'].map((asset) => {
+                {['USDT (TRC-20)', 'USDC (ERC-20)', 'USDT (BEP-20)', 'USDC (SOL)'].map((asset) => {
                   const isWhitelisted = (selectedMerchant.whitelistedAssets || []).includes(asset);
                   return (
                     <button
@@ -537,6 +619,12 @@ export const AdminMerchantsPage: React.FC = () => {
               </div>
             )}
 
+            {selectedMerchant.documents.some((d) => !d.verified) && selectedMerchant.kybStatus !== 'Approved' && (
+              <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-800 font-medium">
+                Approval is disabled until all submitted documents complete OCR verification.
+              </div>
+            )}
+
             <div className="pt-3 border-t border-gray-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <span className="text-xs text-gray-500">
                 Current Status: <strong className="text-gray-900">{selectedMerchant.kybStatus}</strong>
@@ -545,10 +633,16 @@ export const AdminMerchantsPage: React.FC = () => {
                 {selectedMerchant.kybStatus !== 'Approved' && (
                   <>
                     <button
-                      onClick={() => handleUpdateStatus(selectedMerchant.id, 'Approved')}
-                      className="flex-1 sm:flex-initial px-3 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl font-bold text-xs shadow-sm transition cursor-pointer"
+                      onClick={() => setPendingKybApprove(selectedMerchant)}
+                      disabled={selectedMerchant.documents.some((d) => !d.verified)}
+                      title={
+                        selectedMerchant.documents.some((d) => !d.verified)
+                          ? 'Complete OCR verification on all documents before approving'
+                          : 'Approve merchant KYB'
+                      }
+                      className="flex-1 sm:flex-initial px-3 py-1.5 bg-[#007F4E] hover:bg-[#00663E] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold text-xs shadow-sm transition cursor-pointer"
                     >
-                      1-Click Approve
+                      Approve KYB
                     </button>
                     {!showRejectBox && selectedMerchant.kybStatus !== 'Rejected' && (
                       <button
@@ -616,6 +710,22 @@ export const AdminMerchantsPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {pendingKybApprove && (
+        <AdminComplianceConfirmModal
+          isOpen={true}
+          title="Approve Merchant KYB Dossier"
+          description={`Confirm full KYB & UBO verification approval for ${pendingKybApprove.businessName} (${pendingKybApprove.jurisdiction}).`}
+          actionLabel="Approve KYB"
+          targetEntity={`${pendingKybApprove.businessName} (${pendingKybApprove.registrationNo})`}
+          severity="Info"
+          onClose={() => setPendingKybApprove(null)}
+          onConfirm={() => {
+            handleUpdateStatus(pendingKybApprove.id, 'Approved');
+            setPendingKybApprove(null);
+          }}
+        />
       )}
     </div>
   );

@@ -107,11 +107,17 @@ export const ExceptionsPage: React.FC<ExceptionsPageProps> = ({ globalSearchQuer
   const [selectedException, setSelectedException] = useState<ExceptionRecord | null>(null);
   const [settleToast, setSettleToast] = useState<string | null>(null);
 
+  const pendingCount = exceptions.filter(e => e.status === 'Pending').length;
+  const inReviewCount = exceptions.filter(e => e.status === 'In review').length;
+  const settledCount = exceptions.filter(e => e.status === 'Settled').length;
+  const returnedCount = exceptions.filter(e => e.status === 'Returned').length;
+
   const filterTabs = [
-    { id: 'all', label: 'All 6', match: null },
-    { id: 'pending', label: 'Pending 4', match: 'Pending' },
-    { id: 'review', label: 'In review 1', match: 'In review' },
-    { id: 'settled', label: 'Settled 1', match: 'Settled' },
+    { id: 'all', label: `All ${exceptions.length}`, match: null },
+    { id: 'pending', label: `Pending ${pendingCount}`, match: 'Pending' },
+    { id: 'review', label: `In review ${inReviewCount}`, match: 'In review' },
+    { id: 'settled', label: `Settled ${settledCount}`, match: 'Settled' },
+    ...(returnedCount > 0 ? [{ id: 'returned', label: `Returned ${returnedCount}`, match: 'Returned' }] : [])
   ];
 
   const handleCopy = (e: React.MouseEvent, text: string, id: string) => {
@@ -235,7 +241,7 @@ export const ExceptionsPage: React.FC<ExceptionsPageProps> = ({ globalSearchQuer
             <thead>
               <tr className="bg-[#18191B] text-white text-[12px] sm:text-[12.5px] font-medium tracking-normal select-none">
                 <th className="py-2.5 px-4 sm:px-5 rounded-tl-2xl">Exception / CRM ref</th>
-                <th className="py-2.5 px-3">Customer ID</th>
+                <th className="py-2.5 px-3">Merchant Order ID</th>
                 <th className="py-2.5 px-3">Reason</th>
                 <th className="py-2.5 px-3">Received on</th>
                 <th className="py-2.5 px-3">Received amount</th>

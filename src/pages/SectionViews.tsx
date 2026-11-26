@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlertCircle, FileText, Download, Lock, RotateCcw, ExternalLink, Copy, Check, ShieldCheck, Smartphone } from 'lucide-react';
 
 export interface SectionViewProps {
@@ -180,37 +180,163 @@ export const SectionView: React.FC<SectionViewProps> = ({
     );
   }
 
+  const [convertPay, setConvertPay] = useState('1000');
+  const [convertFromToken, setConvertFromToken] = useState('USDT (TRON)');
+  const [convertToToken, setConvertToToken] = useState('USDC (ERC-20)');
+  const [convertQuoteSecs, setConvertQuoteSecs] = useState(28);
+  const [convertReviewing, setConvertReviewing] = useState(false);
+  const [convertLoading, setConvertLoading] = useState(false);
+  const [convertToast, setConvertToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (activeTab !== 'convert') return;
+    const timer = setInterval(() => {
+      setConvertQuoteSecs((prev) => (prev <= 1 ? 30 : prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [activeTab]);
+
+  const payAmountNum = Math.max(0, parseFloat(convertPay) || 0);
+  const feeRate = 0.0005; // 0.05% network routing fee
+  const feeAmount = payAmountNum * feeRate;
+  const indicativeRate =
+    convertFromToken === convertToToken
+      ? 1.0
+      : convertFromToken.startsWith('EURC')
+      ? 1.0852
+      : convertToToken.startsWith('EURC')
+      ? 0.9215
+      : 0.9998;
+  const receiveNum = Math.max(0, (payAmountNum - feeAmount) * indicativeRate);
+
+  const handleFlipTokens = () => {
+    const prevFrom = convertFromToken;
+    setConvertFromToken(convertToToken);
+    setConvertToToken(prevFrom);
+    setConvertQuoteSecs(30);
+    setConvertReviewing(false);
+  };
+
+  const handleExecuteConvert = () => {
+    setConvertLoading(true);
+    setTimeout(() => {
+      setConvertLoading(false);
+      setConvertReviewing(false);
+      setConvertToast(
+        `Converted ${payAmountNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${convertFromToken.split(' ')[0]} to ${receiveNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${convertToToken.split(' ')[0]} (est.).`
+      );
+      setTimeout(() => setConvertToast(null), 5000);
+    }, 800);
+  };
+
   if (activeTab === 'convert') {
+    const receiveVal = receiveNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     return (
       <div className="space-y-4 animate-fadeIn">
+        {convertToast && (
+          <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center justify-between shadow-sm animate-fadeIn">
+            <span>{convertToast}</span>
+            <button onClick={() => setConvertToast(null)} className="text-emerald-600 hover:text-emerald-900 font-bold ml-2 cursor-pointer">✕</button>
+          </div>
+        )}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm max-w-lg">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-bold text-gray-900">Stablecoin FX Exchange</span>
-            <span className="text-[11px] text-[#00C076] font-semibold">Zero slippage pool</span>
+            <span className="text-xs text-[#007F4E] font-semibold">Optimized algorithmic routing</span>
           </div>
           <div className="space-y-3">
             <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
-              <span className="text-[10px] text-gray-400 font-medium">You Pay</span>
+              <span className="text-xs text-gray-500 font-medium">You Pay</span>
               <div className="flex items-center justify-between mt-1">
-                <input type="number" defaultValue="1000" className="bg-transparent font-bold text-lg text-gray-900 outline-none w-1/2" />
-                <span className="px-2.5 py-1 bg-white rounded-lg text-xs font-semibold text-gray-800 shadow-sm">USDT (TRON)</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={convertPay}
+                  disabled={convertReviewing}
+                  onChange={(e) => setConvertPay(e.target.value)}
+                  className="bg-transparent font-bold text-lg text-gray-900 outline-none w-1/2 disabled:opacity-70"
+                />
+                <span className="px-2.5 py-1 bg-white rounded-lg text-xs font-semibold text-gray-800 shadow-sm">{convertFromToken}</span>
               </div>
             </div>
+
             <div className="flex justify-center -my-2">
-              <div className="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 shadow-sm">
+              <button
+                type="button"
+                onClick={handleFlipTokens}
+                title="Swap Direction"
+                className="w-7 h-7 rounded-full bg-white border border-gray-200 hover:border-[#007F4E] flex items-center justify-center text-gray-500 hover:text-[#007F4E] shadow-sm transition cursor-pointer"
+              >
                 <RotateCcw className="w-3.5 h-3.5" />
-              </div>
+              </button>
             </div>
+
             <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
-              <span className="text-[10px] text-gray-400 font-medium">You Receive (Guaranteed)</span>
+              <span className="text-xs text-gray-500 font-medium">You Receive (Estimated)</span>
               <div className="flex items-center justify-between mt-1">
-                <span className="font-bold text-lg text-[#00C076]">1,000.00</span>
-                <span className="px-2.5 py-1 bg-white rounded-lg text-xs font-semibold text-gray-800 shadow-sm">USDC (ERC-20)</span>
+                <span className="font-bold text-lg text-[#007F4E]">{receiveVal}</span>
+                <span className="px-2.5 py-1 bg-white rounded-lg text-xs font-semibold text-gray-800 shadow-sm">{convertToToken}</span>
               </div>
             </div>
-            <button className="w-full py-2.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-xs font-bold shadow-md transition">
-              Convert Instantly
-            </button>
+
+            {/* Rate & Quote Expiry metadata */}
+            <div className="p-2.5 bg-gray-50/80 rounded-xl border border-gray-100 text-xs text-gray-600 space-y-1">
+              <div className="flex items-center justify-between">
+                <span>Indicative Exchange Rate</span>
+                <span className="font-semibold text-gray-800">1 {convertFromToken.split(' ')[0]} ≈ {indicativeRate.toFixed(4)} {convertToToken.split(' ')[0]}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Routing Network Fee (0.05%)</span>
+                <span className="font-semibold text-gray-800">{feeAmount.toFixed(2)} {convertFromToken.split(' ')[0]}</span>
+              </div>
+              <div className="flex items-center justify-between text-gray-500 pt-0.5 border-t border-gray-200/50">
+                <span>Estimated quote valid for</span>
+                <span className="font-mono text-gray-700 font-semibold">{convertQuoteSecs}s</span>
+              </div>
+            </div>
+
+            {convertReviewing ? (
+              <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-2.5">
+                <p className="text-xs font-bold text-emerald-900">
+                  Review Conversion: {payAmountNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {convertFromToken.split(' ')[0]} → {receiveVal} {convertToToken.split(' ')[0]}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setConvertReviewing(false)}
+                    disabled={convertLoading}
+                    className="flex-1 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl text-xs font-semibold transition cursor-pointer"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleExecuteConvert}
+                    disabled={convertLoading}
+                    className="flex-1 py-2 bg-[#007F4E] hover:bg-[#00663E] disabled:opacity-60 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    {convertLoading ? (
+                      <>
+                        <RotateCcw className="w-3.5 h-3.5 animate-spin" />
+                        <span>Executing...</span>
+                      </>
+                    ) : (
+                      <span>Confirm & Convert</span>
+                    )}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConvertReviewing(true)}
+                disabled={payAmountNum <= 0}
+                className="w-full py-2.5 bg-[#007F4E] hover:bg-[#00663E] disabled:opacity-60 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <span>Review Conversion</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -239,7 +365,7 @@ export const SectionView: React.FC<SectionViewProps> = ({
               <FileText className="w-4 h-4 text-gray-600" />
               <div>
                 <p className="text-xs font-bold text-gray-900">Quarterly Tax & AML Audit Ledger - Q3 2026</p>
-                <p className="text-[10px] text-gray-400">Certified SHA-256 Hash Digest</p>
+                <p className="text-[10px] text-gray-400">SHA-256 checksum</p>
               </div>
             </div>
             <button className="flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-100">

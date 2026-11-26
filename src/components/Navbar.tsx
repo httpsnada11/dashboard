@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Search,
   Bell,
@@ -58,9 +58,35 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [showNotificationMenu, setShowNotificationMenu] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
-  const fullDisplayName = currentUser?.name || 'Daniel Vance';
+  const notifRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setShowNotificationMenu(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setShowProfileMenu(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowNotificationMenu(false);
+        setShowProfileMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  const fullDisplayName = currentUser?.name || (portalMode === 'admin' ? 'Sarah Chen (Platform SuperAdmin)' : 'Nora Vale');
   const displayName = fullDisplayName.trim().split(' ')[0] || fullDisplayName;
-  const displayEmail = currentUser?.email || 'daniel@gmail.com';
+  const displayEmail = currentUser?.email || (portalMode === 'admin' ? 'admin@copym.com' : 'nora@apexforex.example.com');
 
   return (
     <header className="w-full bg-white px-3 sm:px-6 lg:px-6 py-2.5 flex items-center justify-between border-b border-gray-100/90 sticky top-0 z-40">
@@ -84,8 +110,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Environment Mode Switcher (Sandbox vs Live) */}
-        {portalMode === 'merchant' && (
+        {/* Environment Mode Switcher (Sandbox vs Live) - Merchant Only, or Admin Operator Pill */}
+        {portalMode === 'merchant' ? (
           <div className="hidden md:flex items-center bg-gray-100/90 p-0.5 rounded-full border border-gray-200/70 select-none text-[11px] font-semibold ml-1 sm:ml-2">
             <button
               onClick={() => onToggleEnvironment?.(false)}
@@ -120,6 +146,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </span>
               )}
             </button>
+          </div>
+        ) : (
+          <div className="hidden md:flex items-center gap-2 ml-2">
+            <span className="px-2.5 py-1 rounded-full bg-slate-900 text-white text-[11px] font-bold tracking-wide flex items-center gap-1.5 border border-slate-700">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00C076] animate-pulse" />
+              <span>OPS CONSOLE · PRODUCTION</span>
+            </span>
+            <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-[#007F4E] text-[11px] font-bold border border-emerald-200">
+              Role: SuperAdmin
+            </span>
           </div>
         )}
       </div>
@@ -157,60 +193,68 @@ export const Navbar: React.FC<NavbarProps> = ({
           <Search className="w-4 h-4" />
         </button>
 
-        {/* Modern Vector Icons Action Bar (Play, RotateCcw, Key, Lock) */}
-        <div className="hidden xl:flex items-center gap-1 bg-gray-100/70 p-0.5 rounded-full border border-gray-200/50">
-          {/* RotateCcw: Refresh button */}
-          <button
-            onClick={onRefresh}
-            title="Refresh Transactions (RotateCcw)"
-            className="p-1.5 rounded-full hover:bg-white text-gray-600 hover:text-gray-900 transition-all shadow-none hover:shadow-sm"
-          >
-            <RotateCcw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#00C076]' : ''}`} />
-          </button>
+        {/* Modern Vector Icons Action Bar (Merchant Only) */}
+        {portalMode === 'merchant' && (
+          <div className="hidden xl:flex items-center gap-1 bg-gray-100/70 p-0.5 rounded-full border border-gray-200/50">
+            {/* RotateCcw: Refresh button */}
+            <button
+              onClick={onRefresh}
+              title="Refresh Transactions"
+              className="p-1.5 rounded-full hover:bg-white text-gray-600 hover:text-gray-900 transition-all shadow-none hover:shadow-sm cursor-pointer"
+            >
+              <RotateCcw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#00C076]' : ''}`} />
+            </button>
 
-          {/* Play: Live Feed Simulator */}
-          <button
-            onClick={() => setIsLiveSimulating(!isLiveSimulating)}
-            title={isLiveSimulating ? "Live Streaming Active" : "Simulate Incoming Payments (Play)"}
-            className={`p-1.5 rounded-full transition-all flex items-center gap-1 ${
-              isLiveSimulating
-                ? 'bg-[#00C076] text-white shadow-sm'
-                : 'hover:bg-white text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Play className={`w-3 h-3 ${isLiveSimulating ? 'fill-white' : ''}`} />
-            {isLiveSimulating && <span className="text-[9px] font-semibold pr-1">LIVE</span>}
-          </button>
+            {/* Play: Live Feed Simulator */}
+            <button
+              onClick={() => setIsLiveSimulating(!isLiveSimulating)}
+              title={isLiveSimulating ? "Live Streaming Active" : "Simulate Incoming Payments"}
+              className={`p-1.5 rounded-full transition-all flex items-center gap-1 cursor-pointer ${
+                isLiveSimulating
+                  ? 'bg-[#00C076] text-white shadow-sm'
+                  : 'hover:bg-white text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Play className={`w-3 h-3 ${isLiveSimulating ? 'fill-white' : ''}`} />
+              {isLiveSimulating && <span className="text-[9px] font-semibold pr-1">LIVE</span>}
+            </button>
 
-          {/* Key: Developer API Keys */}
-          <button
-            onClick={onOpenDevModal}
-            title="Developer API Keys (Key)"
-            className="p-1.5 rounded-full hover:bg-white text-gray-600 hover:text-gray-900 transition-all"
-          >
-            <Key className="w-3.5 h-3.5" />
-          </button>
+            {/* Key: Developer API Keys */}
+            <button
+              onClick={onOpenDevModal}
+              title="Developer API Credentials"
+              className="p-1.5 rounded-full hover:bg-white text-gray-600 hover:text-gray-900 transition-all cursor-pointer"
+            >
+              <Key className="w-3.5 h-3.5" />
+            </button>
 
-          {/* Lock: Security & Lock */}
-          <button
-            onClick={onOpenSecurityModal}
-            title="Security Vault & Permissions (Lock)"
-            className="p-1.5 rounded-full hover:bg-white text-gray-600 hover:text-gray-900 transition-all"
-          >
-            <Lock className="w-3.5 h-3.5" />
-          </button>
-        </div>
+            {/* Lock: Security & Lock */}
+            <button
+              onClick={onOpenSecurityModal}
+              title="Security Vault & Permissions"
+              className="p-1.5 rounded-full hover:bg-white text-gray-600 hover:text-gray-900 transition-all cursor-pointer"
+            >
+              <Lock className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
-        {/* AML Risk Indicator (Tablet & Desktop) */}
-        <div className="hidden sm:block">
-          <AMLRiskBadge level="Low" score={96} />
-        </div>
+        {/* AML Risk Indicator (Merchant Only) */}
+        {portalMode === 'merchant' && (
+          <div className="hidden sm:block">
+            <AMLRiskBadge level="Low" score={96} />
+          </div>
+        )}
 
         {/* Notification Bell */}
-        <div className="relative">
+        <div className="relative" ref={notifRef}>
           <button
-            onClick={() => setShowNotificationMenu(!showNotificationMenu)}
-            className="w-8 h-8 rounded-full bg-[#EAEBEF] hover:bg-[#E2E4E9] flex items-center justify-center text-gray-700 transition relative"
+            onClick={() => {
+              const next = !showNotificationMenu;
+              setShowNotificationMenu(next);
+              if (next) setShowProfileMenu(false);
+            }}
+            className="w-8 h-8 rounded-full bg-[#EAEBEF] hover:bg-[#E2E4E9] flex items-center justify-center text-gray-700 transition relative cursor-pointer"
             title="Notifications"
           >
             <Bell className="w-3.5 h-3.5 text-gray-700" />
@@ -232,10 +276,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
         </div>
 
-        {/* Daniel User Profile Pill - Responsive Clamping */}
-        <div className="relative">
+        {/* User Profile Pill - Responsive Clamping */}
+        <div className="relative" ref={profileRef}>
           <button
-            onClick={() => setShowProfileMenu(!showProfileMenu)}
+            onClick={() => {
+              const next = !showProfileMenu;
+              setShowProfileMenu(next);
+              if (next) setShowNotificationMenu(false);
+            }}
             className="flex items-center gap-1.5 sm:gap-2 text-white pl-1 pr-2 sm:pr-2.5 py-1 rounded-full shadow-sm transition-all select-none bg-[#00C076] hover:bg-[#00AA67] cursor-pointer"
           >
             {/* Dark circular avatar */}

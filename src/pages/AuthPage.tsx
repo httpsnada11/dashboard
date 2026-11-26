@@ -3,6 +3,7 @@ import { Eye, EyeOff, ArrowLeft, RefreshCw, Lock, ShieldCheck, ShieldAlert } fro
 import copyMLogo from '../image/logo.png';
 import authHeroImg from '../assets/auth-hero.png';
 import { PortalMode } from '../types';
+import { api } from '../services/api';
 
 export type AuthMode = 'login' | 'register' | 'mfa' | 'forgot';
 
@@ -21,10 +22,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   const [mode, setMode] = useState<AuthMode>(initialMode);
 
   // Form states - Login
-  const [loginEmail, setLoginEmail] = useState(isAdmin ? 'admin@copym.com' : 'merchant@gmail.com');
-  const [loginPassword, setLoginPassword] = useState('password123');
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [activeMerchantName, setActiveMerchantName] = useState(
-    isAdmin ? 'Sarah Chen (Platform SuperAdmin)' : 'Daniel Vance'
+    isAdmin ? 'Sarah Chen (Platform SuperAdmin)' : 'Nora Vale'
   );
   const [rememberDevice, setRememberDevice] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,12 +34,17 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
   // Form states - Register
   const [regBusinessName, setRegBusinessName] = useState('Apex Forex Global');
-  const [regEmail, setRegEmail] = useState('name@company.com');
+  const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [agreeTerms, setAgreeTerms] = useState(true);
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [activeLegalModal, setActiveLegalModal] = useState<'terms' | 'privacy' | null>(null);
+
+  // Form states - Forgot Password
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSubmitted, setForgotSubmitted] = useState(false);
 
   // Live password strength calculation
   const getPasswordStrength = (pass: string) => {
@@ -61,12 +68,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   const [isRecoveryMode, setIsRecoveryMode] = useState<boolean>(false);
   const [recoveryCode, setRecoveryCode] = useState<string>('');
 
-  // Form states - Forgot Password
-  const [forgotEmail, setForgotEmail] = useState('merchant@gmail.com');
-  const [forgotSubmitted, setForgotSubmitted] = useState(false);
-
   // Handler: Sign In
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -87,16 +90,58 @@ export const AuthPage: React.FC<AuthPageProps> = ({
     }
 
     setIsSubmitting(true);
-    // Simulate API authorization check
-    setTimeout(() => {
+    try {
+      // 1. Send credentials to backend (sets HttpOnly cookie)
+      if (isAdmin) {
+        await api.adminLogin({ email: emailTrimmed, password: loginPassword });
+      } else {
+        await api.login({ email: emailTrimmed, password: loginPassword });
+      }
+
+      // 2. Fetch authenticated merchant & user profile
+      let profile: any = null;
+      try {
+        profile = await api.getMe();
+      } catch {
+        // profile fetch fallback if session initialized without getMe
+      }
+
+      // 3. Save display info for fast UI hydration
+      const merchantName =
+        profile?.merchant?.displayName ||
+        profile?.merchant?.name ||
+        profile?.user?.name ||
+        (isAdmin ? 'Sarah Chen (Platform SuperAdmin)' : 'Apex Forex');
+      const merchantEmail = profile?.user?.email || profile?.email || emailTrimmed;
+
+      setActiveMerchantName(merchantName);
+      if (isAdmin) {
+        localStorage.setItem('copym_admin_session', 'true');
+        localStorage.setItem('copym_admin_name', merchantName);
+        localStorage.setItem('copym_admin_email', merchantEmail);
+      } else {
+        localStorage.setItem('copym_merchant_session', 'true');
+        localStorage.setItem('copym_merchant_name', merchantName);
+        localStorage.setItem('copym_merchant_email', merchantEmail);
+      }
+
+      // Notify parent component state
+      onSuccessLogin({
+        name: merchantName,
+        email: merchantEmail,
+      });
+
+      // 4. Redirect to dashboard / admin KYT queue
+      window.location.pathname = isAdmin ? '/admin/kyt' : '/dashboard';
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Login failed. Please check your credentials.');
+    } finally {
       setIsSubmitting(false);
-      // Advance to MFA verification (Task FE-01 compliance)
-      setMode('mfa');
-    }, 500);
+    }
   };
 
   // Handler: Register with validation
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -111,8 +156,12 @@ export const AuthPage: React.FC<AuthPageProps> = ({
       setErrorMessage('Please enter a valid corporate or work email address.');
       return;
     }
-    if (regPassword.length < 8) {
-      setErrorMessage('Password must be at least 8 characters long.');
+    const hasMinLen = regPassword.length >= 8;
+    const hasNumber = /[0-9]/.test(regPassword);
+    const hasSpecial = /[^A-Za-z0-9]/.test(regPassword);
+
+    if (!hasMinLen || !hasNumber || !hasSpecial) {
+      setErrorMessage('Password must be at least 8 characters and include at least 1 number and 1 special character.');
       return;
     }
     if (regPassword !== regConfirmPassword) {
@@ -120,18 +169,37 @@ export const AuthPage: React.FC<AuthPageProps> = ({
       return;
     }
     if (!agreeTerms) {
-      setErrorMessage('You must agree to the Terms of Service and Privacy Policy.');
+      setErrorMessage('You must agree to the Terms of Service and Privacy Policy before proceeding.');
       return;
     }
 
     setIsSubmitting(true);
-    // Advance to 2FA verification setup
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      await api.register({
+        email: emailTrimmed,
+        password: regPassword,
+        business_name: regBusinessName.trim(),
+        businessName: regBusinessName.trim(),
+        display_name: regBusinessName.trim(),
+        name: regBusinessName.trim(),
+      });
+
       setActiveMerchantName(regBusinessName.trim());
-      setLoginEmail(emailTrimmed);
-      setMode('mfa');
-    }, 600);
+      localStorage.setItem('copym_merchant_session', 'true');
+      localStorage.setItem('copym_merchant_name', regBusinessName.trim());
+      localStorage.setItem('copym_merchant_email', emailTrimmed);
+
+      onSuccessLogin({
+        name: regBusinessName.trim(),
+        email: emailTrimmed,
+      });
+
+      window.location.pathname = '/dashboard';
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Dummy Handler: MFA Verify
@@ -156,8 +224,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
     setTimeout(() => {
       setIsSubmitting(false);
       onSuccessLogin({
-        name: activeMerchantName || (isAdmin ? 'Sarah Chen (Platform SuperAdmin)' : 'Daniel Vance'),
-        email: loginEmail || (isAdmin ? 'admin@copym.com' : 'merchant@gmail.com')
+        name: activeMerchantName || (isAdmin ? 'Sarah Chen (Platform SuperAdmin)' : 'Nora Vale'),
+        email: loginEmail || (isAdmin ? 'admin@copym.com' : 'nora@apexforex.example.com')
       });
     }, 600);
   };
@@ -284,27 +352,30 @@ export const AuthPage: React.FC<AuthPageProps> = ({
               )}
 
               {/* Form: Consistent left alignment & full-width matching button */}
-              <form onSubmit={handleLoginSubmit} className="space-y-4">
+              <form onSubmit={handleLoginSubmit} noValidate className="space-y-4">
                 {/* Email Address */}
                 <div>
-                  <label className="block text-xs font-semibold text-[#14171A] mb-1.5">
+                  <label htmlFor="loginEmail" className="block text-xs font-semibold text-[#14171A] mb-1.5 cursor-pointer">
                     {isAdmin ? 'Operator Work Email' : 'Email Address'}
                   </label>
                   <input
+                    id="loginEmail"
+                    name="email"
                     type="email"
+                    autoComplete="email"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder={isAdmin ? 'admin@copym.com' : 'merchant@gmail.com'}
+                    placeholder={isAdmin ? 'admin@copym.com' : 'name@example.com'}
                     required
                     className="w-full px-3.5 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00C076] focus:ring-1 focus:ring-[#00C076] transition shadow-2xs"
                   />
                 </div>
 
-                {/* Password with Forgot password? link */}
+                {/* Password with Eye Toggle and Forgot password? link */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-semibold text-[#14171A]">
-                      {isAdmin ? 'Platform Master Password' : 'Password'}
+                    <label htmlFor="loginPassword" className="text-xs font-semibold text-[#14171A] cursor-pointer">
+                      Password
                     </label>
                     <button
                       type="button"
@@ -314,28 +385,46 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       Forgot password?
                     </button>
                   </div>
-                  <input
-                    type="password"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                    required
-                    className="w-full px-3.5 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00C076] focus:ring-1 focus:ring-[#00C076] transition shadow-2xs"
-                  />
+                  <div className="relative">
+                    <input
+                      id="loginPassword"
+                      name="password"
+                      type={showLoginPassword ? 'text' : 'password'}
+                      autoComplete="current-password"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      placeholder="••••••••••••"
+                      required
+                      className="w-full pl-3.5 pr-11 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00C076] focus:ring-1 focus:ring-[#00C076] transition shadow-2xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPassword(!showLoginPassword)}
+                      aria-label={showLoginPassword ? 'Hide password' : 'Show password'}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5 cursor-pointer"
+                    >
+                      {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
 
-                {/* Remember device checkbox */}
-                <div className="flex items-center gap-2 pt-0.5">
-                  <input
-                    type="checkbox"
-                    id="rememberDevice"
-                    checked={rememberDevice}
-                    onChange={(e) => setRememberDevice(e.target.checked)}
-                    className="w-4 h-4 rounded text-[#00C076] focus:ring-[#00C076] accent-[#00C076] border-gray-300 cursor-pointer"
-                  />
-                  <label htmlFor="rememberDevice" className="text-xs text-[#6B7280] select-none cursor-pointer">
-                    Remember this device for 30 days
-                  </label>
+                {/* Demo autofill hint pill */}
+                <div className="flex items-center justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isAdmin) {
+                        setLoginEmail('admin@copym.com');
+                        setLoginPassword('password123');
+                      } else {
+                        setLoginEmail('nora@apexforex.example.com');
+                        setLoginPassword('password123');
+                      }
+                    }}
+                    className="text-[11px] text-gray-400 hover:text-[#00C076] font-medium transition cursor-pointer"
+                  >
+                    Quick fill demo credentials
+                  </button>
                 </div>
 
                 {/* Submit Button (Exact full width matching inputs, signature #00C076) */}
@@ -431,7 +520,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   {/* Title & Subtitle */}
                   <div className="text-center lg:text-left mb-6 sm:mb-7">
                     <h1 className="text-2xl sm:text-[28px] font-bold text-[#14171A] tracking-tight leading-tight">
-                      Get started with CopyM-Pay
+                      Get started with CopyM Pay
                     </h1>
                     <p className="text-[13px] text-[#6B7280] mt-1.5 leading-relaxed">
                       Create your merchant account to start accepting crypto payments.
@@ -446,7 +535,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   )}
 
                   {/* Form */}
-                  <form onSubmit={handleRegisterSubmit} className="space-y-3.5">
+                  <form onSubmit={handleRegisterSubmit} noValidate className="space-y-3.5">
                     {/* Business Name */}
                     <div>
                       <label className="block text-xs font-semibold text-[#14171A] mb-1.5">
@@ -522,9 +611,21 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                           })}
                         </div>
                       )}
-                      <p className="text-[11px] text-[#6B7280] mt-1">
-                        Minimum 8 characters, 1 number, 1 special character
-                      </p>
+                      {/* Live 3-point Requirements Checklist */}
+                      <div className="mt-2 space-y-1 text-[11px] bg-gray-50 p-2.5 rounded-xl border border-gray-100">
+                        <div className={`flex items-center gap-1.5 ${regPassword.length >= 8 ? 'text-[#00C076] font-semibold' : 'text-gray-400'}`}>
+                          <span>{regPassword.length >= 8 ? '✓' : '○'}</span>
+                          <span>Minimum 8 characters</span>
+                        </div>
+                        <div className={`flex items-center gap-1.5 ${/[0-9]/.test(regPassword) ? 'text-[#00C076] font-semibold' : 'text-gray-400'}`}>
+                          <span>{/[0-9]/.test(regPassword) ? '✓' : '○'}</span>
+                          <span>At least 1 number</span>
+                        </div>
+                        <div className={`flex items-center gap-1.5 ${/[^A-Za-z0-9]/.test(regPassword) ? 'text-[#00C076] font-semibold' : 'text-gray-400'}`}>
+                          <span>{/[^A-Za-z0-9]/.test(regPassword) ? '✓' : '○'}</span>
+                          <span>At least 1 special character</span>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Confirm Password with Eye Toggle */}
@@ -556,7 +657,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                           type="button"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                           aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5"
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5 cursor-pointer"
                         >
                           {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
@@ -568,15 +669,28 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       <input
                         type="checkbox"
                         id="terms"
+                        required
                         checked={agreeTerms}
                         onChange={(e) => setAgreeTerms(e.target.checked)}
                         className="mt-0.5 w-4 h-4 rounded text-[#00C076] focus:ring-[#00C076] border-gray-300 accent-[#00C076] cursor-pointer"
                       />
-                      <label htmlFor="terms" className="text-xs text-[#6B7280] leading-snug cursor-pointer">
+                      <label htmlFor="terms" className="text-xs text-[#6B7280] leading-snug cursor-pointer select-none">
                         I agree to the{' '}
-                        <span className="text-[#00C076] hover:underline font-medium">Terms of Service</span>{' '}
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); setActiveLegalModal('terms'); }}
+                          className="text-[#00C076] hover:underline font-semibold cursor-pointer"
+                        >
+                          Terms of Service
+                        </button>{' '}
                         and{' '}
-                        <span className="text-[#00C076] hover:underline font-medium">Privacy Policy</span>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); setActiveLegalModal('privacy'); }}
+                          className="text-[#00C076] hover:underline font-semibold cursor-pointer"
+                        >
+                          Privacy Policy
+                        </button>
                       </label>
                     </div>
 
@@ -862,16 +976,35 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 <span>Back to sign in</span>
               </button>
 
+              {/* Brand Header */}
+              <div className="flex items-center justify-center lg:justify-start gap-2.5 mb-6">
+                <img
+                  src={copyMLogo}
+                  alt="CopyM Pay"
+                  className="w-8 h-8 object-contain flex-shrink-0"
+                />
+                <h2 className="text-xl font-bold text-[#14171A] tracking-tight leading-tight flex items-center gap-1">
+                  <span>CopyM</span>
+                  <span className="text-[#00C076]">Pay</span>
+                </h2>
+              </div>
+
               <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#00C076] flex items-center justify-center mb-4">
                 <Lock className="w-6 h-6" />
               </div>
 
               <div className="text-center lg:text-left mb-6">
                 <h1 className="text-2xl sm:text-[28px] font-bold text-[#14171A] tracking-tight leading-tight">
-                  {isAdmin ? 'Privileged Password Reset' : 'Reset your password'}
+                  {forgotSubmitted
+                    ? 'Check your inbox'
+                    : isAdmin
+                    ? 'Privileged Password Reset'
+                    : 'Reset your password'}
                 </h1>
                 <p className="text-[13px] text-[#6B7280] mt-1.5 leading-relaxed">
-                  {isAdmin
+                  {forgotSubmitted
+                    ? 'If an account exists for this email, we have sent a secure recovery link.'
+                    : isAdmin
                     ? 'Enter your platform administrator work email to initiate the Security Officer recovery protocol.'
                     : 'Enter your registered work email to receive password reset instructions.'}
                 </p>
@@ -883,8 +1016,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     <p className="font-bold text-sm text-[#065F46] mb-1">
                       Check your inbox
                     </p>
-                    A password recovery link has been dispatched to{' '}
-                    <span className="font-semibold text-gray-900">{forgotEmail}</span>.
+                    If an account exists for <span className="font-semibold text-gray-900">{forgotEmail}</span>, you will receive password reset instructions shortly.
                   </div>
                   <button
                     type="button"
@@ -898,16 +1030,18 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleForgotSubmit} className="space-y-4">
+                <form onSubmit={handleForgotSubmit} noValidate className="space-y-4">
                   <div>
-                    <label className="block text-xs font-semibold text-[#14171A] mb-1.5">
-                      Email Address
+                    <label htmlFor="forgotEmail" className="block text-xs font-semibold text-[#14171A] mb-1.5 cursor-pointer">
+                      Work Email Address
                     </label>
                     <input
+                      id="forgotEmail"
                       type="email"
+                      autoComplete="email"
                       value={forgotEmail}
                       onChange={(e) => setForgotEmail(e.target.value)}
-                      placeholder={isAdmin ? 'admin@copym.com' : 'merchant@gmail.com'}
+                      placeholder={isAdmin ? 'admin@copym.com' : 'name@example.com'}
                       required
                       className="w-full px-3.5 py-2.5 sm:py-3 bg-white border border-[#E2E4E9] rounded-xl text-sm text-[#14171A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#00C076] focus:ring-1 focus:ring-[#00C076] transition shadow-2xs"
                     />
@@ -933,6 +1067,68 @@ export const AuthPage: React.FC<AuthPageProps> = ({
           )}
         </div>
       </div>
+
+      {/* Terms of Service & Privacy Policy Modal */}
+      {activeLegalModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-[24px] max-w-lg w-full p-6 shadow-2xl border border-gray-100 max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <h3 className="text-base font-bold text-gray-900">
+                {activeLegalModal === 'terms' ? 'Terms of Service' : 'Privacy Policy'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setActiveLegalModal(null)}
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="py-4 overflow-y-auto space-y-3 text-xs text-gray-600 leading-relaxed pr-1">
+              {activeLegalModal === 'terms' ? (
+                <>
+                  <p className="font-semibold text-gray-800">1. Acceptance of Terms</p>
+                  <p>
+                    By registering for and utilizing CopyM Pay merchant infrastructure, you agree to comply with our enterprise service terms, regulatory guidelines, and anti-fraud policies.
+                  </p>
+                  <p className="font-semibold text-gray-800">2. Merchant Responsibilities</p>
+                  <p>
+                    Merchants are responsible for maintaining the confidentiality of API credentials and implementing dual-control policies for treasury disbursement.
+                  </p>
+                  <p className="font-semibold text-gray-800">3. Compliance & Risk Controls</p>
+                  <p>
+                    All on-chain transactions processed through CopyM Pay undergo real-time screening to ensure alignment with applicable AML regulations.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="font-semibold text-gray-800">1. Data Collection & Processing</p>
+                  <p>
+                    We collect essential merchant information, including corporate registration records and transaction metadata, strictly to deliver treasury settlement and fraud prevention services.
+                  </p>
+                  <p className="font-semibold text-gray-800">2. Cryptographic Security</p>
+                  <p>
+                    Merchant credentials and HMAC webhook secrets are stored using hardware security best practices and enterprise-grade encryption.
+                  </p>
+                  <p className="font-semibold text-gray-800">3. Retention & Compliance</p>
+                  <p>
+                    Audit logs and immutable transaction ledgers are retained in accordance with financial regulatory compliance standards.
+                  </p>
+                </>
+              )}
+            </div>
+            <div className="pt-3 border-t border-gray-100 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setActiveLegalModal(null)}
+                className="px-4 py-2 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl text-xs font-semibold shadow-xs"
+              >
+                I Understand
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

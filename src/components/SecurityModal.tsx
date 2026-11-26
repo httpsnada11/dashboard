@@ -37,7 +37,7 @@ export const SecurityModal: React.FC<SecurityModalProps> = ({ isOpen, onClose })
               <Smartphone className="w-5 h-5 text-gray-600" />
               <div>
                 <p className="text-xs font-bold text-gray-900">Two-Factor Authentication (2FA)</p>
-                <p className="text-[11px] text-gray-500">Google Authenticator or YubiKey</p>
+                <p className="text-[11px] text-gray-500">Authenticator app or YubiKey</p>
               </div>
             </div>
             <button
@@ -81,7 +81,7 @@ export const SecurityModal: React.FC<SecurityModalProps> = ({ isOpen, onClose })
           <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-start gap-2.5">
             <ShieldCheck className="w-4 h-4 text-[#00C076] mt-0.5 flex-shrink-0" />
             <p className="text-[11px] text-[#00683e] leading-relaxed">
-              Automated Chainalysis & TRM Labs AML screening is active. High-risk incoming crypto transactions are automatically placed into the <strong>Exceptions</strong> queue for review.
+              Automated multi-vendor AML screening is active. High-risk incoming crypto transactions are automatically placed into the <strong>Exceptions</strong> queue for review.
             </p>
           </div>
         </div>

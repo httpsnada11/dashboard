@@ -41,6 +41,7 @@ import {
 
 import { Transaction, PayoutRecord, PortalMode, AdminTabId, MerchantKybLifecycleStatus } from './types';
 import { getKybApplication, subscribeKybStatus } from './utils/kybStorage';
+import { api } from './services/api';
 
 // Uniform Page Metadata matching the exact screenshot structure
 const PAGE_META: Record<string, { title: string; category: string }> = {
@@ -66,189 +67,18 @@ const PAGE_META: Record<string, { title: string; category: string }> = {
   'admin-audit': { title: 'Immutable Audit Trail', category: 'Security & Governance' },
 };
 
-// Initial distinct payout dataset
-const INITIAL_PAYOUTS: PayoutRecord[] = [
-  {
-    id: 'pay_1',
-    ref: 'pay_3LX8..C51',
-    fullRef: 'pay_3LX891280a9bC51',
-    amount: '8,750.00',
-    numericAmount: 8750,
-    network: 'USDC · ERC-20',
-    customer: 'cust_29371',
-    destinationType: 'DESTINATION · FIRST-PARTY DEPOSIT',
-    destinationAddress: '0x4d8A..91eC',
-    fullAddress: '0x4d8A00912cb84910ef123491eC',
-    requestedBy: 'Owen Shah',
-    complianceText: 'KYC verified · sanctions clear',
-    status: 'Needs approval',
-    createdAt: '28 Oct 2026, 14:20'
-  },
-  {
-    id: 'pay_2',
-    ref: 'pay_7NK9..B14',
-    fullRef: 'pay_7NK988201fa1B14',
-    amount: '14,200.00',
-    numericAmount: 14200,
-    network: 'USDT · TRON',
-    customer: 'cust_84019',
-    destinationType: 'DESTINATION · VENDOR SETTLEMENT',
-    destinationAddress: 'TYK9A..8v2L',
-    fullAddress: 'TYK9A3XmUqZ9z8VnLw7h4Jb1k8Pq5D2gXy',
-    requestedBy: 'Elena Rostova',
-    complianceText: 'AML risk score: 08 (Low) · TRM verified',
-    status: 'Needs approval',
-    createdAt: '28 Oct 2026, 13:45'
-  },
-  {
-    id: 'pay_3',
-    ref: 'pay_9VR2..E88',
-    fullRef: 'pay_9VR244012bc0E88',
-    amount: '3,850.00',
-    numericAmount: 3850,
-    network: 'USDT · ERC-20',
-    customer: 'cust_15492',
-    destinationType: 'DESTINATION · OTC LIQUIDITY POOL',
-    destinationAddress: '0x91F2..3cA8',
-    fullAddress: '0x91F20901abcf8912c7713cA8',
-    requestedBy: 'Marcus Vance',
-    complianceText: 'Biometric 2FA confirmed · Chainalysis clean',
-    status: 'Needs approval',
-    createdAt: '28 Oct 2026, 12:50'
-  },
-  {
-    id: 'pay_4',
-    ref: 'pay_4TM1..K09',
-    fullRef: 'pay_4TM1557288aaK09',
-    amount: '22,400.00',
-    numericAmount: 22400,
-    network: 'USDC · SOLANA',
-    customer: 'cust_99214',
-    destinationType: 'DESTINATION · TREASURY CONSOLIDATION',
-    destinationAddress: '7XqP..2vNp',
-    fullAddress: '7XqP110293847aa1928374bb2vNp',
-    requestedBy: 'Sarah Chen',
-    complianceText: 'Whitelisted cold multi-sig wallet',
-    status: 'Completed',
-    createdAt: '28 Oct 2026, 11:15'
-  },
-  {
-    id: 'pay_5',
-    ref: 'pay_2WP8..M33',
-    fullRef: 'pay_2WP800293118M33',
-    amount: '5,100.00',
-    numericAmount: 5100,
-    network: 'USDT · TRON',
-    customer: 'cust_47219',
-    destinationType: 'DESTINATION · AFFILIATE COMMISSION',
-    destinationAddress: 'TR7N..8b1A',
-    fullAddress: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
-    requestedBy: 'David Zhang',
-    complianceText: 'Under threshold ($10k) auto-approved',
-    status: 'In flight',
-    createdAt: '28 Oct 2026, 09:30'
-  }
-];
-
-// Initial distinct deposit/activity dataset
-const INITIAL_ACTIVITIES: Transaction[] = [
-  {
-    id: 'tx_1',
-    type: 'Deposit',
-    reference: 'dep_8Hq2..f31',
-    fullRef: 'dep_8Hq288192001f31',
-    customer: 'cust_92104',
-    network: 'USDT · TRON',
-    amount: '+ 2,500.00',
-    numericAmount: 2500,
-    status: 'Credited',
-    time: '2 min ago'
-  },
-  {
-    id: 'tx_2',
-    type: 'Deposit',
-    reference: 'dep_3Nk4..a19',
-    fullRef: 'dep_3Nk477102938a19',
-    customer: 'cust_44812',
-    network: 'USDT · TRON',
-    amount: '+ 1,200.00',
-    numericAmount: 1200,
-    status: 'Confirming (14/19)',
-    time: '9 min ago'
-  },
-  {
-    id: 'tx_3',
-    type: 'Deposit',
-    reference: 'dep_1Pp7..b82',
-    fullRef: 'dep_1Pp755910234b82',
-    customer: 'cust_77192',
-    network: 'USDT · TRON',
-    amount: '+ 5,000.00',
-    numericAmount: 5000,
-    status: 'Credited',
-    time: '18 min ago'
-  },
-  {
-    id: 'tx_4',
-    type: 'Deposit',
-    reference: 'dep_8Hp9..co2',
-    fullRef: 'dep_8Hp900384112co2',
-    customer: 'cust_30017',
-    network: 'USDC · ERC-20',
-    amount: '+ 950.00',
-    numericAmount: 950,
-    status: 'Exception: late',
-    time: '31 min ago'
-  },
-  {
-    id: 'tx_5',
-    type: 'Payout',
-    reference: 'po_5k5..1e4',
-    fullRef: 'po_5k50921477aa1e4',
-    customer: 'cust_11872',
-    network: 'USDT · TRON',
-    amount: '- 1,000.00',
-    numericAmount: -1000,
-    status: 'Completed',
-    time: '48 min ago'
-  }
-];
-
 export function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('copym_auth_session') === 'true';
-    } catch {
-      return false;
-    }
-  });
-
-  const [currentUser, setCurrentUser] = useState<{ name: string; email: string }>(() => {
-    try {
-      const savedName = localStorage.getItem('copym_merchant_name');
-      const savedEmail = localStorage.getItem('copym_merchant_email');
-      if (savedName) {
-        return { name: savedName, email: savedEmail || 'merchant@gmail.com' };
-      }
-    } catch {
-      // ignore
-    }
-    return { name: 'Daniel Vance', email: 'daniel@gmail.com' };
-  });
-
   // Portal Mode: 'merchant' (Port 3000 / root / /merchant) or 'admin' (Port 3001 / /admin)
   const [portalMode, setPortalMode] = useState<PortalMode>(() => {
     try {
-      // 1. Port-based detection: 3001 is dedicated Admin, 3000 is Merchant
       if (window.location.port === '3001' || import.meta.env.MODE === 'admin') {
         return 'admin';
       }
       if (window.location.port === '3000') {
         return 'merchant';
       }
-      // 2. Strict URL Path-based detection (Takes absolute precedence over localStorage)
       const path = window.location.pathname.toLowerCase();
-      if (path.startsWith('/admin') || path.includes('/ops-7x9k')) {
+      if (path.startsWith('/admin')) {
         return 'admin';
       }
       if (path.startsWith('/merchant')) {
@@ -258,6 +88,38 @@ export function App() {
       // ignore
     }
     return 'merchant';
+  });
+
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    try {
+      const path = window.location.pathname.toLowerCase();
+      const isAdm = path.startsWith('/admin') || window.location.port === '3001' || import.meta.env.MODE === 'admin';
+      if (isAdm) {
+        return localStorage.getItem('copym_admin_session') === 'true';
+      }
+      return localStorage.getItem('copym_merchant_session') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const [currentUser, setCurrentUser] = useState<{ name: string; email: string }>(() => {
+    try {
+      const isAdm = portalMode === 'admin';
+      if (isAdm) {
+        const savedName = localStorage.getItem('copym_admin_name');
+        const savedEmail = localStorage.getItem('copym_admin_email');
+        return { name: savedName || 'Sarah Chen (Platform SuperAdmin)', email: savedEmail || 'admin@copym.com' };
+      }
+      const savedName = localStorage.getItem('copym_merchant_name');
+      const savedEmail = localStorage.getItem('copym_merchant_email');
+      if (savedName) {
+        return { name: savedName, email: savedEmail || 'nora@apexforex.example.com' };
+      }
+    } catch {
+      // ignore
+    }
+    return { name: 'Nora Vale', email: 'nora@apexforex.example.com' };
   });
 
   // Admin Portal Tab
@@ -270,7 +132,7 @@ export function App() {
       if (path.includes('/payouts')) return 'admin-payouts';
       if (path.includes('/logs')) return 'admin-logs';
       if (path.includes('/audit')) return 'admin-audit';
-      if (path.includes('/overview')) return 'admin-overview';
+      if (path.includes('/overview') || path.includes('/kyt')) return 'admin-overview';
     } catch {
       // ignore
     }
@@ -281,22 +143,39 @@ export function App() {
     const defaultUser =
       portalMode === 'admin'
         ? { name: 'Sarah Chen (Platform SuperAdmin)', email: 'admin@copym.com' }
-        : { name: 'Daniel Vance', email: 'merchant@gmail.com' };
+        : { name: 'Nora Vale', email: 'nora@apexforex.example.com' };
     const user = merchantInfo || defaultUser;
     setCurrentUser(user);
     try {
-      localStorage.setItem('copym_auth_session', 'true');
-      localStorage.setItem('copym_merchant_name', user.name);
-      localStorage.setItem('copym_merchant_email', user.email);
+      if (portalMode === 'admin') {
+        localStorage.setItem('copym_admin_session', 'true');
+        localStorage.setItem('copym_admin_name', user.name);
+        localStorage.setItem('copym_admin_email', user.email);
+      } else {
+        localStorage.setItem('copym_merchant_session', 'true');
+        localStorage.setItem('copym_merchant_name', user.name);
+        localStorage.setItem('copym_merchant_email', user.email);
+      }
     } catch {
       // ignore storage errors
     }
     setIsAuthenticated(true);
   };
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     try {
-      localStorage.removeItem('copym_auth_session');
+      if (portalMode === 'admin') {
+        await api.adminLogout().catch(() => {});
+        localStorage.removeItem('copym_admin_session');
+        localStorage.removeItem('copym_admin_name');
+        localStorage.removeItem('copym_admin_email');
+      } else {
+        await api.logout().catch(() => {});
+        localStorage.removeItem('copym_merchant_session');
+        localStorage.removeItem('copym_merchant_name');
+        localStorage.removeItem('copym_merchant_email');
+        localStorage.removeItem('copym_auth_session');
+      }
     } catch {
       // ignore
     }
@@ -331,10 +210,85 @@ export function App() {
     return 'dashboard';
   });
   const [searchQuery, setSearchQuery] = useState('');
-  const [activities, setActivities] = useState<Transaction[]>(INITIAL_ACTIVITIES);
-  const [payouts, setPayouts] = useState<PayoutRecord[]>(INITIAL_PAYOUTS);
-  const [balance, setBalance] = useState<number>(56768);
-  const [usdtBalance, setUsdtBalance] = useState<number>(56768.98);
+  const [activities, setActivities] = useState<Transaction[]>([]);
+  const [payouts, setPayouts] = useState<PayoutRecord[]>([]);
+  const [balance, setBalance] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('copym_balance');
+      return saved ? Number(saved) : 0;
+    } catch {
+      return 0;
+    }
+  });
+  const [usdtBalance, setUsdtBalance] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('copym_usdt_balance');
+      return saved ? Number(saved) : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  // Fetch real ledger balances and live transactions from backend
+  useEffect(() => {
+    if (isAuthenticated && portalMode === 'merchant') {
+      api.getBalances()
+        .then((res: any) => {
+          const avail =
+            res?.available ??
+            res?.balances?.available ??
+            res?.data?.available ??
+            res?.total_available ??
+            0;
+          const num = Number(avail) || 0;
+          setBalance(num);
+          setUsdtBalance(num);
+          localStorage.setItem('copym_balance', num.toString());
+          localStorage.setItem('copym_usdt_balance', num.toString());
+        })
+        .catch((err) => {
+          console.warn('Could not load backend balances:', err);
+        });
+
+      api.getOrders()
+        .then((res: any) => {
+          const list = res?.data || res?.orders || (Array.isArray(res) ? res : []);
+          if (Array.isArray(list) && list.length > 0) {
+            const mapped: Transaction[] = list.map((item: any) => ({
+              id: item.order_id || item.id,
+              type: 'Deposit',
+              reference: item.order_id ? item.order_id.slice(0, 12) : 'ord_live',
+              fullRef: item.order_id || item.id,
+              customer: item.merchant_order_id || item.order_id || 'ord_live',
+              network: `${item.currency || 'USDT'} · ${item.network || 'TRON'}`,
+              amount: `+ ${item.amount}`,
+              numericAmount: Number(item.amount || 0),
+              status: item.status || 'Credited',
+              time: item.created_at ? new Date((typeof item.created_at === 'number' && item.created_at < 10000000000 ? item.created_at * 1000 : item.created_at)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'
+            }));
+            setActivities(mapped);
+          } else {
+            setActivities([]);
+          }
+        })
+        .catch(() => {
+          setActivities([]);
+        });
+
+      api.getPayouts()
+        .then((res: any) => {
+          const list = res?.data || res?.payouts || (Array.isArray(res) ? res : []);
+          if (Array.isArray(list) && list.length > 0) {
+            setPayouts(list);
+          } else {
+            setPayouts([]);
+          }
+        })
+        .catch(() => {
+          setPayouts([]);
+        });
+    }
+  }, [isAuthenticated, portalMode]);
 
   // Responsive Mobile Navigation State
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -391,7 +345,7 @@ export function App() {
     try {
       if (portalMode === 'admin') {
         const routeMap: Record<AdminTabId, string> = {
-          'admin-overview': '/admin/overview',
+          'admin-overview': '/admin/kyt',
           'admin-merchants': '/admin/merchants',
           'admin-whitelist': '/admin/whitelist',
           'admin-exceptions': '/admin/exceptions',
@@ -399,25 +353,16 @@ export function App() {
           'admin-logs': '/admin/logs',
           'admin-audit': '/admin/audit',
         };
-        const target = routeMap[adminTab] || '/admin/overview';
+        const target = routeMap[adminTab] || '/admin/kyt';
         if (window.location.pathname !== target) {
-          window.history.replaceState(null, '', target);
+          window.history.pushState(null, '', target);
         }
       } else {
-        // Merchant Portal URL synchronization
+        // Merchant Portal URL synchronization with pushState
         const currentPath = window.location.pathname.toLowerCase();
-        if (currentPath.startsWith('/admin') || currentPath.includes('/ops-7x9k')) {
-          window.history.replaceState(null, '', '/merchant/' + activeTab);
-        } else if (currentPath.startsWith('/merchant')) {
-          const target = '/merchant/' + activeTab;
-          if (window.location.pathname !== target) {
-            window.history.replaceState(null, '', target);
-          }
-        } else if (currentPath !== '/') {
-          const target = '/' + activeTab;
-          if (window.location.pathname !== target) {
-            window.history.replaceState(null, '', target);
-          }
+        const target = activeTab === 'dashboard' ? '/' : `/${activeTab}`;
+        if (window.location.pathname !== target && currentPath !== `/merchant/${activeTab}`) {
+          window.history.pushState(null, '', target);
         }
       }
     } catch {
@@ -428,7 +373,7 @@ export function App() {
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname.toLowerCase();
-      if (path.startsWith('/admin') || path.includes('/ops-7x9k')) {
+      if (path.startsWith('/admin')) {
         setPortalMode('admin');
         if (path.includes('/merchants')) setAdminTab('admin-merchants');
         else if (path.includes('/whitelist')) setAdminTab('admin-whitelist');
@@ -439,7 +384,11 @@ export function App() {
         else setAdminTab('admin-overview');
       } else {
         setPortalMode('merchant');
-        const cleanPath = path.replace(/^\/merchant\/?/, '');
+        const cleanPath = path.replace(/^\/merchant\/?/, '').replace(/^\//, '');
+        if (!cleanPath) {
+          setActiveTab('dashboard');
+          return;
+        }
         const validTabs = [
           'dashboard',
           'deposits',
@@ -468,11 +417,13 @@ export function App() {
   // Dynamically update document title based on portal mode and active tab
   useEffect(() => {
     if (portalMode === 'admin') {
-      document.title = 'CopyM Pay — Platform Admin Operations (:3001)';
+      const pageTitle = PAGE_META[adminTab]?.title || 'Platform Admin';
+      document.title = `CopyM Pay — ${pageTitle}`;
     } else {
-      document.title = 'CopyM Pay — Merchant Treasury Portal (:3000)';
+      const pageTitle = PAGE_META[activeTab]?.title || 'Dashboard';
+      document.title = `CopyM Pay — ${pageTitle}`;
     }
-  }, [portalMode]);
+  }, [portalMode, activeTab, adminTab]);
 
   const currentMeta =
     portalMode === 'admin'
@@ -487,10 +438,13 @@ export function App() {
     }, 700);
   };
 
-  // Add Deposit from modal
+  // Add Deposit from modal - writes directly to backend MySQL ledger
   const handleAddDeposit = (newDeposit: Partial<Transaction>) => {
     const amountStr = newDeposit.amount || '0';
     const rawVal = parseFloat(amountStr.replace(/[^0-9.]/g, '')) || 0;
+    const amountDecimal = rawVal.toFixed(2);
+    const networkClean = (newDeposit.network || '').includes('ERC') ? 'ETHEREUM' : 'TRON';
+
     setBalance(prev => prev + rawVal);
     setUsdtBalance(prev => prev + rawVal);
     const completeTx: Transaction = {
@@ -506,6 +460,31 @@ export function App() {
       time: newDeposit.time || 'Just now'
     };
     setActivities(prev => [completeTx, ...prev]);
+
+    // Persist real order into backend MySQL and simulate confirmation if credited
+    api.createOrder({
+      amount: amountDecimal,
+      currency: 'USDT',
+      network: networkClean,
+      payer_id: newDeposit.customer,
+      description: newDeposit.fullRef || 'Custom Cashier Deposit',
+    }).then(async (orderRes) => {
+      if (orderRes?.order_id && newDeposit.status === 'Credited') {
+        await api.simulateOrderPayment(orderRes.order_id, {
+          amount: amountDecimal,
+          confirmations: 19,
+        }).catch(() => {});
+      }
+      // Re-fetch authoritative balance from double-entry ledger
+      const bal = await api.getBalances().catch(() => null);
+      if (bal?.available !== undefined) {
+        const val = Number(bal.available) || 0;
+        setBalance(val);
+        setUsdtBalance(val);
+      }
+    }).catch(err => {
+      console.warn('Could not persist order to backend:', err);
+    });
   };
 
   // Add Payout from modal - Directly prepends to both Payouts rows and Recent activities
@@ -525,6 +504,18 @@ export function App() {
       status: 'In flight',
       time: 'Just now'
     }, ...prev]);
+
+    // Persist payout to backend
+    api.createPayout({
+      amount: newPayoutItem.numericAmount.toFixed(2),
+      currency: 'USDT',
+      destination_address: newPayoutItem.destinationAddress || newPayoutItem.fullAddress,
+      payer_id: newPayoutItem.customer,
+      merchant_order_id: newPayoutItem.fullRef,
+      network: newPayoutItem.network.includes('ERC') ? 'ETHEREUM' : 'TRON',
+    }).catch(err => {
+      console.warn('Could not persist payout to backend:', err);
+    });
   };
 
   // Swap currency
@@ -677,7 +668,7 @@ export function App() {
       return (
         <div className="flex items-center gap-2">
           <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-            24h Anti-Theft Active
+            24h Security Hold Active
           </span>
         </div>
       );
@@ -881,13 +872,11 @@ export function App() {
                 <DashboardPage
                   balance={balance.toLocaleString('en-US')}
                   usdtBalance={usdtBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                  onOpenDeposit={() => {
-                    setDepositModalInitial(null);
-                    setIsDepositModalOpen(true);
-                  }}
-                  onOpenPayout={() => setIsPayoutModalOpen(true)}
-                  onOpenSwap={() => setIsSwapModalOpen(true)}
+                  onOpenDeposit={() => setActiveTab('deposits')}
+                  onOpenPayout={() => setActiveTab('payouts')}
+                  onOpenSwap={() => setActiveTab('convert')}
                   activities={activities}
+                  payouts={payouts}
                   searchQuery={searchQuery}
                   onSelectTransaction={(tx) => setSelectedTx(tx)}
                 />
@@ -1002,6 +991,7 @@ export function App() {
         isOpen={isPayoutModalOpen}
         onClose={() => setIsPayoutModalOpen(false)}
         onAddPayout={handleAddPayout}
+        availableBalance={usdtBalance}
       />
 
       <SwapModal

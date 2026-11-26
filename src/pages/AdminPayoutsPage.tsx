@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
+import { appendAuditEvent } from '../utils/auditLogStore';
 import {
   ShieldCheck,
   Search,
@@ -245,29 +247,71 @@ export const AdminPayoutsPage: React.FC = () => {
       setIsSubmittingMpc(false);
       setApproveModalPayout(null);
       setTwoFactorCode('');
-      setMpcSuccessMessage(`Fireblocks MPC Quorum signed & broadcasted for ${approveModalPayout.payoutRef}!`);
+      setMpcSuccessMessage(`Enterprise MPC Quorum signed & broadcasted for ${approveModalPayout.payoutRef}!`);
       setTimeout(() => setMpcSuccessMessage(null), 4000);
     }, 1200);
   };
 
-  // Batch Approval
-  const handleBatchApprove = () => {
-    if (selectedIds.length === 0) return;
-    setPayouts((prev) =>
-      prev.map((item) =>
-        selectedIds.includes(item.id) && item.status === 'Pending Checker'
-          ? {
-            ...item,
-            status: 'Completed' as AdminPayoutStatus,
-            checkerName: 'Sarah Chen (Platform SuperAdmin)',
-            mpcStatus: '2/2 Quorum Met'
-          }
-          : item
-      )
-    );
+  // Batch Approval & Hold (with mandatory 2FA)
+  const [bulkActionMode, setBulkActionMode] = useState<'approve' | 'hold' | null>(null);
+  const [bulkTwoFactorCode, setBulkTwoFactorCode] = useState('');
+
+  const handleConfirmBulkAction = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bulkActionMode || selectedIds.length === 0) return;
+    if (bulkTwoFactorCode.trim().length < 6) {
+      alert('Please enter a valid 6-digit authenticator app code to authorize this bulk action.');
+      return;
+    }
+
     const count = selectedIds.length;
+    if (bulkActionMode === 'approve') {
+      setPayouts((prev) =>
+        prev.map((item) =>
+          selectedIds.includes(item.id) && item.status === 'Pending Checker'
+            ? {
+                ...item,
+                status: 'Completed' as AdminPayoutStatus,
+                checkerName: 'Sarah Chen (Platform SuperAdmin)',
+                mpcStatus: '2/2 Quorum Met',
+              }
+            : item
+        )
+      );
+      appendAuditEvent({
+        action: 'Bulk Co-Sign Payouts',
+        target: `${count} selected payouts`,
+        reasonCode: 'Dual-Control Policy Exception Approved',
+        note: `Batch co-signed ${count} payout(s) with 2FA verification.`,
+        severity: 'Warning',
+      });
+      setMpcSuccessMessage(`Co-signed ${count} payout(s) via Enterprise MPC Co-Signer!`);
+    } else {
+      setPayouts((prev) =>
+        prev.map((item) =>
+          selectedIds.includes(item.id)
+            ? {
+                ...item,
+                status: 'Compliance Hold' as AdminPayoutStatus,
+                checkerName: 'Sarah Chen (Platform SuperAdmin)',
+                holdReason: 'Batch compliance hold placed by checker',
+              }
+            : item
+        )
+      );
+      appendAuditEvent({
+        action: 'Bulk Compliance Hold',
+        target: `${count} selected payouts`,
+        reasonCode: 'Sanctions / High-Risk Enforcement Hold',
+        note: `Placed batch compliance hold on ${count} payout(s) with 2FA verification.`,
+        severity: 'Critical',
+      });
+      setMpcSuccessMessage(`Placed compliance hold on ${count} payout(s).`);
+    }
+
     setSelectedIds([]);
-    setMpcSuccessMessage(`Batch approved ${count} payouts via Fireblocks MPC Co-Signer!`);
+    setBulkTwoFactorCode('');
+    setBulkActionMode(null);
     setTimeout(() => setMpcSuccessMessage(null), 4000);
   };
 
@@ -296,7 +340,7 @@ export const AdminPayoutsPage: React.FC = () => {
               </span>
             </div>
             <p className="text-xs text-gray-300 mt-0.5">
-              Enforcing institutional 4-eyes principle. Payouts require independent Platform Checker sign-off + Fireblocks 2-of-3 MPC Quorum.
+              Enforcing institutional 4-eyes principle. Payouts require independent Platform Checker sign-off + Enterprise 2-of-3 MPC Quorum.
             </p>
           </div>
         </div>
@@ -356,7 +400,7 @@ export const AdminPayoutsPage: React.FC = () => {
             <span className="text-2xl font-bold text-emerald-600">2 of 3</span>
             <span className="text-xs font-semibold text-emerald-600">Threshold Active</span>
           </div>
-          <span className="text-[11px] text-gray-400 mt-1 block">Fireblocks Engine v4.19</span>
+          <span className="text-[11px] text-gray-400 mt-1 block">Enterprise MPC Engine v4.19</span>
         </div>
 
         <div className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-2xs">
@@ -416,15 +460,32 @@ export const AdminPayoutsPage: React.FC = () => {
           </div>
 
           {/* Search & Batch Action */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {selectedIds.length > 0 && (
-              <button
-                onClick={handleBatchApprove}
-                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Approve Selected ({selectedIds.length})</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBulkTwoFactorCode('');
+                    setBulkActionMode('approve');
+                  }}
+                  className="px-3 py-1.5 bg-[#007F4E] hover:bg-[#00663E] text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Co-Sign Selected ({selectedIds.length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBulkTwoFactorCode('');
+                    setBulkActionMode('hold');
+                  }}
+                  className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <PauseCircle className="w-3.5 h-3.5" />
+                  <span>Hold Selected ({selectedIds.length})</span>
+                </button>
+              </>
             )}
 
             <div className="relative w-full sm:w-64">
@@ -441,9 +502,8 @@ export const AdminPayoutsPage: React.FC = () => {
         </div>
 
         {/* Mobile Swipe Hint */}
-        <div className="lg:hidden flex items-center justify-between text-[11px] text-gray-400 p-3 bg-gray-50/50 border-b border-gray-100">
+        <div className="lg:hidden flex items-center justify-between text-[11px] text-gray-500 p-3 bg-gray-50/50 border-b border-gray-100">
           <span>↔ Swipe horizontally to review Maker, Destination & Quorum</span>
-          <span className="text-[#00C076] font-semibold text-[10.5px]">Touch scroll active</span>
         </div>
 
         {/* Table */}
@@ -466,7 +526,7 @@ export const AdminPayoutsPage: React.FC = () => {
                 <th className="py-3 px-4 whitespace-nowrap">KYT Risk Score</th>
                 <th className="py-3 px-4 whitespace-nowrap">MPC Quorum</th>
                 <th className="py-3 px-4 whitespace-nowrap min-w-[140px]">Status</th>
-                <th className="py-3 px-4 text-right whitespace-nowrap min-w-[190px]">Checker Action</th>
+                <th className="py-3 px-4 text-right whitespace-nowrap min-w-[190px] sticky right-0 bg-gray-50 z-10 shadow-[-4px_0_8px_rgba(0,0,0,0.03)]">Checker Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -596,7 +656,7 @@ export const AdminPayoutsPage: React.FC = () => {
                     </td>
 
                     {/* Checker Action */}
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap min-w-[190px]">
+                    <td className="py-3.5 px-4 text-right whitespace-nowrap min-w-[190px] sticky right-0 bg-white z-10 shadow-[-4px_0_8px_rgba(0,0,0,0.03)]">
                       <div className="inline-flex items-center justify-end gap-1.5 whitespace-nowrap">
                         {payout.status === 'Pending Checker' && (
                           <>
@@ -772,7 +832,7 @@ export const AdminPayoutsPage: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-700">Enter Admin 2FA Token (Google Authenticator)</label>
+              <label className="text-xs font-semibold text-gray-700">Enter Admin 2FA Token (Authenticator app)</label>
               <input
                 type="text"
                 maxLength={6}
@@ -882,7 +942,7 @@ export const AdminPayoutsPage: React.FC = () => {
                 </div>
                 <div className="pt-2">
                   <span className="font-bold text-gray-900">2. Automated KYT Screening</span>
-                  <p className="text-gray-500">TRM Labs & Chainalysis verified clean</p>
+                  <p className="text-gray-500">Multi-vendor risk screening verified clean</p>
                 </div>
                 <div className="pt-2">
                   <span className="font-bold text-gray-900">3. Platform Checker Sign-off</span>
@@ -895,6 +955,72 @@ export const AdminPayoutsPage: React.FC = () => {
           </div>
         </div>
       )}
+      {bulkActionMode &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn"
+            role="dialog"
+            aria-modal="true"
+          >
+            <form
+              onSubmit={handleConfirmBulkAction}
+              className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100 space-y-4"
+            >
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <h3 className="font-bold text-gray-900 text-sm">
+                  {bulkActionMode === 'approve'
+                    ? `Bulk Co-Sign ${selectedIds.length} Payout(s)`
+                    : `Place Compliance Hold on ${selectedIds.length} Payout(s)`}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setBulkActionMode(null)}
+                  className="p-1 text-gray-400 hover:text-gray-700 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="text-xs text-gray-600">
+                {bulkActionMode === 'approve'
+                  ? 'Authorize MPC co-signing for all selected Pending Checker payouts. This action will be recorded in the audit trail.'
+                  : 'Place all selected payouts on immediate compliance hold. Requires 2FA confirmation.'}
+              </p>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-gray-700 block">
+                  Enter Admin 2FA Token (Authenticator app)
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={bulkTwoFactorCode}
+                  onChange={(e) => setBulkTwoFactorCode(e.target.value.replace(/[^0-9]/g, ''))}
+                  placeholder="000000"
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-center text-base tracking-widest font-mono font-bold focus:outline-none focus:border-[#007F4E]"
+                />
+              </div>
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setBulkActionMode(null)}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className={`px-4 py-2 text-white rounded-xl text-xs font-bold shadow-sm cursor-pointer ${
+                    bulkActionMode === 'approve'
+                      ? 'bg-[#007F4E] hover:bg-[#00663E]'
+                      : 'bg-red-600 hover:bg-red-700'
+                  }`}
+                >
+                  {bulkActionMode === 'approve' ? 'Confirm Bulk Co-Sign' : 'Confirm Bulk Hold'}
+                </button>
+              </div>
+            </form>
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

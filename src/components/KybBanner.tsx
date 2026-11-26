@@ -64,7 +64,7 @@ export const KybBanner: React.FC<KybBannerProps> = ({ onOpenWizard, className = 
               onClick={() => onOpenWizard(kybData.currentStep || 1)}
               className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer"
             >
-              <span>{kybData.currentStep > 1 ? `Resume Verification (Step ${kybData.currentStep}/5)` : 'Start Verification'}</span>
+              <span>{kybData.currentStep > 1 ? `Resume Verification (Step ${kybData.currentStep}/4)` : 'Start Verification'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
 
@@ -147,7 +147,7 @@ export const KybBanner: React.FC<KybBannerProps> = ({ onOpenWizard, className = 
           <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
             <button
               type="button"
-              onClick={() => onOpenWizard(5)}
+              onClick={() => onOpenWizard(4)}
               className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer"
             >
               <span>View Dossier Status</span>
@@ -200,10 +200,10 @@ export const KybBanner: React.FC<KybBannerProps> = ({ onOpenWizard, className = 
           <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
             <button
               type="button"
-              onClick={() => onOpenWizard(4)}
+              onClick={() => onOpenWizard(3)}
               className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 transition shadow-xs cursor-pointer"
             >
-              <span>Resolve Document Issue (Step 4)</span>
+              <span>Resolve Document Issue (Step 3)</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
 

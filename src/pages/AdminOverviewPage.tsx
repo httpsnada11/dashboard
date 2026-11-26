@@ -16,6 +16,7 @@ import {
   Zap
 } from 'lucide-react';
 import { AMLRiskAlert } from '../types';
+import { AdminComplianceConfirmModal } from '../components/AdminComplianceConfirmModal';
 
 const INITIAL_ALERTS: AMLRiskAlert[] = [
   {
@@ -82,7 +83,7 @@ const INITIAL_ALERTS: AMLRiskAlert[] = [
     amount: '60,000.00 USDC',
     riskScore: 89,
     riskLevel: 'Critical',
-    flagReason: 'Ransomware affiliated address (Chainalysis tag)',
+    flagReason: 'Ransomware affiliated address (Risk feed tag)',
     merchant: 'Vance Capital Ltd',
     client: 'cust_90124',
     time: '2 hrs ago',
@@ -100,6 +101,13 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
   const [filterLevel, setFilterLevel] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedAlert, setSelectedAlert] = useState<AMLRiskAlert | null>(null);
+  const [pendingAction, setPendingAction] = useState<{
+    alert: AMLRiskAlert;
+    newStatus: AMLRiskAlert['status'];
+    title: string;
+    description: string;
+    variant: 'primary' | 'destructive';
+  } | null>(null);
 
   // Filter alerts
   const filteredAlerts = alerts.filter((alert) => {
@@ -132,7 +140,7 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
   return (
     <div className="space-y-6">
       {/* Platform Admin Banner */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-red-950/80 via-[#14171A] to-[#1E293B] text-white border border-red-500/20 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="p-4 sm:p-5 rounded-2xl bg-[#14171A] text-white border border-slate-800 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
           <div className="w-11 h-11 rounded-2xl bg-red-500/20 text-red-400 flex items-center justify-center border border-red-500/30 flex-shrink-0">
             <ShieldAlert className="w-6 h-6 animate-pulse" />
@@ -147,7 +155,7 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
               </span>
             </div>
             <p className="text-xs text-gray-300 mt-0.5">
-              Live automated blockchain threat detection via TRM Labs, Chainalysis & Elliptic feeds.
+              Live automated blockchain threat detection via integrated risk feeds.
             </p>
           </div>
         </div>
@@ -215,7 +223,7 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
                     <Lock className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900 text-sm">Fireblocks MPC Node Cluster</h3>
+                    <h3 className="font-bold text-gray-900 text-sm">Enterprise MPC Custody Cluster</h3>
                     <p className="text-[11px] text-gray-400">2-of-3 MPC Quorum Threshold Active</p>
                   </div>
                 </div>
@@ -268,8 +276,8 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
                     <Server className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900 text-sm">DB & Redis Worker Fleet</h3>
-                    <p className="text-[11px] text-gray-400">Celery / Bull Queue Dispatcher</p>
+                    <h3 className="font-bold text-gray-900 text-sm">Database & Cache Worker Fleet</h3>
+                    <p className="text-[11px] text-gray-400">Asynchronous Task Pipeline</p>
                   </div>
                 </div>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -281,7 +289,7 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
                 <div className="p-3 bg-gray-50/80 rounded-xl flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Database className="w-3.5 h-3.5 text-blue-500" />
-                    <span className="font-semibold text-gray-900">MySQL Primary Cluster</span>
+                    <span className="font-semibold text-gray-900">Primary Relational Cluster</span>
                   </div>
                   <div className="text-right">
                     <span className="font-mono text-emerald-600 font-bold">1.1ms</span>
@@ -292,7 +300,7 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
                 <div className="p-3 bg-gray-50/80 rounded-xl flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Cpu className="w-3.5 h-3.5 text-red-500" />
-                    <span className="font-semibold text-gray-900">Redis Memory & Pub/Sub</span>
+                    <span className="font-semibold text-gray-900">Distributed Memory & Cache Cluster</span>
                   </div>
                   <div className="text-right">
                     <span className="font-mono text-emerald-600 font-bold">0.5ms</span>
@@ -332,7 +340,7 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-gray-900 font-mono">$30,000,000 Total Custody</span>
+                <span className="text-xs font-bold text-gray-900 font-mono">Institutional Reserve Pool</span>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                   Balanced
                 </span>
@@ -358,7 +366,7 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
                   <span className="font-bold text-gray-900">Cold Multi-Sig Vault: $27,859,500.00 (92.9%)</span>
-                  <span className="text-gray-400 font-mono text-[10.5px]">Fireblocks Fund001</span>
+                  <span className="text-gray-400 font-mono text-[10.5px]">Enterprise Vault 001</span>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
@@ -392,7 +400,7 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
                   TRON Network (TRC-20)
                 </span>
                 <div className="flex items-baseline justify-between">
-                  <span className="font-bold text-gray-900 text-xs">TronGrid Dedicated</span>
+                  <span className="font-bold text-gray-900 text-xs">TRON Enterprise RPC</span>
                   <span className="font-mono text-emerald-600 font-bold text-xs">18ms</span>
                 </div>
                 <span className="text-[10px] text-gray-400 font-mono block mt-1">Block #66,419,203</span>
@@ -403,7 +411,7 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
                   Ethereum (ERC-20)
                 </span>
                 <div className="flex items-baseline justify-between">
-                  <span className="font-bold text-gray-900 text-xs">Alchemy Mainnet</span>
+                  <span className="font-bold text-gray-900 text-xs">Ethereum High-Availability RPC</span>
                   <span className="font-mono text-emerald-600 font-bold text-xs">24ms</span>
                 </div>
                 <span className="text-[10px] text-gray-400 font-mono block mt-1">Block #21,184,910</span>
@@ -414,7 +422,7 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
                   Solana (SPL Token)
                 </span>
                 <div className="flex items-baseline justify-between">
-                  <span className="font-bold text-gray-900 text-xs">Triton High-Speed RPC</span>
+                  <span className="font-bold text-gray-900 text-xs">Solana Priority RPC</span>
                   <span className="font-mono text-emerald-600 font-bold text-xs">29ms</span>
                 </div>
                 <span className="text-[10px] text-gray-400 font-mono block mt-1">Slot #291,048,119</span>
@@ -425,7 +433,7 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
                   BNB Chain (BEP-20)
                 </span>
                 <div className="flex items-baseline justify-between">
-                  <span className="font-bold text-gray-900 text-xs">QuickNode BSC</span>
+                  <span className="font-bold text-gray-900 text-xs">BNB Chain Low-Latency RPC</span>
                   <span className="font-mono text-emerald-600 font-bold text-xs">22ms</span>
                 </div>
                 <span className="text-[10px] text-gray-400 font-mono block mt-1">Block #43,891,012</span>
@@ -660,13 +668,13 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
                           <>
                             <button
                               onClick={() => handleAction(alert.id, 'Frozen')}
-                              className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 font-bold transition text-[11px]"
+                              className="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-bold transition text-[11px] cursor-pointer"
                             >
                               Freeze
                             </button>
                             <button
                               onClick={() => handleAction(alert.id, 'Approved Override')}
-                              className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-[#00C076] border border-emerald-200 font-bold transition text-[11px]"
+                              className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-[#007F4E] border border-emerald-200 font-bold transition text-[11px] cursor-pointer"
                             >
                               Clear
                             </button>
@@ -749,26 +757,54 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
 
             <div className="pt-3 border-t border-gray-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
               <button
-                onClick={() => {
-                  handleAction(selectedAlert.id, 'Frozen');
-                  setSelectedAlert(null);
-                }}
-                className="w-full sm:w-auto px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-xs shadow-sm transition cursor-pointer"
+                onClick={() =>
+                  setPendingAction({
+                    alert: selectedAlert,
+                    newStatus: 'Frozen',
+                    title: 'Freeze Wallet & Hold Funds',
+                    description: `Enforce a compliance freeze on ${selectedAlert.merchant} (${selectedAlert.amount}) due to KYT risk score ${selectedAlert.riskScore}/100.`,
+                    variant: 'destructive',
+                  })
+                }
+                className="w-full sm:w-auto px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs shadow-sm transition cursor-pointer"
               >
                 Freeze Wallet
               </button>
               <button
-                onClick={() => {
-                  handleAction(selectedAlert.id, 'Approved Override');
-                  setSelectedAlert(null);
-                }}
-                className="w-full sm:w-auto px-4 py-2.5 bg-[#00C076] hover:bg-[#00AA67] text-white rounded-xl font-bold text-xs shadow-sm transition cursor-pointer"
+                onClick={() =>
+                  setPendingAction({
+                    alert: selectedAlert,
+                    newStatus: 'Approved Override',
+                    title: 'Clear False Positive (KYT Override)',
+                    description: `Override KYT alert (${selectedAlert.flagReason}) for ${selectedAlert.merchant}. Requires mandatory reason code and justification note.`,
+                    variant: 'primary',
+                  })
+                }
+                className="w-full sm:w-auto px-4 py-2.5 bg-[#007F4E] hover:bg-[#00663E] text-white rounded-xl font-bold text-xs shadow-sm transition cursor-pointer"
               >
                 Clear False Positive
               </button>
             </div>
           </div>
         </div>
+      )}
+
+      {pendingAction && (
+        <AdminComplianceConfirmModal
+          isOpen={true}
+          title={pendingAction.title}
+          description={pendingAction.description}
+          actionLabel={pendingAction.newStatus === 'Frozen' ? 'Confirm Freeze' : 'Confirm Override'}
+          targetEntity={`${pendingAction.alert.merchant} · ${pendingAction.alert.txHash} (Score ${pendingAction.alert.riskScore}/100)`}
+          severity={pendingAction.newStatus === 'Frozen' ? 'Critical' : 'Warning'}
+          variant={pendingAction.variant}
+          onClose={() => setPendingAction(null)}
+          onConfirm={() => {
+            handleAction(pendingAction.alert.id, pendingAction.newStatus);
+            setSelectedAlert(null);
+            setPendingAction(null);
+          }}
+        />
       )}
     </div>
   );

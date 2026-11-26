@@ -10,7 +10,7 @@ export { RecentActivity } from './RecentActivity';
 export type { RecentActivityProps } from './RecentActivity';
 export { AMLRiskBadge } from './AMLRiskBadge';
 export type { AMLRiskBadgeProps } from './AMLRiskBadge';
-export { CopyMLogo, LiquidChromeWaves, WalletGraphic, PayoutGraphic, SwappGraphic } from './Graphics';
+export { CopyMLogo, LiquidChromeWaves, WalletGraphic, PayoutGraphic, SwappGraphic, ConvertGraphic } from './Graphics';
 export { DeveloperModal, DepositModal, PayoutModal, SwapModal } from './Modals';
 export type { DeveloperModalProps, DepositModalProps, PayoutModalProps, SwapModalProps } from './Modals';
 export { DepositCheckoutModal } from './DepositCheckoutModal';

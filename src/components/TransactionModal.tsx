@@ -56,7 +56,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
               <span className="font-semibold text-gray-800">{transaction.network}</span>
             </div>
             <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-              <span className="text-gray-400 block mb-0.5">Customer ID</span>
+              <span className="text-gray-400 block mb-0.5">Merchant Order ID</span>
               <span className="font-semibold text-gray-800">{transaction.customer}</span>
             </div>
           </div>

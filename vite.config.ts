@@ -11,7 +11,14 @@ export default defineConfig(({ mode }) => {
     server: {
       port: process.env.PORT ? parseInt(process.env.PORT, 10) : defaultPort,
       open: false,
-      host: true
-    }
+      host: true,
+      proxy: {
+        '/v1': {
+          target: 'http://localhost:4000', // Backend server address
+          changeOrigin: true,
+          secure: false,
+        },
+      },
+    },
   };
 });

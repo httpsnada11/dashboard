@@ -88,7 +88,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
               <tr className="bg-[#18191B] text-white text-[12px] sm:text-[12.5px] font-medium tracking-normal select-none">
                 <th className="py-2.5 px-4 sm:px-5 rounded-tl-2xl">Type</th>
                 <th className="py-2.5 px-3">Reference</th>
-                <th className="py-2.5 px-3">Customer</th>
+                <th className="py-2.5 px-3">Merchant Order ID</th>
                 <th className="py-2.5 px-3">Network</th>
                 <th className="py-2.5 px-3 text-left">Amount</th>
                 <th className="py-2.5 px-3">Status</th>
@@ -101,7 +101,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
               {filteredActivities.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-8 text-center text-gray-400">
-                    No transactions match your search query.
+                    {searchQuery ? 'No transactions match your search query.' : 'No transaction activity recorded yet for this merchant.'}
                   </td>
                 </tr>
               ) : (

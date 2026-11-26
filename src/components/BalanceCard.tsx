@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
-import { WalletGraphic, PayoutGraphic, SwappGraphic } from './Graphics';
 import cardBg from '../assets/card-bg.png';
+import usdtIcon from '../assets/usdt-icon.png';
+import depositIcon from '../assets/deposit-icon.png';
+import payoutIcon from '../assets/payout-icon.png';
+import swapIcon from '../assets/swap-icon.png';
 
 export type BalanceCategory = 'Available' | 'Confirming' | 'Reserved' | 'Held';
 
@@ -15,8 +18,8 @@ export interface BalanceCardProps {
 }
 
 export const BalanceCard: React.FC<BalanceCardProps> = ({
-  balance = 56768,
-  usdtBalance = 56768.98,
+  balance = 0,
+  usdtBalance = 0,
   onOpenDeposit,
   onOpenPayout,
   onOpenSwap,
@@ -27,7 +30,9 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
 
   // Dynamic projection details matching task FE-02 & COPYm Pay ledger
   const formattedAvailable =
-    typeof balance === 'number' ? balance.toLocaleString('en-US') : balance.toString();
+    typeof balance === 'number'
+      ? balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : balance.toString();
   const formattedAvailableUsdt =
     typeof usdtBalance === 'number'
       ? `${usdtBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT`
@@ -172,7 +177,11 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
 
         {/* Dynamic USDT equivalent label & status indicator */}
         <div className="flex items-center gap-1.5 mt-2">
-          <span className={`w-2 h-2 rounded-full ${currentProjection.dotColor} flex-shrink-0 animate-pulse`} />
+          <img
+            src={usdtIcon}
+            alt="USDT"
+            className="w-4 h-4 sm:w-4.5 sm:h-4.5 object-contain flex-shrink-0 drop-shadow-xs"
+          />
           <span
             key={`usdt_${selectedCategory}`}
             className="text-xs sm:text-[13px] text-[#9FA6B2] font-medium tracking-wide animate-fadeIn"
@@ -193,7 +202,11 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
             Deposits
           </span>
           <div className="transform group-hover:scale-105 transition-transform duration-200 flex-shrink-0 ml-1">
-            <WalletGraphic className="w-9 h-7 xs:w-11 xs:h-9 sm:w-13 sm:h-10 drop-shadow-md" />
+            <img
+              src={depositIcon}
+              alt="Deposits"
+              className="w-8 h-7 xs:w-10 xs:h-8 sm:w-12 sm:h-9 object-contain drop-shadow-md"
+            />
           </div>
         </div>
 
@@ -206,20 +219,28 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
             Payout
           </span>
           <div className="transform group-hover:scale-105 transition-transform duration-200 flex-shrink-0 ml-1">
-            <PayoutGraphic className="w-9 h-7 xs:w-11 xs:h-9 sm:w-13 sm:h-10 drop-shadow-md" />
+            <img
+              src={payoutIcon}
+              alt="Payout"
+              className="w-8 h-7 xs:w-10 xs:h-8 sm:w-12 sm:h-9 object-contain drop-shadow-md"
+            />
           </div>
         </div>
 
-        {/* Card 3: Swapp */}
+        {/* Card 3: Convert */}
         <div
           onClick={onOpenSwap}
           className="glass-emboss rounded-xl sm:rounded-2xl px-2.5 py-2.5 xs:px-3.5 xs:py-3 sm:px-4 sm:py-3.5 flex items-center justify-between cursor-pointer transition-all duration-200 group hover:shadow-emerald-500/10 min-w-0"
         >
           <span className="text-xs xs:text-sm sm:text-[15px] font-bold text-white tracking-tight group-hover:text-[#00C076] transition-colors truncate">
-            Swapp
+            Convert
           </span>
           <div className="transform group-hover:scale-105 transition-transform duration-200 flex-shrink-0 ml-1">
-            <SwappGraphic className="w-9 h-7 xs:w-11 xs:h-9 sm:w-13 sm:h-10 drop-shadow-md" />
+            <img
+              src={swapIcon}
+              alt="Convert"
+              className="w-8 h-7 xs:w-10 xs:h-8 sm:w-12 sm:h-9 object-contain drop-shadow-md"
+            />
           </div>
         </div>
       </div>

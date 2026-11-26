@@ -73,7 +73,7 @@ export const INITIAL_KYB_DATA: KybApplicationData = {
     registrationNumber: 'BVI-771920-REG',
     jurisdiction: 'British Virgin Islands (BVI FSC)',
     operatingAddress: 'Commerce House, Wickhams Cay 1, Road Town, Tortola VG1110',
-    websiteUrl: 'https://apexliquidity.com'
+    websiteUrl: 'https://apexforex.example.com'
   },
   profile: {
     industry: 'Forex Broker & Liquidity Provider',

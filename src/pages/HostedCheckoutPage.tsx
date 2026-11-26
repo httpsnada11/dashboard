@@ -449,7 +449,7 @@ Merkle Proof: 0x8f4c2e71d3a958b10e4a77cb2103f56e9cba3210459812dfaa910c23948bf8a1
                 {amount} <span className="text-emerald-200 text-sm font-bold">{selectedNetwork.asset}</span>
               </div>
               <span className="text-[10.5px] text-emerald-100/80 font-medium">
-                ≈ ${amount} USD Guaranteed
+                ≈ ${amount} USD Estimated
               </span>
             </div>
 

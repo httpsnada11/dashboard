@@ -3,20 +3,15 @@ import {
   X,
   Check,
   Building2,
-  Users,
   ShieldCheck,
   Upload,
   AlertCircle,
   FileCheck,
   ChevronRight,
-  ArrowLeft,
-  Trash2,
-  Plus,
-  DollarSign
+  ArrowLeft
 } from 'lucide-react';
 import {
   KybApplicationData,
-  KybDirectorUbo,
   KybDocumentItem
 } from '../types';
 import {
@@ -34,10 +29,8 @@ export interface KybOnboardingWizardProps {
 
 const STEP_TITLES = [
   { step: 1, label: 'Company Entity', icon: Building2 },
-  { step: 2, label: 'Business & Risk', icon: DollarSign },
-  { step: 3, label: 'Directors & UBOs', icon: Users },
-  { step: 4, label: 'Document Vault', icon: Upload },
-  { step: 5, label: 'Sign-off', icon: ShieldCheck }
+  { step: 2, label: 'Document Vault', icon: Upload },
+  { step: 3, label: 'Sign-off', icon: ShieldCheck }
 ];
 
 export const KybOnboardingWizard: React.FC<KybOnboardingWizardProps> = ({
@@ -56,7 +49,7 @@ export const KybOnboardingWizard: React.FC<KybOnboardingWizardProps> = ({
     if (isOpen) {
       const fresh = getKybApplication();
       setKybData(fresh);
-      setCurrentStep(initialStep || fresh.currentStep || 1);
+      setCurrentStep(Math.min(initialStep || fresh.currentStep || 1, 3));
       setSubmittedSuccess(false);
     }
   }, [isOpen, initialStep]);
@@ -73,56 +66,7 @@ export const KybOnboardingWizard: React.FC<KybOnboardingWizardProps> = ({
     saveKybDraft(updated);
   };
 
-  // Step 2: Business Profile handlers
-  const handleProfileChange = (field: keyof KybApplicationData['profile'], value: unknown) => {
-    const updated = {
-      ...kybData,
-      profile: { ...kybData.profile, [field]: value }
-    };
-    setKybData(updated);
-    saveKybDraft(updated);
-  };
-
-  // Step 3: Directors & UBOs handlers
-  const handleAddDirector = () => {
-    const newUbo: KybDirectorUbo = {
-      id: 'ubo_' + Date.now(),
-      fullName: '',
-      dateOfBirth: '1990-01-01',
-      nationality: 'United Kingdom',
-      residentialCountry: 'United Kingdom',
-      ownershipPercentage: 25,
-      isDirector: true,
-      isUbo: true
-    };
-    const updated = {
-      ...kybData,
-      directors: [...kybData.directors, newUbo]
-    };
-    setKybData(updated);
-    saveKybDraft(updated);
-  };
-
-  const handleUpdateDirector = (id: string, field: keyof KybDirectorUbo, value: unknown) => {
-    const updated = {
-      ...kybData,
-      directors: kybData.directors.map(d => (d.id === id ? { ...d, [field]: value } : d))
-    };
-    setKybData(updated);
-    saveKybDraft(updated);
-  };
-
-  const handleRemoveDirector = (id: string) => {
-    if (kybData.directors.length <= 1) return;
-    const updated = {
-      ...kybData,
-      directors: kybData.directors.filter(d => d.id !== id)
-    };
-    setKybData(updated);
-    saveKybDraft(updated);
-  };
-
-  // Step 4: Document Vault handlers (simulated upload)
+  // Document Vault handlers (simulated upload)
   const handleSimulateUpload = (docId: string) => {
     const updatedDocs: KybDocumentItem[] = kybData.documents.map(doc => {
       if (doc.id === docId) {
@@ -143,7 +87,7 @@ export const KybOnboardingWizard: React.FC<KybOnboardingWizardProps> = ({
     saveKybDraft(updated);
   };
 
-  // Step 5: Submission
+  // Submission
   const handleSubmitApplication = () => {
     setIsSubmitting(true);
     setTimeout(() => {
@@ -158,7 +102,7 @@ export const KybOnboardingWizard: React.FC<KybOnboardingWizardProps> = ({
   };
 
   const nextStep = () => {
-    if (currentStep < 5) {
+    if (currentStep < 3) {
       const next = currentStep + 1;
       setCurrentStep(next);
       saveKybDraft({ currentStep: next });
@@ -178,7 +122,7 @@ export const KybOnboardingWizard: React.FC<KybOnboardingWizardProps> = ({
       <div className="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-7 shadow-2xl border border-slate-100 my-auto relative transition-all max-h-[92vh] flex flex-col justify-between">
         
         {/* ======================================================== */}
-        {/* MODAL HEADER WITH 5-STEP PROGRESS BAR                    */}
+        {/* MODAL HEADER WITH 3-STEP PROGRESS BAR                    */}
         {/* ======================================================== */}
         <div>
           <div className="flex items-center justify-between pb-4 border-b border-slate-100">
@@ -192,11 +136,11 @@ export const KybOnboardingWizard: React.FC<KybOnboardingWizardProps> = ({
                     Corporate KYB Verification
                   </h3>
                   <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10.5px] font-bold">
-                    Step {currentStep} of 5
+                    Step {currentStep} of 3
                   </span>
                 </div>
                 <p className="text-xs text-slate-400">
-                  Progressive Unlock: Verify company entity & beneficial owners to access Live Crypto Processing.
+                  Progressive Unlock: Verify company entity and documentation to access Live Crypto Processing.
                 </p>
               </div>
             </div>
@@ -211,7 +155,7 @@ export const KybOnboardingWizard: React.FC<KybOnboardingWizardProps> = ({
 
           {/* Stepper Progress Bar */}
           <div className="py-3.5 border-b border-slate-100">
-            <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
               {STEP_TITLES.map((s) => {
                 const isCurrent = currentStep === s.step;
                 const isPassed = currentStep > s.step;
@@ -288,7 +232,7 @@ export const KybOnboardingWizard: React.FC<KybOnboardingWizardProps> = ({
                 <div className="space-y-3.5 animate-fadeIn">
                   <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-                      Section 1 of 5
+                      Section 1 of 3
                     </span>
                     <h4 className="text-sm font-bold text-slate-900">Registered Legal Entity Information</h4>
                     <p className="text-[11px] text-slate-500 mt-0.5">
@@ -367,208 +311,12 @@ export const KybOnboardingWizard: React.FC<KybOnboardingWizardProps> = ({
                 </div>
               )}
 
-              {/* STEP 2: BUSINESS PROFILE & RISK */}
+              {/* STEP 2: DOCUMENT VAULT */}
               {currentStep === 2 && (
                 <div className="space-y-3.5 animate-fadeIn">
                   <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-                      Section 2 of 5
-                    </span>
-                    <h4 className="text-sm font-bold text-slate-900">Business Model, Volume & Market Risk</h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      Configure your expected ingestion throughput so compliance can automatically size your settlement limits.
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                        Industry Vertical Category *
-                      </label>
-                      <select
-                        value={kybData.profile.industry}
-                        onChange={(e) => handleProfileChange('industry', e.target.value)}
-                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-[#00C076]"
-                      >
-                        <option value="Forex Broker & Liquidity Provider">Forex Broker & Liquidity Provider</option>
-                        <option value="iGaming & Online Entertainment">iGaming & Online Entertainment</option>
-                        <option value="Prop Trading & Financial Markets">Prop Trading & Financial Markets</option>
-                        <option value="E-Commerce & Digital Goods">E-Commerce & Digital Goods</option>
-                        <option value="Web3 SaaS & Technology Infrastructure">Web3 SaaS & Infrastructure</option>
-                        <option value="OTC Trading Desk & Remittance">OTC Trading Desk & Remittance</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                        Expected Monthly Ingestion Volume *
-                      </label>
-                      <select
-                        value={kybData.profile.monthlyVolume}
-                        onChange={(e) => handleProfileChange('monthlyVolume', e.target.value)}
-                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-[#00C076]"
-                      >
-                        <option value="$25,000 – $100,000 / month">$25,000 – $100,000 / month (Tier 3)</option>
-                        <option value="$100,000 – $250,000 / month">$100,000 – $250,000 / month (Tier 2)</option>
-                        <option value="$250,000 – $1,000,000 / month">$250,000 – $1,000,000 / month (Tier 1)</option>
-                        <option value="$1,000,000+ / month (Enterprise VIP)">$1,000,000+ / month (Enterprise VIP)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                        Average Transaction Size *
-                      </label>
-                      <input
-                        type="text"
-                        value={kybData.profile.averageTxSize}
-                        onChange={(e) => handleProfileChange('averageTxSize', e.target.value)}
-                        placeholder="e.g. $1,000.00 – $5,000.00 USDT"
-                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#00C076]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                        Primary Target Customer Jurisdictions *
-                      </label>
-                      <input
-                        type="text"
-                        value={kybData.profile.targetJurisdictions.join(', ')}
-                        onChange={(e) =>
-                          handleProfileChange(
-                            'targetJurisdictions',
-                            e.target.value.split(',').map((s) => s.trim())
-                          )
-                        }
-                        placeholder="e.g. LATAM, Southeast Asia, EU, MENA"
-                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#00C076]"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* STEP 3: DIRECTORS & UBOS */}
-              {currentStep === 3 && (
-                <div className="space-y-3.5 animate-fadeIn">
-                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-                        Section 3 of 5
-                      </span>
-                      <h4 className="text-sm font-bold text-slate-900">Directors & Ultimate Beneficial Owners (UBO)</h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
-                        FATF & OFAC compliance mandates disclosure of any natural person holding ≥25% shares or voting control.
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleAddDirector}
-                      className="px-3 py-1.5 bg-[#00C076] hover:bg-[#00AA67] text-white font-bold rounded-xl text-xs flex items-center gap-1 shadow-2xs transition cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Add Person</span>
-                    </button>
-                  </div>
-
-                  <div className="space-y-3">
-                    {kybData.directors.map((d, index) => (
-                      <div
-                        key={d.id}
-                        className="p-3.5 bg-white border border-slate-200 rounded-2xl shadow-2xs space-y-3"
-                      >
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                          <span className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
-                            <Users className="w-3.5 h-3.5 text-[#00C076]" />
-                            <span>Individual #{index + 1} ({d.ownershipPercentage}% Shares)</span>
-                          </span>
-
-                          {kybData.directors.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveDirector(d.id)}
-                              className="text-slate-400 hover:text-rose-600 transition p-1"
-                              title="Remove"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                          <div>
-                            <label className="block text-[10.5px] font-bold text-slate-600 mb-0.5">Full Legal Name *</label>
-                            <input
-                              type="text"
-                              value={d.fullName}
-                              onChange={(e) => handleUpdateDirector(d.id, 'fullName', e.target.value)}
-                              placeholder="As written on passport"
-                              className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-[#00C076]"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-[10.5px] font-bold text-slate-600 mb-0.5">Date of Birth *</label>
-                            <input
-                              type="date"
-                              value={d.dateOfBirth}
-                              onChange={(e) => handleUpdateDirector(d.id, 'dateOfBirth', e.target.value)}
-                              className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-[#00C076]"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-[10.5px] font-bold text-slate-600 mb-0.5">Shareholding % (≥25%) *</label>
-                            <input
-                              type="number"
-                              min="0"
-                              max="100"
-                              value={d.ownershipPercentage}
-                              onChange={(e) => handleUpdateDirector(d.id, 'ownershipPercentage', Number(e.target.value))}
-                              className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-[#00C076]"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                          <div>
-                            <label className="block text-[10.5px] font-bold text-slate-600 mb-0.5">Nationality *</label>
-                            <input
-                              type="text"
-                              value={d.nationality}
-                              onChange={(e) => handleUpdateDirector(d.id, 'nationality', e.target.value)}
-                              placeholder="e.g. British, Cypriot, Singaporean"
-                              className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-[#00C076]"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-[10.5px] font-bold text-slate-600 mb-0.5">Country of Residence *</label>
-                            <input
-                              type="text"
-                              value={d.residentialCountry}
-                              onChange={(e) => handleUpdateDirector(d.id, 'residentialCountry', e.target.value)}
-                              placeholder="e.g. United Kingdom"
-                              className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-[#00C076]"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* STEP 4: DOCUMENT VAULT */}
-              {currentStep === 4 && (
-                <div className="space-y-3.5 animate-fadeIn">
-                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-                      Section 4 of 5
+                      Section 2 of 3
                     </span>
                     <h4 className="text-sm font-bold text-slate-900">Secure Corporate Document Vault</h4>
                     <p className="text-[11px] text-slate-500 mt-0.5">
@@ -649,12 +397,12 @@ export const KybOnboardingWizard: React.FC<KybOnboardingWizardProps> = ({
                 </div>
               )}
 
-              {/* STEP 5: DECLARATION & SIGN-OFF */}
-              {currentStep === 5 && (
+              {/* STEP 3: DECLARATION & SIGN-OFF */}
+              {currentStep === 3 && (
                 <div className="space-y-3.5 animate-fadeIn">
                   <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-                      Section 5 of 5
+                      Section 3 of 3
                     </span>
                     <h4 className="text-sm font-bold text-slate-900">Legal Representation & PEP/Sanctions Declaration</h4>
                     <p className="text-[11px] text-slate-500 mt-0.5">
@@ -695,17 +443,6 @@ export const KybOnboardingWizard: React.FC<KybOnboardingWizardProps> = ({
                       </span>
                     </label>
                   </div>
-
-                  {/* Pre-submission Summary */}
-                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-[11.5px] text-emerald-900 flex items-center justify-between">
-                    <div>
-                      <strong>Ready for Submission: </strong>
-                      <span>All 5 corporate sections completed. Verification turnaround 24–48 hours.</span>
-                    </div>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-[#00875A] font-bold text-[10px]">
-                      100% Validated
-                    </span>
-                  </div>
                 </div>
               )}
             </>
@@ -740,7 +477,7 @@ export const KybOnboardingWizard: React.FC<KybOnboardingWizardProps> = ({
                 Save Draft & Exit
               </button>
 
-              {currentStep < 5 ? (
+              {currentStep < 3 ? (
                 <button
                   type="button"
                   onClick={nextStep}

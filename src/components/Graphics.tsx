@@ -1,5 +1,9 @@
 import React from 'react';
 import copyMLogo from '../image/logo.png';
+import depositIcon from '../assets/deposit-icon.png';
+import payoutIcon from '../assets/payout-icon.png';
+import swapIcon from '../assets/swap-icon.png';
+import usdtIcon from '../assets/usdt-icon.png';
 
 interface GraphicProps {
   className?: string;
@@ -10,190 +14,28 @@ export const CopyMLogo: React.FC<GraphicProps> = ({ className = "w-8 h-8" }) => 
   <img src={copyMLogo} alt="CopyM Pay" className={`object-contain ${className}`} />
 );
 
+// Tether USDT Icon Graphic
+export const UsdtGraphic: React.FC<GraphicProps> = ({ className = "w-5 h-5" }) => (
+  <img src={usdtIcon} alt="USDT" className={`object-contain ${className}`} />
+);
+
 // Metallic 3D Wallet Graphic for "Deposits"
 export const WalletGraphic: React.FC<GraphicProps> = ({ className = "w-20 h-16" }) => (
-  <svg viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <defs>
-      <linearGradient id="wallet-silver" x1="15" y1="10" x2="85" y2="70" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#F0F2F5" />
-        <stop offset="0.3" stopColor="#CBD2DC" />
-        <stop offset="0.7" stopColor="#8A93A0" />
-        <stop offset="1" stopColor="#5E6573" />
-      </linearGradient>
-      <linearGradient id="card-sheen" x1="30" y1="0" x2="80" y2="45" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#FFFFFF" />
-        <stop offset="0.5" stopColor="#B8C0CC" />
-        <stop offset="1" stopColor="#7E8794" />
-      </linearGradient>
-      <linearGradient id="gold-emblem" x1="45" y1="45" x2="60" y2="60" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#E2E8F0" />
-        <stop offset="1" stopColor="#94A3B8" />
-      </linearGradient>
-      <filter id="soft-shadow" x="0" y="0" width="100" height="85" filterUnits="userSpaceOnUse">
-        <feDropShadow dx="2" dy="5" stdDeviation="4" floodColor="#000000" floodOpacity="0.45" />
-      </filter>
-    </defs>
-    
-    <g filter="url(#soft-shadow)">
-      {/* Credit card peeking out from wallet */}
-      <rect
-        x="32"
-        y="12"
-        width="46"
-        height="28"
-        rx="5"
-        transform="rotate(-10 32 12)"
-        fill="url(#card-sheen)"
-        stroke="#E2E8F0"
-        strokeWidth="0.8"
-      />
-      {/* Chip / magnetic stripe on card */}
-      <rect
-        x="42"
-        y="18"
-        width="10"
-        height="8"
-        rx="1.5"
-        transform="rotate(-10 42 18)"
-        fill="#94A3B8"
-        opacity="0.8"
-      />
-
-      {/* Main Leather / Metallic Wallet Body */}
-      <path
-        d="M18 26C18 20.4772 22.4772 16 28 16H76C81.5228 16 86 20.4772 86 26V58C86 63.5228 81.5228 68 76 68H28C22.4772 68 18 63.5228 18 58V26Z"
-        fill="url(#wallet-silver)"
-        stroke="#A0AAB8"
-        strokeWidth="1.2"
-      />
-
-      {/* Wallet flap / seam line */}
-      <path
-        d="M18 36C28 36 34 38 46 44C54 48 64 48 72 44C78 41 82 37 86 36"
-        stroke="#475569"
-        strokeWidth="1.2"
-        fill="none"
-        opacity="0.5"
-      />
-
-      {/* Flap fastener tab */}
-      <path
-        d="M44 45H58C61.3 45 64 47.7 64 51V52C64 55.3 61.3 58 58 58H44C40.7 58 38 55.3 38 52V51C38 47.7 40.7 45 44 45Z"
-        fill="#64748B"
-        stroke="#CBD5E1"
-        strokeWidth="0.8"
-      />
-
-      {/* Center 8-pointed star/diamond emblem on the wallet tab */}
-      <path
-        d="M51 48L52.2 50.8L55 52L52.2 53.2L51 56L49.8 53.2L47 52L49.8 50.8Z"
-        fill="url(#gold-emblem)"
-      />
-    </g>
-  </svg>
+  <img src={depositIcon} alt="Deposits" className={`object-contain ${className}`} />
 );
 
 // Metallic 3D Card with Arrow Graphic for "Payout"
 export const PayoutGraphic: React.FC<GraphicProps> = ({ className = "w-20 h-16" }) => (
-  <svg viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <defs>
-      <linearGradient id="payout-silver" x1="20" y1="12" x2="78" y2="68" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#F8FAFC" />
-        <stop offset="0.35" stopColor="#D4D9E2" />
-        <stop offset="0.7" stopColor="#8C96A5" />
-        <stop offset="1" stopColor="#4A5260" />
-      </linearGradient>
-      <linearGradient id="arrow-emboss" x1="38" y1="28" x2="68" y2="58" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#FFFFFF" />
-        <stop offset="1" stopColor="#9CA3AF" />
-      </linearGradient>
-      <filter id="payout-shadow" x="5" y="5" width="90" height="75" filterUnits="userSpaceOnUse">
-        <feDropShadow dx="3" dy="6" stdDeviation="5" floodColor="#000000" floodOpacity="0.5" />
-      </filter>
-    </defs>
-    <g filter="url(#payout-shadow)">
-      {/* 3D Tilted Card Body */}
-      <rect
-        x="24"
-        y="16"
-        width="54"
-        height="48"
-        rx="8"
-        transform="rotate(-5 24 16)"
-        fill="url(#payout-silver)"
-        stroke="#E2E8F0"
-        strokeWidth="1.2"
-      />
-      {/* Glossy edge highlight */}
-      <line
-        x1="27"
-        y1="18"
-        x2="78"
-        y2="13.5"
-        stroke="#FFFFFF"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        opacity="0.9"
-      />
-      
-      {/* 3D Embossed Arrow Pointing Upwards/Diagonal */}
-      <g transform="rotate(-5 50 40)">
-        {/* Shadow behind arrow */}
-        <path
-          d="M48 52L56 36L44 38L45 34L62 32L64 49L60 50L58 42L49 54Z"
-          fill="#1E293B"
-          opacity="0.35"
-          transform="translate(1, 1)"
-        />
-        {/* Bold 3D arrow */}
-        <path
-          d="M44 48L53 35L42 37L43 33L60 31L61 48L57 49L55 41L45 50Z"
-          fill="url(#arrow-emboss)"
-        />
-      </g>
-    </g>
-  </svg>
+  <img src={payoutIcon} alt="Payout" className={`object-contain ${className}`} />
 );
 
-// Metallic 3D Opposing Arrows Graphic for "Swapp"
-export const SwappGraphic: React.FC<GraphicProps> = ({ className = "w-20 h-16" }) => (
-  <svg viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <defs>
-      <linearGradient id="swap-top" x1="30" y1="20" x2="75" y2="45" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#FFFFFF" />
-        <stop offset="0.4" stopColor="#CBD5E1" />
-        <stop offset="0.8" stopColor="#94A3B8" />
-        <stop offset="1" stopColor="#64748B" />
-      </linearGradient>
-      <linearGradient id="swap-bottom" x1="25" y1="35" x2="70" y2="65" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#E2E8F0" />
-        <stop offset="0.4" stopColor="#94A3B8" />
-        <stop offset="0.8" stopColor="#64748B" />
-        <stop offset="1" stopColor="#475569" />
-      </linearGradient>
-      <filter id="swap-shadow" x="10" y="8" width="80" height="66" filterUnits="userSpaceOnUse">
-        <feDropShadow dx="2" dy="4" stdDeviation="4" floodColor="#000000" floodOpacity="0.45" />
-      </filter>
-    </defs>
-    <g filter="url(#swap-shadow)">
-      {/* Top Arrow (pointing right) */}
-      <path
-        d="M26 31C26 29.3431 27.3431 28 29 28H56V21.5C56 20.3 57.4 19.6 58.4 20.4L73.4 31.9C74.2 32.5 74.2 33.7 73.4 34.3L58.4 45.8C57.4 46.6 56 45.9 56 44.7V38H29C27.3431 38 26 36.6569 26 35V31Z"
-        fill="url(#swap-top)"
-        stroke="#E2E8F0"
-        strokeWidth="0.8"
-      />
-
-      {/* Bottom Arrow (pointing left) */}
-      <path
-        d="M74 49C74 50.6569 72.6569 52 71 52H44V58.5C44 59.7 42.6 60.4 41.6 59.6L26.6 48.1C25.8 47.5 25.8 46.3 26.6 45.7L41.6 34.2C42.6 33.4 44 34.1 44 35.3V42H71C72.6569 42 74 43.3431 74 45V49Z"
-        fill="url(#swap-bottom)"
-        stroke="#CBD5E1"
-        strokeWidth="0.8"
-      />
-    </g>
-  </svg>
+// Metallic 3D Opposing Arrows Graphic for "Convert"
+export const ConvertGraphic: React.FC<GraphicProps> = ({ className = "w-20 h-16" }) => (
+  <img src={swapIcon} alt="Convert" className={`object-contain ${className}`} />
 );
+
+// Backward compatibility alias
+export const SwappGraphic = ConvertGraphic;
 
 // Liquid Metallic Wave Flow Texture for the Black Card background
 export const LiquidChromeWaves: React.FC = () => (
