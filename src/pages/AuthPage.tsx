@@ -41,7 +41,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
-  const [activeLegalModal, setActiveLegalModal] = useState<'terms' | 'privacy' | null>(null);
 
   // Form states - Forgot Password
   const [forgotEmail, setForgotEmail] = useState('');
@@ -665,7 +664,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         I agree to the{' '}
                         <a
                           href="/terms"
-                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveLegalModal('terms'); }}
+                          target="_blank"
+                          rel="noreferrer"
                           className="text-[#007F4E] hover:underline font-semibold cursor-pointer rounded-sm focus:outline-none focus:ring-1 focus:ring-[#007F4E]"
                         >
                           Terms of Service
@@ -673,7 +673,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         and{' '}
                         <a
                           href="/privacy"
-                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveLegalModal('privacy'); }}
+                          target="_blank"
+                          rel="noreferrer"
                           className="text-[#007F4E] hover:underline font-semibold cursor-pointer rounded-sm focus:outline-none focus:ring-1 focus:ring-[#007F4E]"
                         >
                           Privacy Policy
@@ -1038,75 +1039,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({
           )}
         </div>
       </div>
-
-      {/* Terms of Service & Privacy Policy Modal */}
-      {activeLegalModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="legal-modal-title"
-            className="bg-white rounded-[24px] max-w-lg w-full p-6 shadow-2xl border border-gray-100 max-h-[85vh] flex flex-col"
-          >
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-              <h3 id="legal-modal-title" className="text-base font-bold text-gray-900">
-                {activeLegalModal === 'terms' ? 'Terms of Service' : 'Privacy Policy'}
-              </h3>
-              <button
-                type="button"
-                autoFocus
-                aria-label="Close legal document"
-                onClick={() => setActiveLegalModal(null)}
-                className="text-[#6B7280] hover:text-gray-600 p-1 rounded-lg"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="py-4 overflow-y-auto space-y-3 text-xs text-gray-600 leading-relaxed pr-1">
-              {activeLegalModal === 'terms' ? (
-                <>
-                  <p className="font-semibold text-gray-800">1. Acceptance of Terms</p>
-                  <p>
-                    By registering for a CopyM Pay account, you agree to these terms and any account terms provided to you.
-                  </p>
-                  <p className="font-semibold text-gray-800">2. Merchant Responsibilities</p>
-                  <p>
-                    Keep your account credentials and API keys confidential, and review account activity regularly.
-                  </p>
-                  <p className="font-semibold text-gray-800">3. Use of the Service</p>
-                  <p>
-                    Service availability and features may change. Contact support if you have questions about your account.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className="font-semibold text-gray-800">1. Data Collection & Processing</p>
-                  <p>
-                    We collect the information you provide, such as your business details and contact email, to create and administer your account.
-                  </p>
-                  <p className="font-semibold text-gray-800">2. Use of Information</p>
-                  <p>
-                    We use account information to provide the services you request and to respond to support inquiries.
-                  </p>
-                  <p className="font-semibold text-gray-800">3. Retention & Sharing</p>
-                  <p>
-                    We keep account information to administer your account and may use service providers that support the platform.
-                  </p>
-                </>
-              )}
-            </div>
-            <div className="pt-3 border-t border-gray-100 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setActiveLegalModal(null)}
-                className="px-4 py-2 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-xl text-xs font-semibold shadow-xs"
-              >
-                I Understand
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

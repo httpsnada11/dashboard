@@ -357,8 +357,89 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onOpenPayoutWithDe
           </div>
         </div>
 
+        <div className="md:hidden mt-4 space-y-2">
+          {filteredAddresses.map((item) => (
+            <div key={item.id} className="table-mobile-card w-full text-left">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="font-bold text-gray-900 text-xs break-words">{item.beneficiaryName}</div>
+                  <div className="text-xs text-gray-500 font-mono break-all">{item.customerId}</div>
+                </div>
+                <span className={`inline-block shrink-0 whitespace-nowrap px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                  item.status === 'Active'
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'bg-amber-50 text-amber-700 border border-amber-200'
+                }`}>
+                  {item.status === 'Active' ? 'Active & Verified' : 'Cooling Period'}
+                </span>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
+                <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 font-medium">{item.category}</span>
+                <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 font-medium">{item.network}</span>
+              </div>
+              <div className="mt-2 flex items-center gap-1.5">
+                <span className="bg-gray-100 px-2 py-0.5 rounded text-xs text-gray-700 font-mono truncate">{item.address}</span>
+                <button
+                  onClick={() => handleCopy(item.id, item.fullAddress)}
+                  title="Copy Full Address"
+                  className="p-1 hover:text-gray-900 text-gray-500 rounded transition-colors"
+                >
+                  {copiedId === item.id ? (
+                    <Check className="w-3.5 h-3.5 text-[#007F4E]" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              </div>
+              {item.status === 'Cooling Period' && (
+                <div className="mt-2">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold">
+                    <Lock className="w-3 h-3 text-amber-600" />
+                    Cooling: {item.coolingRemainingHours}h remaining
+                  </span>
+                  <div className="mt-1 w-full bg-gray-200 rounded-full h-1 overflow-hidden">
+                    <div
+                      className="bg-amber-500 h-1 rounded-full transition-all"
+                      style={{ width: `${Math.round(((24 - (item.coolingRemainingHours || 0)) / 24) * 100)}%` }}
+                    />
+                  </div>
+                  <div className="text-xs text-gray-500 mt-0.5">{item.coolingEndsAt}</div>
+                </div>
+              )}
+              <div className="mt-2 text-xs text-gray-500 break-words">
+                Added by {item.addedBy} · {item.createdAt}
+              </div>
+              <div className="mt-2 flex items-center justify-end gap-1.5 border-t border-gray-100 pt-2">
+                {item.status === 'Active' ? (
+                  <button
+                    onClick={() => onOpenPayoutWithDestination?.(item)}
+                    className="px-2.5 py-1 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-lg font-bold text-xs shadow-2xs transition flex items-center gap-1"
+                  >
+                    <span>Pay</span>
+                    <ArrowUpRight className="w-3 h-3" />
+                  </button>
+                ) : (
+                  <span
+                    className="px-2.5 py-1 bg-gray-100 text-gray-500 rounded-lg font-semibold text-xs cursor-not-allowed"
+                    title="Locked under 24-hour security hold rule"
+                  >
+                    Locked
+                  </span>
+                )}
+                <button
+                  onClick={() => setRemovingAddress(item)}
+                  className="p-1 hover:bg-red-50 hover:text-red-600 text-gray-500 rounded-lg transition"
+                  title="Remove from Whitelist"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
         {/* Addresses Table */}
-        <div className="table-scroll mt-4">
+        <div className="hidden md:block table-scroll mt-4">
           <table className="w-full text-left text-xs">
             <thead className="bg-gray-50/70 text-gray-500 uppercase tracking-wider text-xs border-b border-gray-100">
               <tr>

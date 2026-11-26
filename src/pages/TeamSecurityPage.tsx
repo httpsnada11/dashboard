@@ -370,9 +370,60 @@ export const TeamSecurityPage: React.FC<TeamSecurityPageProps> = ({
         </div>
       )}
 
+      <div className="md:hidden space-y-2">
+        {members.map((m) => (
+          <div key={m.id} className="table-mobile-card w-full text-left">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="font-bold text-[#14171A] text-[13px] break-words">
+                  {m.name}
+                  {m.isYou && <span className="font-normal text-[#6B7280]"> · You</span>}
+                </div>
+                <div className="text-xs text-[#6B7280] break-all">{m.email}</div>
+              </div>
+              <span className="shrink-0 inline-block px-2.5 py-0.5 bg-[#ECEEF2] text-gray-700 font-semibold text-xs rounded-full tracking-wide">
+                {m.status}
+              </span>
+            </div>
+            <div className="mt-2 font-bold text-[#14171A] text-[12.5px] break-words">{m.role}</div>
+            <div className="text-xs text-[#6B7280] break-words">{m.roleDescription}</div>
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-[#374151]">
+              <span>2FA: {m.twoFactor}</span>
+              <span>{m.lastAccessDate}</span>
+            </div>
+            <div className="text-xs text-[#6B7280] break-words">{m.lastAccessSub}</div>
+            <div className="mt-2 flex items-center justify-end gap-1.5 border-t border-gray-100 pt-2">
+              {m.status === 'Invited' ? (
+                <>
+                  <button
+                    onClick={() => handleResendInvite(m)}
+                    className="px-3 py-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-xs font-medium rounded-full shadow-2xs transition"
+                  >
+                    Resend
+                  </button>
+                  <button
+                    onClick={() => handleRevokeInvite(m)}
+                    className="px-3 py-1 bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 text-gray-700 hover:text-red-600 text-xs font-medium rounded-full shadow-2xs transition"
+                  >
+                    Revoke
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setManageMember(m)}
+                  className="px-3.5 py-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-xs font-medium rounded-full shadow-2xs transition"
+                >
+                  Manage
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* TOP SECTION: Team Members Table */}
       <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="table-scroll">
+        <div className="hidden md:block table-scroll">
           <table className="w-full text-left border-collapse min-w-[780px]">
             {/* Dark Sleek Header Bar */}
             <thead>

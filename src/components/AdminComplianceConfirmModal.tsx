@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { appendAuditEvent } from '../utils/auditLogStore';
 import { PLATFORM } from '../utils/sharedMockStore';
+import { useDialogBehavior } from '../hooks/useDialogBehavior';
 
 export interface AdminDialogProps {
   isOpen: boolean;
@@ -28,23 +29,18 @@ export const AdminDialog: React.FC<AdminDialogProps> = ({
   ariaLabel = 'Dialog',
   closeOnOutsideClick = true,
 }) => {
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleEsc = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleEsc);
-    return () => document.removeEventListener('keydown', handleEsc);
-  }, [isOpen, onClose]);
+  const dialogRef = useDialogBehavior(isOpen, onClose);
 
   if (!isOpen) return null;
 
   return createPortal(
     <div
+      ref={dialogRef}
       className={`fixed inset-0 z-[9998] animate-fadeIn overflow-y-auto ${className}`}
       role="dialog"
       aria-modal="true"
       aria-label={ariaLabel}
+      tabIndex={-1}
       onMouseDown={(event) => {
         if (closeOnOutsideClick && event.target === event.currentTarget) onClose();
       }}
@@ -105,6 +101,8 @@ export const AdminComplianceConfirmModal: React.FC<AdminComplianceConfirmModalPr
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  const dialogRef = useDialogBehavior(isOpen, onClose);
+
   useEffect(() => {
     if (!isOpen) return;
     setReasonCode('');
@@ -112,12 +110,7 @@ export const AdminComplianceConfirmModal: React.FC<AdminComplianceConfirmModalPr
     setApprover('');
     setTwoFactorCode('');
     setError(null);
-    const handleEsc = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleEsc);
-    return () => document.removeEventListener('keydown', handleEsc);
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -161,10 +154,12 @@ export const AdminComplianceConfirmModal: React.FC<AdminComplianceConfirmModalPr
 
   return createPortal(
     <div
+      ref={dialogRef}
       className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-labelledby="compliance-modal-title"
+      tabIndex={-1}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Lock,
   X,
@@ -55,7 +56,7 @@ export const LiveModeGate: React.FC<LiveModeGateProps> = ({
     setKybApp(updated);
   };
 
-  return (
+  return createPortal(
     <div ref={dialogRef} role="dialog" aria-modal="true" tabIndex={-1} className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5 bg-black/65 backdrop-blur-xs animate-fadeIn">
       <div className="bg-white rounded-3xl max-w-xl w-full shadow-2xl border border-gray-100/90 overflow-hidden flex flex-col max-h-[92vh]">
         {/* Top Header Strip with Ambient Security Gradient */}
@@ -334,6 +335,7 @@ export const LiveModeGate: React.FC<LiveModeGateProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

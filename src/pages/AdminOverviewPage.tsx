@@ -94,9 +94,10 @@ const INITIAL_ALERTS: AMLRiskAlert[] = [
 
 export interface AdminOverviewPageProps {
   onSelectTx?: (hash: string) => void;
+  globalSearchQuery?: string;
 }
 
-export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
+export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = ({ globalSearchQuery = '' }) => {
   const reserve = getReserveState();
   const [activeOverviewTab, setActiveOverviewTab] = useState<'threats' | 'system-health'>('threats');
   const [alerts, setAlerts] = useState<AMLRiskAlert[]>(INITIAL_ALERTS);
@@ -121,6 +122,8 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
     0
   );
 
+  const effectiveQuery = (globalSearchQuery || searchQuery || '').toLowerCase();
+
   // Filter alerts
   const filteredAlerts = alerts.filter((alert) => {
     const matchesFilter =
@@ -131,11 +134,11 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
       (filterLevel === 'frozen' && alert.status === 'Frozen');
 
     const matchesSearch =
-      searchQuery === '' ||
-      alert.merchant.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      alert.txHash.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      alert.flagReason.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      alert.client.toLowerCase().includes(searchQuery.toLowerCase());
+      effectiveQuery === '' ||
+      alert.merchant.toLowerCase().includes(effectiveQuery) ||
+      alert.txHash.toLowerCase().includes(effectiveQuery) ||
+      alert.flagReason.toLowerCase().includes(effectiveQuery) ||
+      alert.client.toLowerCase().includes(effectiveQuery);
 
     return matchesFilter && matchesSearch;
   });
@@ -581,8 +584,116 @@ export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = () => {
           </div>
         </div>
 
+        <div className="md:hidden mt-3 space-y-2">
+          {filteredAlerts.map((alert) => {
+            const isCritical = alert.riskLevel === 'Critical';
+            const isHigh = alert.riskLevel === 'High';
+
+            return (
+              <div key={alert.id} className="table-mobile-card">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg font-mono font-bold text-xs ${
+                          isCritical
+                            ? 'bg-red-50 text-red-600 border border-red-200'
+                            : isHigh
+                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                            : 'bg-emerald-50 text-[#007F4E] border border-emerald-200'
+                        }`}
+                      >
+                        <ShieldAlert className="w-3 h-3" />
+                        {alert.riskScore}/100
+                      </span>
+                      <span className="font-mono font-bold text-gray-900 break-all">{alert.txHash}</span>
+                    </div>
+                    <div className="text-xs text-[#6B7280] break-words">{alert.network} · {alert.time}</div>
+                  </div>
+                  <span
+                    className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                      alert.status === 'Pending Action'
+                        ? 'bg-amber-100 text-amber-800'
+                        : alert.status === 'Frozen'
+                        ? 'bg-purple-100 text-purple-800'
+                        : alert.status === 'Reported'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-emerald-100 text-[#007F4E]'
+                    }`}
+                  >
+                    {alert.status}
+                  </span>
+                </div>
+                <div className="mt-2 font-bold font-mono text-gray-900">{alert.amount}</div>
+                <div className="text-xs text-gray-900 break-words">
+                  <span className="font-semibold">{alert.merchant}</span> ·{' '}
+                  <span className="font-mono text-[#6B7280]">{alert.client}</span>
+                </div>
+                <div className="mt-1 text-xs text-[#6B7280] break-words">{alert.flagReason}</div>
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <button
+                    onClick={() => setSelectedAlert(alert)}
+                    className="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold transition"
+                    title="Inspect Details"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                  </button>
+                  {alert.status === 'Pending Action' && (
+                    <>
+                      <button
+                        onClick={() =>
+                          setPendingAction({
+                            alert,
+                            newStatus: 'Frozen',
+                            title: 'Freeze Wallet & Hold Funds',
+                            description: `Enforce a compliance freeze on ${alert.merchant} (${alert.amount}) due to KYT risk score ${alert.riskScore}/100.`,
+                            variant: 'destructive',
+                          })
+                        }
+                        className="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-bold transition text-xs cursor-pointer"
+                      >
+                        Freeze
+                      </button>
+                      <button
+                        onClick={() =>
+                          setPendingAction({
+                            alert,
+                            newStatus: 'Approved Override',
+                            title: 'Clear False Positive (KYT Override)',
+                            description: `Override KYT alert (${alert.flagReason}) for ${alert.merchant}. Requires reason code, note and independent checker approval.`,
+                            variant: 'primary',
+                          })
+                        }
+                        className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-[#007F4E] border border-emerald-200 font-bold transition text-xs cursor-pointer"
+                      >
+                        Clear
+                      </button>
+                    </>
+                  )}
+                  {alert.status === 'Frozen' && (
+                    <button
+                      onClick={() =>
+                        setPendingAction({
+                          alert,
+                          newStatus: 'Reported',
+                          title: 'Report Frozen Transaction',
+                          description: `Record a regulatory escalation for ${alert.merchant} (${alert.amount}) linked to ${alert.txHash}.`,
+                          variant: 'destructive',
+                        })
+                      }
+                      className="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-bold transition text-xs"
+                    >
+                      File SAR
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
         {/* Alerts Table */}
-        <div className="table-scroll mt-3">
+        <div className="hidden md:block table-scroll mt-3">
           <table className="w-full text-left text-xs border-collapse min-w-[1020px]">
             <thead>
               <tr className="border-b border-gray-100 text-[#6B7280] uppercase font-semibold text-xs tracking-wider">

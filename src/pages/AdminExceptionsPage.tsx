@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   AlertOctagon,
   RefreshCw,
@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { AdminComplianceConfirmModal } from '../components/AdminComplianceConfirmModal';
 import { formatUsd, getReserveState, IDS, MERCHANT } from '../utils/sharedMockStore';
+import { api } from '../services/api';
 
 interface PlatformException {
   id: string;
@@ -78,7 +79,11 @@ const INITIAL_EXCEPTIONS: PlatformException[] = [
   }
 ];
 
-export const AdminExceptionsPage: React.FC = () => {
+export interface AdminExceptionsPageProps {
+  globalSearchQuery?: string;
+}
+
+export const AdminExceptionsPage: React.FC<AdminExceptionsPageProps> = ({ globalSearchQuery = '' }) => {
   const reserve = getReserveState();
   const hotTargetUsd = reserve.total * 0.05;
   const excessUsd = Math.max(0, reserve.hotUsd - hotTargetUsd);
@@ -96,11 +101,58 @@ export const AdminExceptionsPage: React.FC = () => {
     targetEntity: string;
   } | null>(null);
 
-  const handleResolve = (id: string, newStatus: PlatformException['status']) => {
+  const handleResolve = async (
+    id: string,
+    newStatus: PlatformException['status'],
+    reasonCode?: string,
+    note?: string
+  ) => {
+    try {
+      await api.resolveException(id, {
+        status: newStatus,
+        resolution: newStatus === 'Manually Credited' ? 'CREDIT' : 'REFUND',
+        reasonCode,
+        note,
+      });
+    } catch {
+      // Fall back to local state update when backend is unavailable
+    }
     setExceptions((prev) =>
       prev.map((item) => (item.id === id ? { ...item, status: newStatus } : item))
     );
   };
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res: any = await api.getExceptions();
+        const list = Array.isArray(res) ? res : res?.exceptions || res?.data;
+        if (active && Array.isArray(list) && list.length > 0) {
+          setExceptions(
+            list.map((e: any, idx: number) => ({
+              id: String(e.id || `exc_${idx}`),
+              excRef: e.excRef || e.reference || e.id || `exc_${idx}`,
+              type: e.type || 'Expired QR Deposit',
+              merchant: e.merchant || e.merchantName || 'Merchant',
+              client: e.client || e.customerRef || '—',
+              receivedAmount: e.receivedAmount || e.amount || '0.00',
+              expectedAmount: e.expectedAmount || e.amount || '0.00',
+              assetChain: e.assetChain || e.network || 'USDT · TRON',
+              txHash: e.txHash || '—',
+              createdAt: e.createdAt || 'Recently',
+              status: e.status || 'Pending Resolution',
+            }))
+          );
+        }
+      } catch {
+        // Keep initial mock exceptions when backend is unavailable
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleTriggerSweep = () => {
     setIsSweeping(true);
@@ -111,12 +163,14 @@ export const AdminExceptionsPage: React.FC = () => {
     }, 1200);
   };
 
+  const effectiveQuery = (globalSearchQuery || searchQuery || '').toLowerCase();
+
   const filtered = exceptions.filter(
     (e) =>
-      e.merchant.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.excRef.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.client.toLowerCase().includes(searchQuery.toLowerCase())
+      e.merchant.toLowerCase().includes(effectiveQuery) ||
+      e.excRef.toLowerCase().includes(effectiveQuery) ||
+      e.type.toLowerCase().includes(effectiveQuery) ||
+      e.client.toLowerCase().includes(effectiveQuery)
   );
 
   const pendingCount = exceptions.filter((e) => e.status === 'Pending Resolution').length;
@@ -206,8 +260,100 @@ export const AdminExceptionsPage: React.FC = () => {
           <span>↔ Swipe horizontally to view full exception resolution queue</span>
         </div>
 
+        <div className="md:hidden mt-3 space-y-2">
+          {filtered.map((exc) => (
+            <div key={exc.id} className="table-mobile-card">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="font-mono font-bold text-gray-900 break-all">{exc.excRef}</div>
+                  <div className="text-xs text-[#6B7280]">{exc.createdAt}</div>
+                </div>
+                <span
+                  className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                    exc.status === 'Pending Resolution'
+                      ? 'bg-amber-100 text-amber-800'
+                      : exc.status === 'Manually Credited'
+                      ? 'bg-emerald-100 text-[#007F4E]'
+                      : exc.status === 'Swept to Cold Storage'
+                      ? 'bg-gray-100 text-gray-700'
+                      : 'bg-emerald-100 text-[#007F4E]'
+                  }`}
+                >
+                  {exc.status}
+                </span>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <span
+                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold text-xs ${
+                    exc.type === 'Expired QR Deposit'
+                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                      : exc.type === 'Network Mismatch'
+                      ? 'bg-red-50 text-red-600 border border-red-200'
+                      : 'bg-emerald-50 text-[#007F4E] border border-emerald-200'
+                  }`}
+                >
+                  <AlertOctagon className="w-3 h-3 shrink-0" />
+                  <span>{exc.type}</span>
+                </span>
+              </div>
+              <div className="mt-2 text-xs text-gray-900 break-words">
+                <span className="font-bold">{exc.merchant}</span> ·{' '}
+                <span className="font-mono text-[#6B7280]">{exc.client}</span>
+              </div>
+              <div className="mt-1 text-xs break-words">
+                <span className="font-mono font-bold text-gray-900">{exc.receivedAmount}</span>{' '}
+                <span className="text-[#6B7280]">Exp: {exc.expectedAmount}</span>
+              </div>
+              <div className="mt-1 text-xs break-words">
+                <span className="font-semibold text-gray-800">{exc.assetChain}</span> ·{' '}
+                <span className="font-mono text-[#6B7280]">{exc.txHash}</span>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                {exc.status === 'Pending Resolution' ? (
+                  <>
+                    <button
+                      onClick={() =>
+                        setPendingAction({
+                          type: 'resolve',
+                          exc,
+                          newStatus: 'Manually Credited',
+                          title: 'Manual Ledger Credit Override',
+                          description: `Manually credit ${exc.receivedAmount} to ${exc.merchant} for ${exc.type}.`,
+                          actionLabel: 'Confirm Credit',
+                          targetEntity: `${exc.excRef} · ${exc.merchant} (${exc.receivedAmount})`,
+                        })
+                      }
+                      className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#007F4E] border border-emerald-200 rounded-lg font-bold text-xs transition cursor-pointer"
+                    >
+                      Credit Ledger
+                    </button>
+                    <button
+                      onClick={() =>
+                        setPendingAction({
+                          type: 'resolve',
+                          exc,
+                          newStatus: 'Refunded',
+                          title: 'Approve Exception Refund',
+                          description: `Authorize return/refund of ${exc.receivedAmount} for ${exc.excRef} (${exc.merchant}).`,
+                          actionLabel: 'Confirm Refund',
+                          targetEntity: `${exc.excRef} · ${exc.merchant} (${exc.receivedAmount})`,
+                        })
+                      }
+                      className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-bold text-xs transition cursor-pointer"
+                    >
+                      Refund
+                    </button>
+                  </>
+                ) : (
+                  <span className="text-[#6B7280] text-xs font-medium">Resolved</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
         {/* Exceptions Table */}
-        <div className="table-scroll mt-3">
+        <div className="hidden md:block table-scroll mt-3">
           <table className="w-full text-left text-xs border-collapse min-w-[980px]">
             <thead>
               <tr className="border-b border-gray-100 text-[#6B7280] uppercase font-semibold text-xs tracking-wider">
@@ -339,11 +485,11 @@ export const AdminExceptionsPage: React.FC = () => {
           variant="primary"
           requireSecondApprover
           onClose={() => setPendingAction(null)}
-          onConfirm={() => {
+          onConfirm={(reasonCode, note) => {
             if (pendingAction.type === 'sweep') {
               handleTriggerSweep();
             } else if (pendingAction.exc && pendingAction.newStatus) {
-              handleResolve(pendingAction.exc.id, pendingAction.newStatus);
+              handleResolve(pendingAction.exc.id, pendingAction.newStatus, reasonCode, note);
             }
             setPendingAction(null);
           }}

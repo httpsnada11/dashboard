@@ -26,4 +26,6 @@ export { AdminPayoutsPage } from './AdminPayoutsPage';
 export { AdminAuditPage } from './AdminAuditPage';
 export { AdminWhitelistPage } from './AdminWhitelistPage';
 export { AdminLogsPage } from './AdminLogsPage';
+export { LegalPage } from './LegalPage';
+export type { LegalPageProps } from './LegalPage';
 

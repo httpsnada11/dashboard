@@ -35,7 +35,7 @@ export const AMLRiskBadge: React.FC<AMLRiskBadgeProps> = ({ level = "Low", score
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-xs font-semibold text-gray-800 leading-none">
-          <span className="text-[7px] text-gray-700 font-bold">AML</span>
+          <span className="text-xs text-gray-700 font-bold leading-none">AML</span>
         </div>
       </div>
       <div className="flex flex-col text-left leading-tight">

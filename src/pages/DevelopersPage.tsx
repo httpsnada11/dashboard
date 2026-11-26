@@ -3,6 +3,7 @@ import { Play, Check, Copy, CheckCircle2, ChevronDown, X, RefreshCw, Lock } from
 import { ApiKey, WebhookDelivery, Environment, KybApplicationData } from '../types';
 import { getKybApplication, subscribeKybStatus } from '../utils/kybStorage';
 import { IDS } from '../utils/sharedMockStore';
+import { api } from '../services/api';
 
 const INITIAL_KEYS: ApiKey[] = [
   {
@@ -166,8 +167,76 @@ export interface DevelopersPageProps {
 export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, setOpenCreateKey, onOpenLiveGate }) => {
   const [keys, setKeys] = useState<ApiKey[]>(INITIAL_KEYS);
   const [webhooks, setWebhooks] = useState<WebhookDelivery[]>(INITIAL_WEBHOOKS);
+  const [webhookEndpoints, setWebhookEndpoints] = useState<Array<{ id?: string; url: string }>>([]);
+  const [showAddWebhookModal, setShowAddWebhookModal] = useState(false);
+  const [newWebhookUrl, setNewWebhookUrl] = useState('');
   const [selectedScenarioKey, setSelectedScenarioKey] = useState('underpaid');
   const [depositSession, setDepositSession] = useState('dep_demo_1§9R8J392');
+
+  // Hydrate API keys, webhook endpoints, and deliveries from backend when available
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res: any = await api.getApiKeys();
+        const list = Array.isArray(res) ? res : res?.keys || res?.apiKeys || res?.data;
+        if (active && Array.isArray(list) && list.length > 0) {
+          setKeys(
+            list.map((k: any, idx: number) => ({
+              id: String(k.id || `key_${idx}`),
+              name: k.name || k.label || `${k.environment || 'SANDBOX'} key`,
+              environment: (String(k.environment || 'SANDBOX').toUpperCase() === 'LIVE' ? 'LIVE' : 'SANDBOX') as Environment,
+              maskedKey: k.maskedKey || k.prefix || 'cpy_••••',
+              fullKey: k.fullKey || k.key || k.maskedKey || 'cpy_••••',
+              scopes: Array.isArray(k.scopes) ? k.scopes.join(', ') : k.scopes || 'deposits, payouts',
+              ipList: Array.isArray(k.allowedIps) ? k.allowedIps : k.ipList || ['Any IP allowed'],
+              ipSub: Array.isArray(k.allowedIps) && k.allowedIps.length > 0 ? `${k.allowedIps.length} allowed address` : null,
+              lastUsedAgo: k.lastUsedAgo || 'Recently',
+              lastUsedTime: k.lastUsedAt || k.createdAt || 'Active',
+              status: k.status === 'revoked' ? 'revoked' : 'active',
+            }))
+          );
+        }
+      } catch {
+        // Keep initial mock keys when backend is unavailable
+      }
+
+      try {
+        const whRes: any = await api.getWebhooks();
+        const endpoints = Array.isArray(whRes) ? whRes : whRes?.endpoints || whRes?.webhooks || whRes?.data;
+        if (active && Array.isArray(endpoints)) {
+          setWebhookEndpoints(endpoints.map((ep: any) => ({ id: ep.id, url: ep.url || ep.endpoint || '' })).filter((ep) => ep.url));
+        }
+      } catch {
+        // Keep default empty endpoints list when backend is unavailable
+      }
+
+      try {
+        const dlvRes: any = await api.getWebhookDeliveries();
+        const deliveries = Array.isArray(dlvRes) ? dlvRes : dlvRes?.deliveries || dlvRes?.data;
+        if (active && Array.isArray(deliveries) && deliveries.length > 0) {
+          setWebhooks(
+            deliveries.map((d: any, idx: number) => ({
+              id: String(d.id || `wh_${idx}`),
+              http: Number(d.httpStatus || d.statusCode || d.http || 200),
+              event: d.event || d.eventType || 'deposit.credited',
+              deliveryId: d.deliveryId || d.id || `dlv_${idx}`,
+              relatedRecord: d.relatedRecord || d.resourceId || '—',
+              latency: d.latencyMs ? `${d.latencyMs} ms` : d.latency || '180 ms',
+              time: d.createdAt || d.time || 'Just now',
+              attempts: d.attempts ? `${d.attempts} attempt(s)` : '1 attempt',
+              canRetry: Number(d.httpStatus || d.statusCode || d.http || 200) >= 400,
+            }))
+          );
+        }
+      } catch {
+        // Keep initial mock deliveries when backend is unavailable
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // KYB Compliance Subscription for Live Keys Gate
   const [kybApp, setKybApp] = useState<KybApplicationData>(getKybApplication());
@@ -226,10 +295,15 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
     showToast(`Key "${keyItem.name}" rotated successfully!`);
   };
 
-  const handleRevokeKey = (keyItem: ApiKey) => {
+  const handleRevokeKey = async (keyItem: ApiKey) => {
     if (!/^\d{6}$/.test(revoke2Fa.trim())) {
       setRevokeError('Enter a valid 6-digit 2FA code.');
       return;
+    }
+    try {
+      await api.revokeApiKey(keyItem.id);
+    } catch {
+      // Fall back to local state update when backend is unavailable
     }
     setKeys(prev => prev.filter(k => k.id !== keyItem.id));
     setRevokeModalKey(null);
@@ -238,7 +312,7 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
     showToast(`Key "${keyItem.name}" has been revoked.`);
   };
 
-  const handleCreateKeySubmit = (e: React.FormEvent) => {
+  const handleCreateKeySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newKeyName.trim()) return;
 
@@ -253,17 +327,31 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
       return;
     }
 
+    const scopesList = newKeyScopes.split(',').map((s) => s.trim()).filter(Boolean);
+    const allowedIpsList = newKeyIp.trim() ? [newKeyIp.trim()] : [];
+    let backendKey: any = null;
+    try {
+      backendKey = await api.createApiKey({
+        environment: newKeyEnv,
+        scopes: scopesList,
+        allowedIps: allowedIpsList,
+      });
+    } catch {
+      // Fall back to local mock key when backend is unavailable
+    }
+
     const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
     const prefix = newKeyEnv === 'LIVE' ? 'demo_live_' : 'demo_test_';
+    const createdKeyObj = backendKey?.apiKey || backendKey?.key || backendKey;
 
     const newKey: ApiKey = {
-      id: 'key_' + Date.now(),
+      id: String(createdKeyObj?.id || 'key_' + Date.now()),
       name: newKeyName.trim(),
       environment: newKeyEnv,
-      maskedKey: `${prefix}••••${randomSuffix}`,
-      fullKey: `${prefix}${Math.random().toString(36).substring(2, 14)}${randomSuffix}`,
+      maskedKey: createdKeyObj?.maskedKey || `${prefix}••••${randomSuffix}`,
+      fullKey: createdKeyObj?.fullKey || createdKeyObj?.secret || `${prefix}${Math.random().toString(36).substring(2, 14)}${randomSuffix}`,
       scopes: newKeyScopes,
-      ipList: [newKeyIp || 'Any IP allowed'],
+      ipList: allowedIpsList.length > 0 ? allowedIpsList : ['Any IP allowed'],
       ipSub: newKeyIp ? '1 allowed address' : null,
       lastUsedAgo: 'Never',
       lastUsedTime: 'Created just now',
@@ -287,22 +375,53 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
     showToast(`Webhook ${whItem.deliveryId} re-dispatched with 200 OK!`);
   };
 
-  const handleSendTestEventSubmit = (e: React.FormEvent) => {
+  const handleSendTestEventSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    let pingResult: any = null;
+    try {
+      pingResult = await api.testPingWebhook();
+    } catch {
+      // Fall back to local simulated delivery when backend is unavailable
+    }
     const deliveryNum = Math.floor(750 + Math.random() * 50);
     const newDelivery: WebhookDelivery = {
-      id: 'wh_' + Date.now(),
-      http: 200,
+      id: String(pingResult?.id || 'wh_' + Date.now()),
+      http: Number(pingResult?.httpStatus || 200),
       event: testEventName,
-      deliveryId: `dlv_demo_${deliveryNum}`,
+      deliveryId: pingResult?.deliveryId || `dlv_demo_${deliveryNum}`,
       relatedRecord: `dep_sim_${Math.random().toString(36).substring(2, 5)}..${Math.random().toString(36).substring(2, 5)}`,
-      latency: `${Math.floor(120 + Math.random() * 180)} ms`,
+      latency: pingResult?.latencyMs ? `${pingResult.latencyMs} ms` : `${Math.floor(120 + Math.random() * 180)} ms`,
       time: new Date().toISOString().substring(11, 16) + ' UTC',
       attempts: '1 attempt'
     };
     setWebhooks(prev => [newDelivery, ...prev]);
     setShowSendTestEventModal(false);
     showToast(`Test event "${testEventName}" delivered!`);
+  };
+
+  const handleCreateWebhookSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const url = newWebhookUrl.trim();
+    if (!url) return;
+    try {
+      const created: any = await api.createWebhook({ url, subscriptions: ['deposit.credited', 'payout.completed'] });
+      setWebhookEndpoints((prev) => [{ id: created?.id, url: created?.url || url }, ...prev]);
+      showToast('Webhook endpoint registered.');
+    } catch {
+      setWebhookEndpoints((prev) => [{ url }, ...prev]);
+      showToast('Webhook endpoint saved locally.');
+    }
+    setNewWebhookUrl('');
+    setShowAddWebhookModal(false);
+  };
+
+  const handleRotateWebhookSecret = async () => {
+    try {
+      await api.rotateWebhookSecret();
+      showToast('Webhook signing secret rotated.');
+    } catch {
+      showToast('Webhook signing secret rotation queued (demo).');
+    }
   };
 
   // Run Deposit Simulation Animation
@@ -353,9 +472,60 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
         </div>
       )}
 
+      <div className="md:hidden space-y-2">
+        {keys.map((k) => (
+          <div key={k.id} className="table-mobile-card w-full text-left">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="font-bold text-[#14171A] text-[13px] break-words">{k.name}</div>
+                <span className="inline-block mt-1 px-2 py-0.5 bg-[#ECEEF2] text-gray-700 font-semibold text-xs rounded-full tracking-wide">
+                  {k.environment === 'LIVE' ? 'Live' : 'Sandbox'}
+                </span>
+              </div>
+            </div>
+            <div className="mt-2 flex items-center gap-1.5 font-mono text-[12px] text-gray-800 min-w-0">
+              <span className="truncate">{k.maskedKey}</span>
+              <button
+                onClick={(e) => handleCopyKey(e, k.fullKey, k.id)}
+                title="Copy Key"
+                className="text-gray-300 hover:text-gray-600 transition shrink-0"
+              >
+                {copiedKeyId === k.id ? <Check className="w-3.5 h-3.5 text-[#007F4E]" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+            <div className="mt-2 text-xs text-[#4B5563] break-words">Scopes: {k.scopes}</div>
+            <div className="mt-1 text-xs text-gray-800">
+              <div className="font-medium text-[#6B7280]">IP allowlist</div>
+              {k.ipList.map((ip, idx) => (
+                <div key={idx} className="font-mono break-all leading-tight">{ip}</div>
+              ))}
+              {k.ipSub && <div className="text-[#6B7280] mt-0.5">{k.ipSub}</div>}
+            </div>
+            <div className="mt-2 text-xs">
+              <div className="font-medium text-[#14171A]">{k.lastUsedAgo}</div>
+              <div className="text-[#6B7280]">{k.lastUsedTime}</div>
+            </div>
+            <div className="mt-2 flex items-center justify-end gap-1.5 border-t border-gray-100 pt-2">
+              <button
+                onClick={() => handleRotateKey(k)}
+                className="px-3 py-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 rounded-full text-xs font-semibold transition shadow-2xs select-none"
+              >
+                Rotate
+              </button>
+              <button
+                onClick={() => { setRevokeModalKey(k); setRevoke2Fa(''); setRevokeError(null); }}
+                className="px-3 py-1 bg-white hover:bg-red-50 border border-gray-200 text-gray-700 hover:text-red-600 rounded-full text-xs font-semibold transition shadow-2xs select-none cursor-pointer"
+              >
+                Revoke
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* TOP SECTION: API Keys Table */}
       <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="table-scroll">
+        <div className="hidden md:block table-scroll">
           <table className="w-full text-left border-collapse min-w-[780px]">
             {/* Dark Sleek Header Bar */}
             <thead>
@@ -449,21 +619,79 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
         {/* LEFT COLUMN: Webhook Deliveries (7 cols on large desktop) */}
         <div className="lg:col-span-7 flex flex-col space-y-2.5">
           {/* Header Row */}
-          <div className="flex items-center justify-between px-1">
-            <h3 className="text-[17px] font-bold text-[#14171A] tracking-tight">
-              Webhook deliveries
-            </h3>
-            <button
-              onClick={() => setShowSendTestEventModal(true)}
-              className="px-3.5 py-1 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-full text-xs font-semibold shadow-xs transition select-none flex items-center gap-1"
-            >
-              <span>Send test event</span>
-            </button>
+          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+            <div>
+              <h3 className="text-[17px] font-bold text-[#14171A] tracking-tight">
+                Webhook deliveries
+              </h3>
+              {webhookEndpoints.length > 0 && (
+                <p className="text-xs text-[#6B7280] font-mono truncate max-w-[300px]">
+                  Endpoint: {webhookEndpoints[0].url}
+                </p>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setShowAddWebhookModal(true)}
+                className="px-3 py-1 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-full text-xs font-semibold transition select-none"
+              >
+                Add endpoint
+              </button>
+              <button
+                type="button"
+                onClick={handleRotateWebhookSecret}
+                className="px-3 py-1 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-full text-xs font-semibold transition select-none"
+              >
+                Rotate secret
+              </button>
+              <button
+                onClick={() => setShowSendTestEventModal(true)}
+                className="px-3.5 py-1 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-full text-xs font-semibold shadow-xs transition select-none flex items-center gap-1"
+              >
+                <span>Send test event</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="md:hidden space-y-2">
+            {webhooks.map((wh) => (
+              <div key={wh.id} className="table-mobile-card w-full text-left">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="font-bold text-[#14171A] text-[12px] break-all">{wh.event}</div>
+                    <div className="font-mono text-xs text-[#6B7280] break-all">{wh.deliveryId}</div>
+                  </div>
+                  <span className={`shrink-0 inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-bold ${
+                    wh.http === 200
+                      ? 'bg-gray-100 text-gray-800'
+                      : 'bg-red-50 text-red-600 border border-red-200'
+                  }`}>
+                    {wh.http}
+                  </span>
+                </div>
+                <div className="mt-2 font-mono text-xs text-gray-700 break-all">{wh.relatedRecord}</div>
+                <div className="mt-2 flex flex-wrap items-end justify-between gap-2">
+                  <div>
+                    <div className="text-xs text-gray-800 font-medium">{wh.latency} · {wh.time}</div>
+                    <div className="text-xs text-[#6B7280]">{wh.attempts}</div>
+                  </div>
+                  {wh.canRetry && (
+                    <button
+                      onClick={() => handleRetryWebhook(wh)}
+                      className="px-2.5 py-1 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-full text-xs font-bold transition shadow-2xs whitespace-nowrap"
+                    >
+                      Retry now
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Webhook Deliveries Table */}
           <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="table-scroll">
+            <div className="hidden md:block table-scroll">
               <table className="w-full text-left border-collapse min-w-[500px]">
                 {/* Dark Header */}
                 <thead>
@@ -833,6 +1061,52 @@ export const DevelopersPage: React.FC<DevelopersPageProps> = ({ openCreateKey, s
                 Confirm revoke
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Webhook Endpoint Modal */}
+      {showAddWebhookModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-[24px] max-w-md w-full p-5 sm:p-6 shadow-2xl border border-gray-100">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <h3 className="text-sm font-bold text-gray-900">Add Webhook Endpoint</h3>
+              <button
+                type="button"
+                onClick={() => setShowAddWebhookModal(false)}
+                className="text-gray-500 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <form onSubmit={handleCreateWebhookSubmit} className="py-3 space-y-3 text-xs">
+              <div>
+                <label className="text-xs font-semibold text-gray-700 block mb-1">Endpoint URL</label>
+                <input
+                  type="url"
+                  required
+                  value={newWebhookUrl}
+                  onChange={(e) => setNewWebhookUrl(e.target.value)}
+                  placeholder="https://api.example.com/webhooks/copym"
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs text-gray-900 focus:outline-none focus:border-[#007F4E]"
+                />
+              </div>
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddWebhookModal(false)}
+                  className="px-3.5 py-1.5 text-gray-600 hover:bg-gray-100 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 bg-[#007F4E] hover:bg-[#00663F] text-white rounded-xl font-semibold shadow-xs"
+                >
+                  Save Endpoint
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

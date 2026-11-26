@@ -250,7 +250,11 @@ interface PendingLogAction {
   log: MerchantIssueLog;
 }
 
-export const AdminLogsPage: React.FC = () => {
+export interface AdminLogsPageProps {
+  globalSearchQuery?: string;
+}
+
+export const AdminLogsPage: React.FC<AdminLogsPageProps> = ({ globalSearchQuery = '' }) => {
   const [logs, setLogs] = useState<MerchantIssueLog[]>(INITIAL_ISSUE_LOGS);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMerchant, setSelectedMerchant] = useState<string>('All');
@@ -360,13 +364,15 @@ export const AdminLogsPage: React.FC = () => {
     showNotification('Incident logs exported to CSV.');
   };
 
+  const effectiveQuery = (globalSearchQuery || searchQuery || '').toLowerCase();
+
   const filteredLogs = logs.filter((item) => {
     const matchSearch =
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.merchantName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.errorCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (item.endpointUrl && item.endpointUrl.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (item.affectedCustomerOrTx && item.affectedCustomerOrTx.toLowerCase().includes(searchQuery.toLowerCase()));
+      item.title.toLowerCase().includes(effectiveQuery) ||
+      item.merchantName.toLowerCase().includes(effectiveQuery) ||
+      item.errorCode.toLowerCase().includes(effectiveQuery) ||
+      (item.endpointUrl && item.endpointUrl.toLowerCase().includes(effectiveQuery)) ||
+      (item.affectedCustomerOrTx && item.affectedCustomerOrTx.toLowerCase().includes(effectiveQuery));
 
     const matchMerchant = selectedMerchant === 'All' || item.merchantName === selectedMerchant;
     const matchCategory = selectedCategory === 'All' || item.category === selectedCategory;
@@ -565,7 +571,119 @@ export const AdminLogsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="table-scroll">
+        <div className="md:hidden mt-3 space-y-2">
+          {filteredLogs.length === 0 ? (
+            <p className="py-8 text-center text-xs text-[#6B7280]">No active merchant incidents found</p>
+          ) : (
+            filteredLogs.map((item) => {
+              const isCritical = item.severity === 'Critical';
+              const isWarning = item.severity === 'Warning';
+
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => setSelectedLogId(item.id)}
+                  className="table-mobile-card cursor-pointer"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2.5 min-w-0">
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 border ${
+                          isCritical
+                            ? 'bg-rose-50 text-rose-700 border-rose-200/80'
+                            : isWarning
+                              ? 'bg-amber-50 text-amber-700 border-amber-200/80'
+                              : 'bg-emerald-50 text-[#007F4E] border-emerald-200/80'
+                        }`}
+                      >
+                        {item.httpStatus || '!'}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-bold text-slate-900 break-words">{item.title}</div>
+                        <div className="text-xs break-words">
+                          <span className="font-semibold text-[#007F4E]">{item.merchantName}</span>
+                          <span className="text-slate-300"> · </span>
+                          <span className="font-mono text-[#6B7280]">{item.errorCode}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-xs text-[#6B7280] whitespace-nowrap">{item.timestamp}</span>
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-700">
+                      {item.category}
+                    </span>
+                    {item.httpStatus ? (
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold font-mono ${
+                          item.httpStatus >= 500
+                            ? 'bg-rose-50 text-rose-700 border border-rose-200/70'
+                            : item.httpStatus === 429
+                              ? 'bg-amber-50 text-amber-700 border border-amber-200/70'
+                              : item.httpStatus === 401
+                                ? 'bg-rose-50 text-rose-700 border border-rose-200/70'
+                                : 'bg-emerald-50 text-[#007F4E] border border-emerald-200/70'
+                        }`}
+                      >
+                        HTTP {item.httpStatus}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-[#6B7280] font-mono">N/A (AML)</span>
+                    )}
+                    {item.status === 'Open' && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200/70">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                        <span>Open</span>
+                      </span>
+                    )}
+                    {item.status === 'Investigating' && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200/70">
+                        <RefreshCw className="w-3 h-3 text-amber-600 animate-spin" />
+                        <span>Investigating</span>
+                      </span>
+                    )}
+                    {item.status === 'Resolved' && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-[#007F4E] border border-emerald-200/70">
+                        <Check className="w-3 h-3" />
+                        <span>Resolved</span>
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mt-1 text-xs font-mono text-slate-700 break-words">
+                    {item.affectedCustomerOrTx || item.endpointUrl}
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                    {item.category === 'Webhook Delivery' && item.status !== 'Resolved' && (
+                      <button
+                        type="button"
+                        onClick={() => openAction('retry', item)}
+                        disabled={retryingId === item.id}
+                        className="px-2.5 py-1 bg-[#007F4E] hover:bg-[#00663E] text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition shadow-xs cursor-pointer disabled:opacity-60"
+                        title="Redeliver webhook with documented approval"
+                      >
+                        <RefreshCw className={`w-3 h-3 ${retryingId === item.id ? 'animate-spin' : ''}`} />
+                        <span>{retryingId === item.id ? 'Retrying...' : 'Redeliver'}</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedLogId(item.id)}
+                      className="p-1.5 text-[#6B7280] hover:text-[#007F4E] transition cursor-pointer"
+                      title="Inspect payloads and logs"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <div className="hidden md:block table-scroll">
           <table className="w-full text-left border-collapse text-xs min-w-[940px]">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold text-[#6B7280] uppercase tracking-wider">

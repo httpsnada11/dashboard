@@ -20,8 +20,13 @@ import {
 import { AdminAuditEntry } from '../types';
 import { appendAuditEvent, getAuditLogs } from '../utils/auditLogStore';
 import { AdminDialog } from '../components/AdminComplianceConfirmModal';
+import { api } from '../services/api';
 
-export const AdminAuditPage: React.FC = () => {
+export interface AdminAuditPageProps {
+  globalSearchQuery?: string;
+}
+
+export const AdminAuditPage: React.FC<AdminAuditPageProps> = ({ globalSearchQuery = '' }) => {
   const [logs, setLogs] = useState<AdminAuditEntry[]>(() => getAuditLogs());
   const [searchQuery, setSearchQuery] = useState('');
   const [severityFilter, setSeverityFilter] = useState<'All' | 'Critical' | 'Warning' | 'Info'>('All');
@@ -30,23 +35,55 @@ export const AdminAuditPage: React.FC = () => {
   const [verifiedHash, setVerifiedHash] = useState<string | null>(null);
 
   useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res: any = await api.getAuditEvents();
+        const remoteList = Array.isArray(res) ? res : res?.events || res?.auditEvents || res?.data;
+        if (active && Array.isArray(remoteList) && remoteList.length > 0) {
+          setLogs(
+            remoteList.map((e: any, idx: number) => ({
+              id: String(e.id || `AUD-${idx}`),
+              timestamp: e.timestamp || e.createdAt || 'Just now',
+              operator: e.operator || e.actorName || e.actor || 'Platform Operator',
+              operatorRole: e.operatorRole || e.role || 'Admin',
+              action: e.action || e.event || 'Platform Action',
+              target: e.target || e.resourceId || '—',
+              severity: (e.severity === 'Critical' || e.severity === 'Warning' ? e.severity : 'Info') as AdminAuditEntry['severity'],
+              ip: e.ip || e.ipAddress || '—',
+              hash: e.hash || e.digest || `sha256:${String(e.id || idx)}`,
+              reasonCode: e.reasonCode,
+              note: e.note,
+            }))
+          );
+        }
+      } catch {
+        // Keep local audit log store when backend is unavailable
+      }
+    })();
+
     const handleAuditUpdate = () => {
       setLogs(getAuditLogs());
     };
     window.addEventListener('copym_audit_updated', handleAuditUpdate);
-    return () => window.removeEventListener('copym_audit_updated', handleAuditUpdate);
+    return () => {
+      active = false;
+      window.removeEventListener('copym_audit_updated', handleAuditUpdate);
+    };
   }, []);
 
   const activeOperatorCount = new Set(
     logs.filter((item) => item.operatorRole !== 'Automated Agent').map((item) => item.operator)
   ).size;
 
+  const effectiveQuery = (globalSearchQuery || searchQuery || '').toLowerCase();
+
   const filteredLogs = logs.filter((item) => {
     const matchesSearch =
-      item.operator.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.target.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.hash.toLowerCase().includes(searchQuery.toLowerCase());
+      item.operator.toLowerCase().includes(effectiveQuery) ||
+      item.action.toLowerCase().includes(effectiveQuery) ||
+      item.target.toLowerCase().includes(effectiveQuery) ||
+      item.hash.toLowerCase().includes(effectiveQuery);
     const matchesSeverity = severityFilter === 'All' || item.severity === severityFilter;
     return matchesSearch && matchesSeverity;
   });
@@ -218,8 +255,66 @@ export const AdminAuditPage: React.FC = () => {
           </div>
         </div>
 
+        <div className="md:hidden mt-3 space-y-2">
+          {filteredLogs.map((item) => (
+            <div key={item.id} className="table-mobile-card">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="font-semibold text-gray-900 break-words">{item.operator.split(' (')[0]}</div>
+                  <div className="text-xs text-gray-500 break-words">{item.operatorRole} • {item.ip}</div>
+                </div>
+                <span
+                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                    item.severity === 'Critical'
+                      ? 'bg-red-50 text-red-600 border border-red-200'
+                      : item.severity === 'Warning'
+                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                      : 'bg-emerald-50 text-[#007F4E] border border-emerald-200'
+                  }`}
+                >
+                  {item.severity === 'Critical' && <AlertTriangle className="w-3 h-3" />}
+                  {item.severity === 'Warning' && <Info className="w-3 h-3" />}
+                  {item.severity === 'Info' && <CheckCircle2 className="w-3 h-3" />}
+                  {item.severity}
+                </span>
+              </div>
+              <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-500 font-mono break-words">
+                <Clock className="w-3.5 h-3.5 text-[#6B7280] shrink-0" />
+                <span>{item.timestamp}</span>
+              </div>
+              <div className="mt-1 text-xs font-medium text-gray-800 break-words">{item.action}</div>
+              <div className="text-xs text-gray-600 break-words">{item.target}</div>
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <button
+                  onClick={() => handleVerifyIntegrity(item)}
+                  className="px-2.5 py-1 text-xs rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors flex items-center gap-1 font-semibold"
+                >
+                  {verifiedHash === item.id ? (
+                    <>
+                      <CheckCircle2 className="w-3 h-3 text-[#007F4E]" />
+                      <span className="text-[#007F4E]">Valid Seal</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck className="w-3 h-3 text-[#007F4E]" />
+                      <span>Verify</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => setSelectedLog(item)}
+                  className="p-1 hover:bg-gray-100 text-[#6B7280] hover:text-gray-800 rounded-full transition-colors"
+                  title="View Full Cryptographic Payload"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
         {/* Audit Log Table */}
-        <div className="table-scroll mt-3">
+        <div className="hidden md:block table-scroll mt-3">
           <table className="w-full text-left text-xs min-w-[900px]">
             <thead className="bg-gray-50/70 text-[#6B7280] uppercase tracking-wider text-xs border-b border-gray-100">
               <tr>

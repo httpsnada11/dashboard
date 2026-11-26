@@ -133,7 +133,11 @@ interface PendingPayoutAction {
   payoutRef?: string;
 }
 
-export const AdminPayoutsPage: React.FC = () => {
+export interface AdminPayoutsPageProps {
+  globalSearchQuery?: string;
+}
+
+export const AdminPayoutsPage: React.FC<AdminPayoutsPageProps> = ({ globalSearchQuery = '' }) => {
   const [payouts, setPayouts] = useState<AdminPayoutItem[]>(INITIAL_ADMIN_PAYOUTS);
   const [filterTab, setFilterTab] = useState<'all' | 'pending' | 'hold' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -161,6 +165,8 @@ export const AdminPayoutsPage: React.FC = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const effectiveQuery = (globalSearchQuery || searchQuery || '').toLowerCase();
+
   const filteredPayouts = payouts.filter((p) => {
     const matchesFilter =
       filterTab === 'all' ||
@@ -169,12 +175,12 @@ export const AdminPayoutsPage: React.FC = () => {
       (filterTab === 'completed' && p.status === 'Completed');
 
     const matchesSearch =
-      searchQuery === '' ||
-      p.payoutRef.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.merchantName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.makerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.destinationAddress.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.fullAddress.toLowerCase().includes(searchQuery.toLowerCase());
+      effectiveQuery === '' ||
+      p.payoutRef.toLowerCase().includes(effectiveQuery) ||
+      p.merchantName.toLowerCase().includes(effectiveQuery) ||
+      p.makerName.toLowerCase().includes(effectiveQuery) ||
+      p.destinationAddress.toLowerCase().includes(effectiveQuery) ||
+      p.fullAddress.toLowerCase().includes(effectiveQuery);
 
     return matchesFilter && matchesSearch;
   });
@@ -514,7 +520,147 @@ export const AdminPayoutsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="table-scroll">
+        <div className="md:hidden mt-3 space-y-2">
+          {filteredPayouts.map((payout) => {
+            const isSelected = selectedIds.includes(payout.id);
+
+            return (
+              <div key={payout.id} className={`table-mobile-card ${isSelected ? 'bg-emerald-50/40' : ''}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-2 min-w-0">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleSelect(payout.id)}
+                      className="mt-0.5 rounded text-[#007F4E] focus:ring-[#007F4E]"
+                    />
+                    <div className="min-w-0">
+                      <div className="font-semibold text-gray-900 break-all">{payout.payoutRef}</div>
+                      <div className="flex items-center gap-1 text-xs text-[#6B7280] break-words">
+                        <Building2 className="w-3 h-3 text-[#6B7280] shrink-0" />
+                        <span>{payout.merchantName}</span>
+                      </div>
+                      <div className="text-xs text-[#6B7280] break-words">{payout.makerName}</div>
+                    </div>
+                  </div>
+                  <span
+                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap ${
+                      payout.status === 'Pending Checker'
+                        ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                        : payout.status === 'Compliance Hold'
+                        ? 'bg-red-50 text-red-700 border border-red-200'
+                        : 'bg-emerald-50 text-[#007F4E] border border-emerald-200'
+                    }`}
+                  >
+                    {payout.status}
+                  </span>
+                </div>
+
+                <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                  <span className="font-bold text-gray-900 text-sm">{payout.amount}</span>
+                  <span className="text-xs font-medium text-[#6B7280]">{payout.network}</span>
+                </div>
+
+                <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                  <span className="font-mono text-xs text-gray-700 break-all">{payout.destinationAddress}</span>
+                  <button
+                    onClick={() => handleCopy(payout.fullAddress, payout.id)}
+                    className="text-[#6B7280] hover:text-gray-900 transition cursor-pointer"
+                    title="Copy Full Address"
+                  >
+                    {copiedId === payout.id ? (
+                      <Check className="w-3 h-3 text-[#007F4E]" />
+                    ) : (
+                      <Copy className="w-3 h-3" />
+                    )}
+                  </button>
+                </div>
+                <div className="text-xs uppercase font-bold text-[#6B7280] tracking-wider break-words">
+                  {payout.destinationType}
+                </div>
+
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        payout.kytRiskLevel === 'Clean'
+                          ? 'bg-emerald-500'
+                          : payout.kytRiskLevel === 'Low' || payout.kytRiskLevel === 'Medium'
+                            ? 'bg-amber-500'
+                            : 'bg-red-500 animate-pulse'
+                      }`}
+                    />
+                    <span
+                      className={`font-semibold ${
+                        payout.kytRiskLevel === 'Clean'
+                          ? 'text-[#007F4E]'
+                          : payout.kytRiskLevel === 'Low' || payout.kytRiskLevel === 'Medium'
+                            ? 'text-amber-700'
+                            : 'text-red-700'
+                      }`}
+                    >
+                      Score {payout.kytRiskScore} ({payout.kytRiskLevel})
+                    </span>
+                  </span>
+                  <span
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
+                      payout.mpcStatus === '2/2 Quorum Met'
+                        ? 'bg-emerald-50 text-[#007F4E] border border-emerald-200'
+                        : payout.mpcStatus === '1/2 Signed'
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                          : 'bg-gray-100 text-[#6B7280] border border-gray-200'
+                    }`}
+                  >
+                    <Lock className="w-2.5 h-2.5 shrink-0" />
+                    <span>{payout.mpcStatus}</span>
+                  </span>
+                </div>
+
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  {payout.status === 'Pending Checker' && (
+                    <>
+                      <button
+                        onClick={() => openPayoutAction('approve', payout)}
+                        className="px-3 py-1.5 bg-[#007F4E] hover:bg-[#00663E] text-white rounded-lg text-xs font-bold transition inline-flex items-center gap-1.5 shadow-2xs whitespace-nowrap cursor-pointer shrink-0"
+                        title="Co-Sign as Platform Checker"
+                      >
+                        <Key className="w-3.5 h-3.5 shrink-0" />
+                        <span>Co-Sign</span>
+                      </button>
+                      <button
+                        onClick={() => openPayoutAction('hold', payout)}
+                        className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg text-xs font-bold transition inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0"
+                        title="Place on Compliance Hold"
+                      >
+                        <PauseCircle className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                        <span>Hold</span>
+                      </button>
+                    </>
+                  )}
+                  {payout.status === 'Compliance Hold' && (
+                    <button
+                      onClick={() => openPayoutAction('release', payout)}
+                      className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-[#007F4E] border border-emerald-200 rounded-lg text-xs font-bold transition inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0"
+                      title="Release Compliance Hold"
+                    >
+                      <PlayCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>Release</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setInspectPayout(payout)}
+                    className="p-1.5 hover:bg-gray-100 rounded-lg text-[#6B7280] hover:text-gray-700 transition cursor-pointer shrink-0 ml-0.5"
+                    title="Inspect Payout Lifecycle"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="hidden md:block table-scroll">
           <table className="w-full text-left text-xs min-w-[1040px]">
             <thead className="bg-gray-50/75 border-b border-gray-100 text-[#6B7280] uppercase text-xs tracking-wider font-semibold">
               <tr>

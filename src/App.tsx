@@ -36,7 +36,8 @@ import {
   AdminExceptionsPage,
   AdminPayoutsPage,
   AdminLogsPage,
-  AdminAuditPage
+  AdminAuditPage,
+  LegalPage
 } from './pages';
 
 import { Transaction, PayoutRecord, PortalMode, AdminTabId, MerchantKybLifecycleStatus } from './types';
@@ -386,6 +387,8 @@ export function App() {
       } else {
         const currentPath = window.location.pathname.toLowerCase();
         const isPublicRoute =
+          currentPath === '/terms' ||
+          currentPath === '/privacy' ||
           currentPath.startsWith('/simulator') ||
           currentPath.startsWith('/cashier-simulator') ||
           currentPath.startsWith('/scanner') ||
@@ -406,6 +409,7 @@ export function App() {
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname.toLowerCase();
+      if (path === '/terms' || path === '/privacy') return;
       if (path.startsWith('/admin')) {
         setPortalMode('admin');
         if (path.includes('/merchants')) setAdminTab('admin-merchants');
@@ -449,6 +453,11 @@ export function App() {
 
   // Dynamically update document title based on portal mode and active tab
   useEffect(() => {
+    const legalPath = window.location.pathname.toLowerCase();
+    if (legalPath === '/terms' || legalPath === '/privacy') {
+      document.title = `CopyM Pay — ${legalPath === '/terms' ? 'Terms of Service' : 'Privacy Policy'}`;
+      return;
+    }
     if (portalMode === 'admin') {
       const pageTitle = PAGE_META[adminTab]?.title || 'Platform Admin';
       document.title = `CopyM Pay — ${pageTitle}`;
@@ -808,6 +817,13 @@ export function App() {
     );
   }
 
+  const legalPath = typeof window !== 'undefined' ? window.location.pathname.toLowerCase() : '';
+  const isLegalRoute = legalPath === '/terms' || legalPath === '/privacy';
+
+  if (isLegalRoute) {
+    return <LegalPage type={legalPath === '/terms' ? 'terms' : 'privacy'} />;
+  }
+
   // Dedicated Auth & 2FA View
   if (!isAuthenticated) {
     return (
@@ -884,25 +900,25 @@ export function App() {
             {portalMode === 'admin' ? (
               adminTab === 'admin-overview' ? (
                 /* Platform Admin AML & KYT Attention Queue */
-                <AdminOverviewPage />
+                <AdminOverviewPage globalSearchQuery={searchQuery} />
               ) : adminTab === 'admin-merchants' ? (
                 /* Merchant KYB Adjudication & Limits */
-                <AdminMerchantsPage />
+                <AdminMerchantsPage globalSearchQuery={searchQuery} />
               ) : adminTab === 'admin-whitelist' ? (
                 /* Merchant Payout Address Whitelist Hub */
-                <AdminWhitelistPage />
+                <AdminWhitelistPage globalSearchQuery={searchQuery} />
               ) : adminTab === 'admin-exceptions' ? (
                 /* Payment Exceptions & Automated Cold Sweeps */
-                <AdminExceptionsPage />
+                <AdminExceptionsPage globalSearchQuery={searchQuery} />
               ) : adminTab === 'admin-payouts' ? (
                 /* Platform Maker-Checker Approvals Queue & MPC Co-Signer Gate */
-                <AdminPayoutsPage />
+                <AdminPayoutsPage globalSearchQuery={searchQuery} />
               ) : adminTab === 'admin-logs' ? (
                 /* Centralized Merchant Issue & Diagnostic Logs (CTO Instruction 4) */
-                <AdminLogsPage />
+                <AdminLogsPage globalSearchQuery={searchQuery} />
               ) : (
                 /* Platform Immutable Audit Trail */
-                <AdminAuditPage />
+                <AdminAuditPage globalSearchQuery={searchQuery} />
               )
             ) : (
               /* Merchant Portal Views */

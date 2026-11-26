@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Check,
@@ -123,7 +124,7 @@ export const KybOnboardingWizard: React.FC<KybOnboardingWizardProps> = ({
     }
   };
 
-  return (
+  return createPortal(
     <div ref={dialogRef} role="dialog" aria-modal="true" tabIndex={-1} className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5 bg-black/65 backdrop-blur-xs animate-fadeIn overflow-y-auto selection:bg-[#007F4E] selection:text-white">
       <div className="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-7 shadow-2xl border border-slate-100 my-auto relative transition-all max-h-[92vh] flex flex-col justify-between">
         
@@ -515,6 +516,7 @@ export const KybOnboardingWizard: React.FC<KybOnboardingWizardProps> = ({
         )}
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

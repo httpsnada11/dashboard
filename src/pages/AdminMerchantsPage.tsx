@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Building2,
   CheckCircle2,
@@ -13,6 +13,7 @@ import { MerchantKYBRecord } from '../types';
 import { AdminComplianceConfirmModal, AdminDialog } from '../components/AdminComplianceConfirmModal';
 import { appendAuditEvent } from '../utils/auditLogStore';
 import { MERCHANT } from '../utils/sharedMockStore';
+import { api } from '../services/api';
 
 const INITIAL_MERCHANTS: MerchantKYBRecord[] = [
   {
@@ -116,7 +117,11 @@ const INITIAL_MERCHANTS: MerchantKYBRecord[] = [
   }
 ];
 
-export const AdminMerchantsPage: React.FC = () => {
+export interface AdminMerchantsPageProps {
+  globalSearchQuery?: string;
+}
+
+export const AdminMerchantsPage: React.FC<AdminMerchantsPageProps> = ({ globalSearchQuery = '' }) => {
   const [merchants, setMerchants] = useState<MerchantKYBRecord[]>(INITIAL_MERCHANTS);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -127,6 +132,42 @@ export const AdminMerchantsPage: React.FC = () => {
   const [pendingKybReject, setPendingKybReject] = useState<MerchantKYBRecord | null>(null);
   const [viewingDoc, setViewingDoc] = useState<{ name: string; type: string; verified: boolean } | null>(null);
   const [reviewerNotes, setReviewerNotes] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res: any = await api.getAdminMerchants();
+        const list = Array.isArray(res) ? res : res?.merchants || res?.data;
+        if (active && Array.isArray(list) && list.length > 0) {
+          setMerchants(
+            list.map((m: any, idx: number) => ({
+              id: String(m.id || `mer_${idx}`),
+              businessName: m.businessName || m.displayName || m.name || 'Merchant',
+              legalEntity: m.legalEntity || m.legalName || m.businessName || 'Merchant Legal Entity',
+              jurisdiction: m.jurisdiction || '—',
+              registrationNo: m.registrationNo || m.regNo || '—',
+              directorName: m.directorName || m.ownerName || '—',
+              kybStatus: (m.kybStatus === 'Approved' || m.kybStatus === 'Rejected' ? m.kybStatus : 'Under Review') as MerchantKYBRecord['kybStatus'],
+              riskTier: m.riskTier || 'Tier 2 (Standard)',
+              dailyLimit: m.dailyLimit || '$100,000 / day',
+              currentDailyVolume: m.currentDailyVolume || '$0',
+              appliedDate: m.appliedDate || m.createdAt || 'Recently',
+              amlScore: Number(m.amlScore ?? 85),
+              documents: Array.isArray(m.documents) ? m.documents : [],
+              whitelistedAssets: Array.isArray(m.whitelistedAssets) ? m.whitelistedAssets : ['USDT (TRC-20)', 'USDC (ERC-20)'],
+              rejectionReason: m.rejectionReason,
+            }))
+          );
+        }
+      } catch {
+        // Keep initial mock merchants when backend is unavailable
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleToggleAsset = (merchantId: string, asset: string) => {
     setMerchants((prev) =>
@@ -156,6 +197,8 @@ export const AdminMerchantsPage: React.FC = () => {
     });
   };
 
+  const effectiveQuery = (globalSearchQuery || searchQuery || '').toLowerCase();
+
   const filteredMerchants = merchants.filter((m) => {
     const matchesFilter =
       statusFilter === 'all' ||
@@ -164,16 +207,16 @@ export const AdminMerchantsPage: React.FC = () => {
       (statusFilter === 'rejected' && m.kybStatus === 'Rejected');
 
     const matchesSearch =
-      searchQuery === '' ||
-      m.businessName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.jurisdiction.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.directorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.registrationNo.toLowerCase().includes(searchQuery.toLowerCase());
+      effectiveQuery === '' ||
+      m.businessName.toLowerCase().includes(effectiveQuery) ||
+      m.jurisdiction.toLowerCase().includes(effectiveQuery) ||
+      m.directorName.toLowerCase().includes(effectiveQuery) ||
+      m.registrationNo.toLowerCase().includes(effectiveQuery);
 
     return matchesFilter && matchesSearch;
   });
 
-  const handleUpdateStatus = (
+  const handleUpdateStatus = async (
     id: string,
     newStatus: MerchantKYBRecord['kybStatus'],
     note?: string
@@ -182,6 +225,14 @@ export const AdminMerchantsPage: React.FC = () => {
       newStatus === 'Rejected'
         ? note || 'Compliance rejection recorded in the audit trail.'
         : undefined;
+    try {
+      await api.setKybDecision(id, {
+        decision: newStatus === 'Approved' ? 'APPROVED' : 'REJECTED',
+        reason: note,
+      });
+    } catch {
+      // Fall back to local state update when backend is unavailable
+    }
     setMerchants((prev) =>
       prev.map((m) =>
         m.id === id ? { ...m, kybStatus: newStatus, rejectionReason } : m
@@ -331,8 +382,81 @@ export const AdminMerchantsPage: React.FC = () => {
           </div>
         </div>
 
+        <div className="md:hidden mt-3 space-y-2">
+          {filteredMerchants.map((merchant) => (
+            <div key={merchant.id} className="table-mobile-card">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="font-bold text-gray-900 break-words">{merchant.businessName}</div>
+                  <div className="text-xs text-[#6B7280] break-words">{merchant.legalEntity}</div>
+                </div>
+                <span
+                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold text-xs ${
+                    merchant.kybStatus === 'Approved'
+                      ? 'bg-emerald-50 text-[#007F4E] border border-emerald-200'
+                      : merchant.kybStatus === 'Under Review'
+                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                      : 'bg-red-50 text-red-600 border border-red-200'
+                  }`}
+                >
+                  {merchant.kybStatus === 'Approved' && <Check className="w-3 h-3" />}
+                  {merchant.kybStatus}
+                </span>
+              </div>
+              <div className="mt-2 text-xs text-gray-700 break-words">{merchant.jurisdiction}</div>
+              <div className="text-xs text-gray-800 break-words">
+                {merchant.directorName} · <span className="font-mono text-[#6B7280]">{merchant.registrationNo}</span>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                <span className="inline-flex items-center gap-1.5 font-mono font-bold">
+                  <span className={`w-2 h-2 rounded-full ${merchant.amlScore > 85 ? 'bg-[#007F4E]' : 'bg-red-500'}`} />
+                  <span>{merchant.amlScore}%</span>
+                </span>
+                <span className="font-bold font-mono text-gray-900">{merchant.dailyLimit}</span>
+                <button
+                  onClick={() => {
+                    setEditingLimitMerchant(merchant);
+                    setNewLimitValue(merchant.dailyLimit.replace(/[^0-9]/g, ''));
+                  }}
+                  className="p-1 hover:bg-gray-100 rounded text-[#6B7280] hover:text-gray-700"
+                  title="Adjust Tier Limits"
+                >
+                  <Sliders className="w-3 h-3" />
+                </button>
+                <span className="text-[#6B7280]">Used: {merchant.currentDailyVolume}</span>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <button
+                  onClick={() => setSelectedMerchant(merchant)}
+                  className="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold transition flex items-center gap-1"
+                  title="View Documentation"
+                >
+                  <FileText className="w-3 h-3" />
+                  <span>Docs</span>
+                </button>
+                {merchant.kybStatus === 'Under Review' && (
+                  <>
+                    <button
+                      onClick={() => setPendingKybApprove(merchant)}
+                      className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-[#007F4E] border border-emerald-200 font-bold transition text-xs"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => setPendingKybReject(merchant)}
+                      className="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold transition text-xs"
+                    >
+                      Reject
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
         {/* Directory Table */}
-        <div className="table-scroll mt-3">
+        <div className="hidden md:block table-scroll mt-3">
           <table className="w-full text-left text-xs border-collapse min-w-[1020px]">
             <thead>
               <tr className="border-b border-gray-100 text-[#6B7280] uppercase font-semibold text-xs tracking-wider">

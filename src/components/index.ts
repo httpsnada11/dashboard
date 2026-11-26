@@ -29,4 +29,6 @@ export { KybOnboardingWizard } from './KybOnboardingWizard';
 export type { KybOnboardingWizardProps } from './KybOnboardingWizard';
 export { LiveModeGate } from './LiveModeGate';
 export type { LiveModeGateProps } from './LiveModeGate';
+export { LegalDocumentContent, LEGAL_DOCUMENT_TITLES } from './LegalDocument';
+export type { LegalDocumentType } from './LegalDocument';
 

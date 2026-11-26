@@ -79,9 +79,69 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
         </div>
       </div>
 
+      <div className="md:hidden space-y-2">
+        {filteredActivities.length === 0 ? (
+          <div className="table-mobile-card text-center text-xs text-gray-500">
+            {searchQuery ? 'No transactions match your search query.' : 'No transaction activity recorded yet for this merchant.'}
+          </div>
+        ) : (
+          filteredActivities.map((row) => {
+            const isPositive = row.amount.startsWith('+');
+
+            return (
+              <div
+                key={row.id}
+                onClick={() => onSelectTransaction?.(row)}
+                onKeyDown={(e) => {
+                  if (e.target !== e.currentTarget) return;
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onSelectTransaction?.(row);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                className="table-mobile-card w-full text-left cursor-pointer"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="font-bold text-[#14171A] text-xs break-words">{row.type}</div>
+                  <div className="text-xs text-[#6B7280] whitespace-nowrap">{row.time}</div>
+                </div>
+                <div className="mt-2 flex items-center gap-1.5">
+                  <span className="text-[#4B5563] text-xs break-all">{row.reference}</span>
+                  <button
+                    onClick={(e) => handleCopy(e, row.fullRef || row.reference, row.id)}
+                    title="Copy Reference"
+                    className="text-gray-500 hover:text-gray-700 transition p-0.5 shrink-0"
+                  >
+                    {copiedId === row.id ? (
+                      <Check className="w-3 h-3 text-[#007F4E]" />
+                    ) : (
+                      <Copy className="w-3 h-3" />
+                    )}
+                  </button>
+                </div>
+                <div className="mt-1 text-xs text-[#4B5563] break-all">{row.customer}</div>
+                <div className="mt-1 text-xs text-[#374151] font-medium break-words">{row.network}</div>
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <span className={`text-xs font-semibold whitespace-nowrap ${
+                    isPositive ? 'text-[#007F4E]' : 'text-[#1F2937]'
+                  }`}>
+                    {row.amount}
+                  </span>
+                  <span className={`text-xs whitespace-nowrap ${getStatusColor(row.status)}`}>
+                    {row.status}
+                  </span>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
       {/* Modern Table Container - Responsive Horizontal Scroll */}
       <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="table-scroll">
+        <div className="hidden md:block table-scroll">
           <table className="w-full text-left border-collapse min-w-[640px]">
             {/* Dark Sleek Header */}
             <thead>

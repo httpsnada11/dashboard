@@ -144,7 +144,11 @@ interface PendingAddressAction {
   address: AdminWhitelistedAddress;
 }
 
-export const AdminWhitelistPage: React.FC = () => {
+export interface AdminWhitelistPageProps {
+  globalSearchQuery?: string;
+}
+
+export const AdminWhitelistPage: React.FC<AdminWhitelistPageProps> = ({ globalSearchQuery = '' }) => {
   const [whitelist, setWhitelist] = useState<AdminWhitelistedAddress[]>(() => {
     try {
       const savedMerchant = localStorage.getItem('copym_shared_merchant_addresses');
@@ -314,12 +318,14 @@ export const AdminWhitelistPage: React.FC = () => {
     showNotification('Whitelist registry exported to CSV.');
   };
 
+  const effectiveQuery = (globalSearchQuery || searchQuery || '').toLowerCase();
+
   const filteredList = whitelist.filter((item) => {
     const matchSearch =
-      item.beneficiaryName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.merchantName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.fullAddress.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.network.toLowerCase().includes(searchQuery.toLowerCase());
+      item.beneficiaryName.toLowerCase().includes(effectiveQuery) ||
+      item.merchantName.toLowerCase().includes(effectiveQuery) ||
+      item.fullAddress.toLowerCase().includes(effectiveQuery) ||
+      item.network.toLowerCase().includes(effectiveQuery);
 
     const matchMerchant = selectedMerchant === 'All' || item.merchantName === selectedMerchant;
     const matchStatus = selectedStatus === 'All' || item.status === selectedStatus;
@@ -526,7 +532,158 @@ export const AdminWhitelistPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="table-scroll">
+        <div className="md:hidden mt-3 space-y-2">
+          {filteredList.length === 0 ? (
+            <p className="py-8 text-center text-xs text-[#6B7280]">No whitelisted addresses match filters</p>
+          ) : (
+            filteredList.map((item) => {
+              const isCooling = item.status === 'Cooling Period';
+              const isFrozen = item.status === 'Frozen';
+              const isActive = item.status === 'Active';
+              const isRevoked = item.status === 'Revoked';
+
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => setSelectedAddressId(item.id)}
+                  className="table-mobile-card cursor-pointer"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-bold text-slate-900 break-words">{item.beneficiaryName}</div>
+                      <div className="text-xs text-[#6B7280] break-words">
+                        {item.merchantName} · {item.category}
+                      </div>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-slate-800 whitespace-nowrap">
+                      {item.totalPaidOut}
+                    </span>
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-700">
+                      {item.network}
+                    </span>
+                    <span className="font-mono text-xs text-slate-900 break-all">{item.address}</span>
+                    <button
+                      type="button"
+                      onClick={(e) => handleCopy(item.fullAddress, item.id, e)}
+                      className="p-1 hover:bg-slate-200 rounded text-[#6B7280] hover:text-slate-700 transition ml-0.5"
+                      title="Copy full address"
+                    >
+                      {copiedId === item.id ? (
+                        <Check className="w-3 h-3 text-[#007F4E]" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
+                    </button>
+                  </div>
+                  <div className="text-xs text-[#6B7280] break-words">Added by {item.addedBy.split(' ')[0]}</div>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                    <span className="inline-flex items-center gap-1.5">
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          item.kytRiskLevel === 'Clean'
+                            ? 'bg-emerald-500'
+                            : item.kytRiskLevel === 'Low'
+                              ? 'bg-amber-500'
+                              : 'bg-rose-500'
+                        }`}
+                      />
+                      <span className="font-bold text-slate-800">{item.kytRiskScore}/100</span>
+                      <span className="text-[#6B7280]">({item.kytRiskLevel})</span>
+                    </span>
+                    {isCooling && (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200/70">
+                        <Clock className="w-3.5 h-3.5 text-amber-600" />
+                        <span>{item.coolingRemainingHours}h Timelock Left</span>
+                      </span>
+                    )}
+                    {isActive && (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-[#007F4E] border border-emerald-200/70">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Active (Executable)</span>
+                      </span>
+                    )}
+                    {isFrozen && (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200/70">
+                        <AlertOctagon className="w-3.5 h-3.5 text-rose-600" />
+                        <span>Frozen (Compliance Hold)</span>
+                      </span>
+                    )}
+                    {isRevoked && (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                        <Ban className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Revoked & Blacklisted</span>
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                    {isCooling && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openAction('instant-approve', item);
+                        }}
+                        className="px-2.5 py-1 bg-[#007F4E] hover:bg-[#00663E] text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition shadow-xs cursor-pointer"
+                        title="Fast-track timelock with documented approval"
+                      >
+                        <Unlock className="w-3 h-3" />
+                        <span>Fast-Track</span>
+                      </button>
+                    )}
+                    {!isRevoked && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openAction(isFrozen ? 'unfreeze' : 'freeze', item);
+                        }}
+                        className={`p-1.5 rounded-lg border text-xs transition cursor-pointer ${
+                          isFrozen
+                            ? 'bg-emerald-50 text-[#007F4E] border-emerald-200 hover:bg-emerald-100'
+                            : 'bg-white text-slate-600 border-slate-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200'
+                        }`}
+                        title={isFrozen ? 'Unfreeze address with sign-off' : 'Freeze address with sign-off'}
+                      >
+                        {isFrozen ? <Check className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                      </button>
+                    )}
+                    {!isRevoked && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openAction('revoke', item);
+                        }}
+                        className="p-1.5 rounded-lg border border-slate-200 bg-white text-[#6B7280] hover:text-rose-700 hover:border-rose-200 transition cursor-pointer"
+                        title="Revoke & blacklist with sign-off"
+                      >
+                        <Ban className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedAddressId(item.id);
+                      }}
+                      className="p-1.5 text-[#6B7280] hover:text-[#007F4E] transition cursor-pointer"
+                      title="View full audit drawer"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <div className="hidden md:block table-scroll">
           <table className="w-full text-left border-collapse text-xs min-w-[980px]">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
